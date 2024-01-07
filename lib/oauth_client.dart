@@ -7,23 +7,29 @@ import 'package:oauth2/oauth2.dart' as oauth2;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:webview_flutter/webview_flutter.dart';
 
-class LichessOauth {
+class OauthClient {
   static const String _charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
-  static WebViewController webViewController = WebViewController();
   static const String localAndroidHost = "10.0.2.2";
   static const String localIOSHost = "127.0.0.1";
-  static String localRedirect = "http://0.0.0.0:7777/";
-  static Uri redirectEndpoint = kIsWeb ? Uri.base : Uri.parse(localRedirect);
-  static String host = "lichess.org";
-  static String clientId = "rps-royale.com";
-  static String codeVerifier = "";
-  static String fieldToken = "token";
-  static bool authenticating = false;
-  static bool ignoreStoredToken = false;
+  WebViewController webViewController = WebViewController();
+  String authPath, tokenPath;
+  String host;
+  String clientId;
+  String codeVerifier = "";
+  String fieldToken = "token";
+  bool authenticating = false;
+  bool ignoreStoredToken = false;
+  late Uri redirectEndpoint;
 
-  static authenticate(callBack) async {
+  OauthClient(this.host,this.clientId,
+      { localRedirect = "http://0.0.0.0:7777/",
+        this.authPath = "oauth",
+        this.tokenPath = "api/token" }) {
+    redirectEndpoint = kIsWeb ? Uri.base : Uri.parse(localRedirect);
+  }
+
+  authenticate(callBack) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    //for (String key in prefs.getKeys()) { _logMsg("Pref Key: $key"); }
     String token = prefs.getString(fieldToken) ?? "";
     if (!ignoreStoredToken && token.isNotEmpty) {
       callBack(oauth2.Client(oauth2.Credentials(token)));
@@ -35,7 +41,7 @@ class LichessOauth {
     prefs.setString("code_verifier", codeVerifier);
 
     oauth2.AuthorizationCodeGrant grant = oauth2.AuthorizationCodeGrant(
-        clientId, Uri.parse("$host/oauth"), Uri.parse("$host/api/token"),
+        clientId, Uri.parse("$host/$authPath"), Uri.parse("$host/$tokenPath"),
         httpClient: http.Client(), codeVerifier: codeVerifier);
 
     final authorizationUrl =
@@ -44,7 +50,7 @@ class LichessOauth {
     if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) _runRedirectServer("0.0.0.0",7777,callBack);
   }
 
-  static void decode(String code,callBack) async { //logMsg("Decoding: $code");
+  void decode(String code,callBack) async { //logMsg("Decoding: $code");
     _getClient(kIsWeb ? await _consumeVerifier() : codeVerifier, code).then((client) async {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       if (client != null) {
@@ -57,9 +63,9 @@ class LichessOauth {
     if (!kIsWeb) closeInAppWebView();
   }
 
-  static void deleteToken(token) {
+  void deleteToken(token) {
     final headers = { "Authorization": "Bearer $token", };
-    Uri uri = Uri.parse('https://$host/api/token');
+    Uri uri = Uri.parse('https://$host/$tokenPath');
     http.delete(uri,headers: headers).then((value) {
       _logMsg(value.body);
     });
@@ -70,13 +76,13 @@ class LichessOauth {
     });
   }
 
-  static void _errMsg(String msg, callBack) {
+  void _errMsg(String msg, callBack) {
     authenticating = false;
     _logMsg(msg); callBack("");
   }
-  static void _logMsg(String msg) { print(msg); }
+  void _logMsg(String msg) { print(msg); }
 
-  static Future<void> _openAuthorizationServerLogin(Uri authUri) async {
+  Future<void> _openAuthorizationServerLogin(Uri authUri) async {
     var authUriString = 'https://${authUri.toString()}';
     if (kIsWeb) {
       await launchUrl(Uri.parse(authUriString), mode :  LaunchMode.inAppBrowserView, webOnlyWindowName: "_self");
@@ -85,16 +91,10 @@ class LichessOauth {
       _logMsg("Launching WebView");
       webViewController.setJavaScriptMode(JavaScriptMode.unrestricted);
       webViewController.loadRequest(Uri.parse(authUriString));
-
     }
   }
 
-  static String _createCodeVerifier() {
-    return List.generate(
-        128, (i) => _charset[Random.secure().nextInt(_charset.length)]).join();
-  }
-
-  static _runRedirectServer(String address, int port, callBack) async {
+  void _runRedirectServer(String address, int port, callBack) async {
     var server =  await HttpServer.bind(address,port); //TODO: use 'then' for error checking
     await server.forEach((HttpRequest request) {
       decode(request.uri.queryParameters['code'] ?? "", callBack);
@@ -103,11 +103,11 @@ class LichessOauth {
     });
   }
 
-  static Future<oauth2.Client?> _getClient(String verifier, String? code) async {
+  Future<oauth2.Client?> _getClient(String verifier, String? code) async {
     final grant = oauth2.AuthorizationCodeGrant(
         clientId,
-        Uri.https(host, "/oauth"),
-        Uri.https(host, "/api/token"),
+        Uri.https(host, "/$authPath"),
+        Uri.https(host, "/$tokenPath"),
         httpClient: http.Client(),
         codeVerifier: verifier);
     String ep = redirectEndpoint.toString().split("?").first;
@@ -115,11 +115,16 @@ class LichessOauth {
     return grant.handleAuthorizationCode(code ?? "");
   }
 
-  static Future<String> _consumeVerifier() async {
+  Future<String> _consumeVerifier() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String verifier = prefs.getString("code_verifier") ?? "";
     prefs.remove("code_verifier");
     return verifier;
+  }
+
+  static String _createCodeVerifier() {
+    return List.generate(
+        128, (i) => _charset[Random.secure().nextInt(_charset.length)]).join();
   }
 
 }

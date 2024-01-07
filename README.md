@@ -11,29 +11,56 @@ and the Flutter guide for
 [developing packages and plugins](https://flutter.dev/developing-packages).
 -->
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+Basic Flutter/Dart Client Package for the ZugServ Library
 
 ## Features
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
+Enables the rapid creation of a client to connect to and manage responses from a ZugServ.
 
 ## Getting started
 
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
+For creating a ZugClient: pub get zugclient <br>
+For creating a ZugServ: https://github.com/JohnChernoff/ZugServ
 
 ## Usage
 
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder.
-
 ```dart
-const like = 'sample';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:zugclient/oauth_client.dart';
+import 'package:zugclient/zug_client.dart';
+
+void main() {
+  test('construct a client', () {
+    TestClient testClient = TestClient("example.com", 80, "test");
+    testClient.currentArea = testClient.getOrCreateArea("testArea");
+    expect(testClient.currentArea.title, "testArea");
+  });
+}
+
+class TestArea extends Area {
+  TestArea(super.title);
+}
+
+enum TestServMsg {whee}
+class TestClient extends ZugClient {
+
+  TestClient(super.domain, super.port, super.remoteEndpoint) {
+    addFunctions({
+      TestServMsg.whee.name: whee,
+    });
+    checkRedirect(OauthClient("lichess.org", "testClient"));
+  }
+
+  void whee(data) { print("Received message tyoe 'Whee' from Server"); }
+
+  @override
+  Area createArea(String title) {
+    return TestArea(title);
+  }
+
+}
 ```
 
 ## Additional information
 
-TODO: Tell users more about the package: where to find more information, how to
-contribute to the package, how to file issues, what response they can expect
-from the package authors, and more.
+Very early version - project is rapidly developing, expect updates soon

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:zugclient/zugclient.dart';
+import 'package:zugclient/oauth_client.dart';
+import 'package:zugclient/zug_client.dart';
 
 void main() {
   test('construct a client', () {
@@ -20,9 +21,11 @@ class TestClient extends ZugClient {
     addFunctions({
       TestServMsg.whee.name: whee,
     });
+    checkRedirect(OauthClient("lichess.org", "testClient"));
   }
 
   void whee(data) {
+
   }
 
   @override

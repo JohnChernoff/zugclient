@@ -2,7 +2,7 @@ library zugclient;
 
 import 'zug_sock.dart';
 import 'dialogs.dart';
-import 'lichess_login.dart';
+import 'oauth_client.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:oauth2/oauth2.dart' as oauth2;
@@ -88,7 +88,6 @@ abstract class ZugClient extends ChangeNotifier {
       ServMsg.updateOccupants.name : handleUpdateOccupants,
       ServMsg.updateOptions.name : handleUpdateOptions,
     });
-    checkRedirect();
   }
 
   void addFunctions(Map<String, Function> functions) {
@@ -187,23 +186,21 @@ abstract class ZugClient extends ChangeNotifier {
     }
   }
 
-  void checkRedirect() {
+  void checkRedirect(OauthClient oauthClient) {
     if (kIsWeb) {
       String code = Uri.base.queryParameters["code"]?.toString() ?? "";
       if (code.isNotEmpty) {
         loggingIn = true;
         html.window.history.pushState(null, 'home', Uri.base.path);
-        LichessOauth.decode(code, setAuthClient);
-        return;
+        oauthClient.decode(code, setAuthClient);
       }
     }
   }
 
-  void authenticateWithLichess() {
+  //TODO: option to remove stored token
+  void authenticate(OauthClient oauthClient) { logMsg("Authenticating");
     loggingIn = true;
-    //TODO: option to remove stored token
-    logMsg("Authenticating");
-    LichessOauth.authenticate(setAuthClient);
+    oauthClient.authenticate(setAuthClient);
   }
 
   void setAuthClient(oauth2.Client client) {
