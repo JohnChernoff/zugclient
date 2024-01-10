@@ -1,5 +1,8 @@
 library zugclient;
 
+import 'package:logging/logging.dart';
+
+import 'zug_fields.dart';
 import 'zug_sock.dart';
 import 'dialogs.dart';
 import 'oauth_client.dart';
@@ -10,24 +13,6 @@ import 'dart:io' show Platform;
 import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-
-enum MessageScope { room, area, server }
-enum ServMsg { none, obs, unObs, reqLogin, logOK, noLog, errMsg, servMsg, servUserMsg, areaUserMsg, areaMsg, roomMsg, privMsg, updateUsers, updateAreas, updateArea, updateRoom, updateServ, updateUser, updateOccupant, updateOccupants, updateOptions }
-enum ClientMsg { none, obs, unObs, login, loginGuest, loginLichess, getOptions, setOptions, newRoom, joinRoom, newArea, joinArea, partArea, areaMsg, roomMsg, servMsg, privMsg, updateArea, updateRoom, updateServ, updateUser, updateOccupant, setMute }
-
-const fieldData = "data",
-    fieldType = "type",
-    fieldMsg = "msg",
-    fieldToken = "token",
-    fieldPwd = "pwd",
-    fieldJSON = "json",
-    fieldGame = "game",
-    fieldTitle = "title",
-    fieldPlayer = "occupant",
-    fieldRoom = "room",
-    fieldAreas = "areas",
-    fieldMuted = "muted",
-    fieldColor = "color";
 
 abstract class Area {
   final String title;
@@ -42,13 +27,13 @@ abstract class Area {
 
 abstract class ZugClient extends ChangeNotifier {
 
-  static const kDebugMode = true;
+  static final log = Logger('ClientLogger');
   static const noAreaTitle = "";
   static const servString = "serv";
 
-  bool localServer = true; //false
-  //bool localServer = false;
-  String serverName = "Server";
+  bool localServer;
+  bool noServer = false;
+  String clientName = "ZugClient";
   PackageInfo? packageInfo;
   String domain;
   int port;
@@ -68,12 +53,12 @@ abstract class ZugClient extends ChangeNotifier {
 
   Area createArea(String title);
 
-  ZugClient(this.domain,this.port,this.remoteEndpoint) {
+  ZugClient(this.domain,this.port,this.remoteEndpoint, {this.localServer = false}) {
     noArea = createArea(noAreaTitle);
     currentArea = noArea;
     PackageInfo.fromPlatform().then((PackageInfo info) {
       packageInfo = info;
-      logMsg(info.toString());
+      log.info(info.toString());
     });
     addFunctions({
       ServMsg.reqLogin.name: handleLogin,
@@ -104,8 +89,9 @@ abstract class ZugClient extends ChangeNotifier {
     if (data.isEmpty) {
       send(cmd,data: { fieldTitle : title ??  currentArea.title});
     } else {
-      data[fieldTitle] = title ?? currentArea.title;
-      send(cmd,data:data);
+      Map<String,dynamic> args = Map<String,dynamic>.from(data);
+      args[fieldTitle] = title ?? currentArea.title;
+      send(cmd,data:args);
     }
   }
 
@@ -120,11 +106,12 @@ abstract class ZugClient extends ChangeNotifier {
       else {
         currentArea = noArea;
       }
-      logMsg("Switched to game: ${currentArea.title}");
+      log.info("Switched to game: ${currentArea.title}");
     }
   }
 
-  void handleMsg(String msg) { //logMsg("Incoming msg: $msg");
+  void handleMsg(String msg) {
+    log.fine("Incoming msg: $msg");
     final json = jsonDecode(msg);
     String type = json[fieldType]; //logMsg("Handling: $type");
     Function? fun = _functionMap[type];
@@ -132,16 +119,16 @@ abstract class ZugClient extends ChangeNotifier {
       fun(json[fieldData]);
       notifyListeners();
     } else {
-      logMsg("Function not found: $type");
+      log.warning("Function not found: $type");
     }
   }
 
-  void handleUpdateOccupant(data) { logMsg("Occupant update: $data");
+  void handleUpdateOccupant(data) { log.info("Occupant update: $data");
     Area area = getOrCreateArea(data[fieldTitle]);
     area.occupants[data["user"]["name"]] = data;
   }
 
-  void handleUpdateArea(data) { logMsg("Update Area: $data");
+  void handleUpdateArea(data) { log.info("Update Area: $data");
     Area area = getOrCreateArea(data[fieldTitle]);
     handleUpdateOccupants(data,area : area);
     handleUpdateOptions(data,area : area);
@@ -155,9 +142,9 @@ abstract class ZugClient extends ChangeNotifier {
     }
   }
 
-  void handleUpdateOptions(data, {Area? area}) {
+  void handleUpdateOptions(data, {Area? area}) { //print("Options: $data");
     area = area ?? getOrCreateArea(data[fieldTitle]);
-    area.options = data["options"];
+    area.options = data["options"] ?? {};
   }
 
   void handleAreaMsg(data, {Area? area}) {
@@ -181,7 +168,7 @@ abstract class ZugClient extends ChangeNotifier {
       getOrCreateArea(area[fieldTitle]).exists = true;
     }
     areas.removeWhere((key, value) => !value.exists);
-    if (currentArea != noArea && !currentArea.exists) { //logMsg("No area selected");
+    if (currentArea != noArea && !currentArea.exists) {
       currentArea = noArea;
     }
   }
@@ -198,7 +185,8 @@ abstract class ZugClient extends ChangeNotifier {
   }
 
   //TODO: option to remove stored token
-  void authenticate(OauthClient oauthClient) { logMsg("Authenticating");
+  void authenticate(OauthClient oauthClient) {
+    log.info("Authenticating");
     loggingIn = true;
     oauthClient.authenticate(setAuthClient);
   }
@@ -215,12 +203,12 @@ abstract class ZugClient extends ChangeNotifier {
   void handleLogin(data) { login(); }
   void login() {
     if (isAuthenticated()) {
-      logMsg("Logging in with token");
+      log.info("Logging in with token");
       send(ClientMsg.loginLichess, data: { fieldToken : authClient.credentials.accessToken });
       notifyListeners(); //TODO: handle server login issues?
     }
     else {
-      logMsg("Logging in as guest");
+      log.info("Logging in as guest");
       send(ClientMsg.loginGuest);
       notifyListeners();
     }
@@ -229,7 +217,7 @@ abstract class ZugClient extends ChangeNotifier {
   void connect()  {
     loggingIn = true;
     String address = getWebSockAddress();
-    logMsg("Connecting to $address");
+    log.info("Connecting to $address");
     sock = ZugSock(address,connected,handleMsg,disconnected);
   }
 
@@ -237,13 +225,13 @@ abstract class ZugClient extends ChangeNotifier {
     return authClient.credentials.accessToken.isNotEmpty;
   }
 
-  void connected() { logMsg("Connected!");
+  void connected() { log.info("Connected!");
     isConnected = true;
   }
 
   void disconnected() {
     isConnected = false; isLoggedIn = false;
-    logMsg("Disconnected: $userName");
+    log.info("Disconnected: $userName");
     tryReconnect();
   }
 
@@ -252,21 +240,24 @@ abstract class ZugClient extends ChangeNotifier {
   }
 
   void loggedIn(data) {
-    logMsg("Logged in: ${data.toString()}");
-    userName = data["name"]; //data["user"]["name"]; //logMsg("Logged in: $userName");
+    log.info("Logged in: ${data.toString()}");
+    userName = data["name"];
     loggingIn = false;
     isLoggedIn = true;
 
   }
 
   void loggedOut(data) {
-    logMsg("Logged out: $userName");
+    log.info("Logged out: $userName");
     isLoggedIn = false;
     Dialogs.popup("Logged out - click to log back in").then((ok) { login(); });
   }
 
   void send(Enum type, { var data = "" }) {
-    if (isConnected && sock != null) {
+    if (noServer) {
+      log.fine("Sending: ${type.toString()} -> ${data.toString()}");
+    }
+    else if (isConnected && sock != null) {
       sock!.send(jsonEncode( { fieldType: type.name, fieldData: data } ) );
     }
     else { //playClip("doink");
@@ -289,10 +280,6 @@ abstract class ZugClient extends ChangeNotifier {
     sBuff.write(getDomain());
     sBuff.write(localServer ? ":$port" : "/$remoteEndpoint");
     return sBuff.toString();
-  }
-
-  void logMsg(String msg) {
-    print(msg);
   }
 
 }

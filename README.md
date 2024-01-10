@@ -25,39 +25,40 @@ For creating a ZugServ: https://github.com/JohnChernoff/ZugServ
 ## Usage
 
 ```dart
-import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:zugclient/oauth_client.dart';
+import 'package:zugclient/zug_app.dart';
 import 'package:zugclient/zug_client.dart';
 
 void main() {
-  test('construct a client', () {
-    TestClient testClient = TestClient("example.com", 80, "test");
-    testClient.currentArea = testClient.getOrCreateArea("testArea");
-    expect(testClient.currentArea.title, "testArea");
-  });
+  TestClient testClient = TestClient("example.com", 9999, "test",localServer : true);
+  runApp(TestApp(testClient));
 }
 
-class TestArea extends Area {
-  TestArea(super.title);
-}
+class TestApp extends ZugApp {
+  TestApp(super.client, {super.key});
 
-enum TestServMsg {whee}
-class TestClient extends ZugClient {
-
-  TestClient(super.domain, super.port, super.remoteEndpoint) {
-    addFunctions({
-      TestServMsg.whee.name: whee,
-    });
-    checkRedirect(OauthClient("lichess.org", "testClient"));
+  @override
+  Widget createMainPage(client) {
+    return const Text("Main Page");
   }
 
-  void whee(data) { print("Received message tyoe 'Whee' from Server"); }
+}
+
+class TestClient extends ZugClient {
+  TestClient(super.domain, super.port, super.remoteEndpoint, {super.localServer}) {
+    checkRedirect(OauthClient("lichess.org", clientName));
+  }
 
   @override
   Area createArea(String title) {
     return TestArea(title);
   }
 
+}
+
+class TestArea extends Area {
+  TestArea(super.title);
 }
 ```
 

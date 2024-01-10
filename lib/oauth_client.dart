@@ -8,10 +8,10 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:webview_flutter/webview_flutter.dart';
 
 class OauthClient {
+  static WebViewController webViewController = WebViewController();
   static const String _charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
   static const String localAndroidHost = "10.0.2.2";
   static const String localIOSHost = "127.0.0.1";
-  WebViewController webViewController = WebViewController();
   String authPath, tokenPath;
   String host;
   String clientId;
