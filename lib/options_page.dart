@@ -58,8 +58,7 @@ class _OptionsPageState extends State<OptionsPage> {
     );
   }
 
-  Widget parseOptionEntry(String field, Map<String,dynamic> entry) {
-    //print(entry.toString());
+  Widget parseOptionEntry(String field, Map<String,dynamic> entry) { //print(entry.toString());
     Widget entryWidget = const Text("?");
     dynamic val = entry[fieldOptVal];
     if (val is String) {
@@ -73,6 +72,7 @@ class _OptionsPageState extends State<OptionsPage> {
     }
     else if (val is double) { //or int
       double range = entry[fieldOptMax] - entry[fieldOptMin];
+      double div = (range/entry[fieldOptInc]);
       entryWidget = Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -81,7 +81,7 @@ class _OptionsPageState extends State<OptionsPage> {
             value: val,
             min: entry[fieldOptMin] as double,
             max: entry[fieldOptMax] as double,
-            divisions: (entry[fieldOptInt] ? range as int : null),
+            divisions: div.toInt(),
             label: newOptions[field][fieldOptVal].toString(),
             onChanged: (double value) { //print(value);
               if (value >= entry[fieldOptMin] && value <= entry[fieldOptMax]) {

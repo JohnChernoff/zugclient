@@ -22,7 +22,7 @@ const fieldData = "data",
     fieldOptVal = "val",
     fieldOptMin = "min",
     fieldOptMax = "max",
-    fieldOptInt = "int",
+    fieldOptInc = "inc",
     fieldOptions = "options",
     fieldColor = "color";
 

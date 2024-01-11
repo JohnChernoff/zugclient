@@ -21,9 +21,7 @@ class _LobbyPageState extends State<LobbyPage> {
 
   @override
   Widget build(BuildContext context) {
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final double screenHeight = MediaQuery.of(context).size.height;
-
+    //final double screenWidth = MediaQuery.of(context).size.width; final double screenHeight = MediaQuery.of(context).size.height;
     List<DropdownMenuItem<String>> games = List.empty(growable: true);
 
     games.add(const DropdownMenuItem<String>(value:ZugClient.noAreaTitle, child: Text(ZugClient.noAreaTitle)));
