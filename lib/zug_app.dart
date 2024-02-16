@@ -9,8 +9,9 @@ import 'lobby_page.dart';
 import 'options_page.dart';
 
 abstract class ZugApp extends StatelessWidget {
+  final String appName;
   final ZugClient client;
-  ZugApp(this.client, { super.key, Level logLevel = Level.ALL }) {
+  ZugApp(this.client, this.appName, { super.key, Level logLevel = Level.ALL }) {
     Logger.root.level = logLevel;
     Logger.root.onRecord.listen((record) {
       print('${record.level.name}: ${record.time}: ${record.message}');
@@ -25,7 +26,7 @@ abstract class ZugApp extends StatelessWidget {
         create: (context) => client,
         child: MaterialApp(
           navigatorKey: globalNavigatorKey,
-          title: 'LoxBall',
+          title: appName,
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
             useMaterial3: true,
@@ -59,11 +60,11 @@ class ZugHome extends StatefulWidget {
   State<ZugHome> createState() => _ZugHomeState();
 }
 
-enum Pages { main,lobby,options }
+enum PageType { main,lobby,options,none }
 
 class _ZugHomeState extends State<ZugHome> {
   var selectedIndex = 0;
-  Pages selectedPage = Pages.lobby;
+  PageType selectedPage = PageType.lobby;
 
   @override
   Widget build(BuildContext context) {
@@ -74,13 +75,21 @@ class _ZugHomeState extends State<ZugHome> {
         .colorScheme;
 
     Widget page = widget.app.createSplashPage(client);
-
     if (client.isLoggedIn) {
-      page = switch (selectedPage) {
-        Pages.main => widget.app.createMainPage(client),
-        Pages.lobby => widget.app.createLobbyPage(client),
-        Pages.options => widget.app.createOptionsPage(client),
+      page = switch(client.switchPage) {
+        PageType.main => widget.app.createMainPage(client),
+        PageType.lobby => widget.app.createLobbyPage(client),
+        PageType.options => widget.app.createOptionsPage(client),
+        PageType.none => switch (selectedPage) {
+          PageType.main || PageType.none => widget.app.createMainPage(client),
+          PageType.lobby => widget.app.createLobbyPage(client),
+          PageType.options => widget.app.createOptionsPage(client),
+        }
       };
+      if (client.switchPage != PageType.none) {
+        selectedPage = client.switchPage;
+        client.switchPage = PageType.none;
+      }
     }
 
     // The container for the current page, with its background color
@@ -136,9 +145,9 @@ class _ZugHomeState extends State<ZugHome> {
           if (!Dialogs.dialog) {
             setState(() {
               selectedIndex = value;
-              Pages newPage = Pages.values.elementAt(selectedIndex);
+              PageType newPage = PageType.values.elementAt(selectedIndex);
               selectedPage = newPage;
-              if (selectedPage == Pages.options && client.currentArea.exists) {
+              if (selectedPage == PageType.options && client.currentArea.exists) {
                 widget.app.client.send(ClientMsg.getOptions,data: widget.app.client.currentArea.title);
               }
             });

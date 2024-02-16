@@ -1,6 +1,7 @@
 library zugclient;
 
 import 'package:logging/logging.dart';
+import 'package:zugclient/zug_app.dart';
 
 import 'zug_fields.dart';
 import 'zug_sock.dart';
@@ -50,6 +51,7 @@ abstract class ZugClient extends ChangeNotifier {
   late final Area noArea;
   late Area currentArea; //Area(noAreaTitle);
   final Map<String,Function> _functionMap = {};
+  PageType switchPage = PageType.none;
 
   Area createArea(String title);
 
@@ -95,6 +97,10 @@ abstract class ZugClient extends ChangeNotifier {
     }
   }
 
+  void setSwitchPage(PageType p) {
+    switchPage = p;
+  }
+
   void switchArea(String? title) {
     final t = title ?? noAreaTitle;
     if (currentArea.title != t) {
@@ -116,51 +122,57 @@ abstract class ZugClient extends ChangeNotifier {
     String type = json[fieldType]; //logMsg("Handling: $type");
     Function? fun = _functionMap[type];
     if (fun != null) {
-      fun(json[fieldData]);
-      notifyListeners();
+      if (fun(json[fieldData])) notifyListeners();
     } else {
       log.warning("Function not found: $type");
     }
   }
 
-  void handleUpdateOccupant(data) { log.info("Occupant update: $data");
+  bool handleUpdateOccupant(data) { log.info("Occupant update: $data");
     Area area = getOrCreateArea(data[fieldTitle]);
     area.occupants[data["user"]["name"]] = data;
+    return true;
   }
 
-  void handleUpdateArea(data) { log.info("Update Area: $data");
+  bool handleUpdateArea(data) { log.info("Update Area: $data");
     Area area = getOrCreateArea(data[fieldTitle]);
     handleUpdateOccupants(data,area : area);
     handleUpdateOptions(data,area : area);
+    return true;
   }
 
-  void handleUpdateOccupants(data, {Area? area}) {
+  bool handleUpdateOccupants(data, {Area? area}) {
     area = area ?? getOrCreateArea(data[fieldTitle]);
     area.occupants.clear();
     for (dynamic occupant in data["occupants"]) {
       area.occupants.putIfAbsent(occupant["user"]["name"], () => occupant);
     }
+    return true;
   }
 
-  void handleUpdateOptions(data, {Area? area}) { //print("Options: $data");
+  bool handleUpdateOptions(data, {Area? area}) { //print("Options: $data");
     area = area ?? getOrCreateArea(data[fieldTitle]);
     area.options = data["options"] ?? {};
+    return true;
   }
 
-  void handleAreaMsg(data, {Area? area}) {
+  bool handleAreaMsg(data, {Area? area}) {
     area = area ?? getOrCreateArea(data[fieldTitle]);
     area.messages.add(data[fieldMsg]); area.newMessages++;
+    return true;
   }
 
-  void handleServMsg(data) {
+  bool handleServMsg(data) {
     messages.add(data[fieldMsg]); newMessages++;
+    return true;
   }
 
-  void handleErrorMsg(data) {
+  bool handleErrorMsg(data) {
     Dialogs.popup("Error: ${data[fieldMsg]}");
+    return true;
   }
 
-  void handleAreaList(data) {
+  bool handleAreaList(data) {
     for (Area area in areas.values) {
       area.exists = false;
     }
@@ -171,6 +183,7 @@ abstract class ZugClient extends ChangeNotifier {
     if (currentArea != noArea && !currentArea.exists) {
       currentArea = noArea;
     }
+    return true;
   }
 
   void checkRedirect(OauthClient oauthClient) {
@@ -200,7 +213,7 @@ abstract class ZugClient extends ChangeNotifier {
     }
   }
 
-  void handleLogin(data) { login(); }
+  bool handleLogin(data) { login(); return false; }
   void login() {
     if (isAuthenticated()) {
       log.info("Logging in with token");
@@ -239,18 +252,19 @@ abstract class ZugClient extends ChangeNotifier {
     Dialogs.popup("Disconnected - click to reconnect").then((ok) { connect(); });
   }
 
-  void loggedIn(data) {
+  bool loggedIn(data) {
     log.info("Logged in: ${data.toString()}");
     userName = data["name"];
     loggingIn = false;
     isLoggedIn = true;
-
+    return true;
   }
 
-  void loggedOut(data) {
+  bool loggedOut(data) {
     log.info("Logged out: $userName");
     isLoggedIn = false;
     Dialogs.popup("Logged out - click to log back in").then((ok) { login(); });
+    return true;
   }
 
   void send(Enum type, { var data = "" }) {

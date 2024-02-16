@@ -17,8 +17,8 @@ void main() {
   TestArea testArea = testClient.getOrCreateArea("testArea") as TestArea;
   testArea.options = {
     "fooName" : { fieldOptVal : "Name" },
-    "fooInt" : { fieldOptVal : 2, fieldOptMin : 0, fieldOptMax : 12, fieldOptInt : true },
-    "fooDouble" : { fieldOptVal : 5.0, fieldOptMin : -7.34, fieldOptMax: 18.92, fieldOptInt : false },
+    "fooInt" : { fieldOptVal : 2, fieldOptMin : 0, fieldOptMax : 12, fieldOptInc : 2 },
+    "fooDouble" : { fieldOptVal : 5.0, fieldOptMin : -7.34, fieldOptMax: 18.92, fieldOptInc : .25 },
     "fooBool" : { fieldOptVal: true }
   };
   testClient.currentArea = testArea;

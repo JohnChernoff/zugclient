@@ -5,11 +5,11 @@ import 'package:zugclient/zug_client.dart';
 
 void main() {
   TestClient testClient = TestClient("example.com", 9999, "test",localServer : true);
-  runApp(TestApp(testClient));
+  runApp(TestApp(testClient,"TestApp"));
 }
 
 class TestApp extends ZugApp {
-  TestApp(super.client, {super.key});
+  TestApp(super.client, super.appName, {super.key});
 
   @override
   Widget createMainPage(client) {
