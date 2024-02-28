@@ -11,6 +11,7 @@ import 'options_page.dart';
 abstract class ZugApp extends StatelessWidget {
   final String appName;
   final ZugClient client;
+  final ColorScheme defaultColorScheme = ColorScheme.fromSeed(seedColor: Colors.deepPurple);
   ZugApp(this.client, this.appName, { super.key, Level logLevel = Level.ALL }) {
     Logger.root.level = logLevel;
     Logger.root.onRecord.listen((record) {
@@ -28,12 +29,16 @@ abstract class ZugApp extends StatelessWidget {
           navigatorKey: globalNavigatorKey,
           title: appName,
           theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+            colorScheme: defaultColorScheme,
             useMaterial3: true,
           ),
-          home: ZugHome(app:this),
+          home: createHomePage(this),
         )
     );
+  }
+
+  Widget createHomePage(ZugApp app) {
+    return ZugHome(app:app);
   }
 
   Widget createOptionsPage(client) {
@@ -41,7 +46,7 @@ abstract class ZugApp extends StatelessWidget {
   }
 
   Widget createLobbyPage(client) {
-    return LobbyPage(client);
+    return LobbyPage(client, foregroundColor: defaultColorScheme.onBackground, backgroundColor: defaultColorScheme.background);
   }
 
   Widget createSplashPage(client) {
@@ -57,12 +62,21 @@ class ZugHome extends StatefulWidget {
   const ZugHome({super.key, required this.app});
 
   @override
-  State<ZugHome> createState() => _ZugHomeState();
+  State<ZugHome> createState() => ZugHomeState();
+
+  Color getAppBarColor(BuildContext context, ZugClient client) {
+    return Theme.of(context).colorScheme.inversePrimary;
+  }
+
+  Text getAppBarText(ZugClient client, {Color textColor = Colors.black}) {
+    return Text("${client.userName}: ${client.currentArea.exists ? client.currentArea.title : "-"}",
+        style: TextStyle(color: textColor));
+  }
 }
 
 enum PageType { main,lobby,options,none }
 
-class _ZugHomeState extends State<ZugHome> {
+class ZugHomeState extends State<ZugHome> {
   var selectedIndex = 0;
   PageType selectedPage = PageType.lobby;
 
@@ -90,6 +104,7 @@ class _ZugHomeState extends State<ZugHome> {
         selectedPage = client.switchPage;
         client.switchPage = PageType.none;
       }
+      client.selectedPage = selectedPage;
     }
 
     // The container for the current page, with its background color
@@ -104,11 +119,8 @@ class _ZugHomeState extends State<ZugHome> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme
-            .of(context)
-            .colorScheme
-            .inversePrimary,
-        title: Text("${client.userName}: ${client.currentArea.exists ? client.currentArea.title : "-"}"),
+        backgroundColor: widget.getAppBarColor(context, client),
+        title: widget.getAppBarText(client)
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -148,7 +160,7 @@ class _ZugHomeState extends State<ZugHome> {
               PageType newPage = PageType.values.elementAt(selectedIndex);
               selectedPage = newPage;
               if (selectedPage == PageType.options && client.currentArea.exists) {
-                widget.app.client.send(ClientMsg.getOptions,data: widget.app.client.currentArea.title);
+                widget.app.client.areaCmd(ClientMsg.getOptions);
               }
             });
           }

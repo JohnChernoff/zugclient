@@ -43,7 +43,7 @@ class _OptionsPageState extends State<OptionsPage> {
                   (index) => widgets.values.elementAt(index))),
         )),
         SizedBox(
-            height: 128,
+            height: 72,
             child: Center(child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [

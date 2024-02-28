@@ -2,7 +2,6 @@ library zugclient;
 
 import 'package:logging/logging.dart';
 import 'package:zugclient/zug_app.dart';
-
 import 'zug_fields.dart';
 import 'zug_sock.dart';
 import 'dialogs.dart';
@@ -15,15 +14,20 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-abstract class Area {
+abstract class Room {
   final String title;
   List<dynamic> messages = [];
+  int newMessages = 0;
   Map<String,dynamic> occupants = {};
+  Room(this.title);
+}
+
+abstract class Area extends Room {
   Map<String,dynamic> options = {};
   MessageScope msgScope = MessageScope.area;
-  int newMessages = 0;
   bool exists = true;
-  Area(this.title);
+  Room? currentRoom;
+  Area(super.title);
 }
 
 abstract class ZugClient extends ChangeNotifier {
@@ -50,8 +54,9 @@ abstract class ZugClient extends ChangeNotifier {
   List<dynamic> messages = [];
   late final Area noArea;
   late Area currentArea; //Area(noAreaTitle);
-  final Map<String,Function> _functionMap = {};
+  final Map<Enum,Function> _functionMap = {};
   PageType switchPage = PageType.none;
+  PageType selectedPage = PageType.none;
 
   Area createArea(String title);
 
@@ -63,22 +68,58 @@ abstract class ZugClient extends ChangeNotifier {
       log.info(info.toString());
     });
     addFunctions({
-      ServMsg.reqLogin.name: handleLogin,
-      ServMsg.noLog.name: loggedOut,
-      ServMsg.logOK.name: loggedIn,
-      ServMsg.errMsg.name: handleErrorMsg,
-      ServMsg.servMsg.name: handleServMsg,
-      ServMsg.areaMsg.name: handleAreaMsg,
-      ServMsg.updateAreas.name: handleAreaList,
-      ServMsg.updateArea.name: handleUpdateArea,
-      ServMsg.updateOccupant.name: handleUpdateOccupant,
-      ServMsg.updateOccupants.name : handleUpdateOccupants,
-      ServMsg.updateOptions.name : handleUpdateOptions,
+      ServMsg.none: handleNoFun,
+      ServMsg.reqLogin: handleLogin,
+      ServMsg.noLog: loggedOut,
+      ServMsg.logOK: loggedIn,
+      ServMsg.errMsg: handleErrorMsg,
+      ServMsg.servMsg: handleServMsg,
+      ServMsg.areaMsg: handleAreaMsg,
+      ServMsg.areaUserMsg: handleAreaMsg,
+      ServMsg.updateAreas: handleAreaList,
+      ServMsg.updateArea: handleUpdateArea,
+      ServMsg.updateOccupant: handleUpdateOccupant,
+      ServMsg.updateOccupants : handleUpdateOccupants,
+      ServMsg.updateOptions : handleUpdateOptions,
     });
   }
 
-  void addFunctions(Map<String, Function> functions) {
+  void addFunctions(Map<Enum, Function> functions) {
     _functionMap.addAll(functions);
+  }
+
+  Map<Enum,Function> getFunctions() { return _functionMap; }
+
+  String getUserName(dynamic data) {
+    return data[fieldUser][fieldName];
+  }
+
+  String getPlayerName(dynamic data) {
+    return getUserName(data[fieldPlayer]);
+  }
+
+  dynamic getUniqueName(dynamic userData) {
+    return {
+      fieldName: userData[fieldName],
+      fieldAuthSource: userData[fieldAuthSource][fieldName]
+    };
+  }
+
+  void newArea() {
+    Dialogs.getString('Choose Game Title',userName)
+        .then((title) => send(ClientMsg.newArea, data: {fieldTitle: title}));
+  }
+
+  void joinArea() {
+    areaCmd(ClientMsg.joinArea);
+  }
+
+  void partArea() {
+    areaCmd(ClientMsg.partArea);
+  }
+
+  void startArea() {
+    areaCmd(ClientMsg.startArea);
   }
 
   Area getOrCreateArea(String title) {
@@ -116,16 +157,26 @@ abstract class ZugClient extends ChangeNotifier {
     }
   }
 
-  void handleMsg(String msg) {
+  Enum handleMsg(String msg) {
     log.fine("Incoming msg: $msg");
     final json = jsonDecode(msg);
     String type = json[fieldType]; //logMsg("Handling: $type");
-    Function? fun = _functionMap[type];
+    Enum funEnum = _functionMap.keys.singleWhere((element) => element.name == type, orElse: () => ClientMsg.none);
+    Function? fun = _functionMap[funEnum];
     if (fun != null) {
-      if (fun(json[fieldData])) notifyListeners();
+      if (fun.runtimeType != bool) {
+        fun(json[fieldData]); notifyListeners();
+      } else if (fun(json[fieldData])) {
+        notifyListeners();
+      }
     } else {
       log.warning("Function not found: $type");
     }
+    return funEnum;
+  }
+
+  void handleNoFun(data) {
+    log.warning("Ergh");
   }
 
   bool handleUpdateOccupant(data) { log.info("Occupant update: $data");
@@ -156,14 +207,16 @@ abstract class ZugClient extends ChangeNotifier {
     return true;
   }
 
-  bool handleAreaMsg(data, {Area? area}) {
+  bool handleAreaMsg(data, {Area? area}) { print(data);
     area = area ?? getOrCreateArea(data[fieldTitle]);
-    area.messages.add(data[fieldMsg]); area.newMessages++;
+    area.messages.add(data); //data[fieldMsg]);
+    area.newMessages++;
     return true;
   }
 
   bool handleServMsg(data) {
-    messages.add(data[fieldMsg]); newMessages++;
+    messages.add(data); //data[fieldMsg]);
+    newMessages++;
     return true;
   }
 
@@ -225,6 +278,10 @@ abstract class ZugClient extends ChangeNotifier {
       send(ClientMsg.loginGuest);
       notifyListeners();
     }
+  }
+
+  void update() {
+    notifyListeners();
   }
 
   void connect()  {
@@ -294,6 +351,10 @@ abstract class ZugClient extends ChangeNotifier {
     sBuff.write(getDomain());
     sBuff.write(localServer ? ":$port" : "/$remoteEndpoint");
     return sBuff.toString();
+  }
+
+  void deleteToken() {
+    //TODO: ergh
   }
 
 }

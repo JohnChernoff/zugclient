@@ -76,7 +76,7 @@ class Dialogs {
   }
 
   static Future<Widget?> getWidget(String prompt, List<Widget> widgetList, int axisCount,
-      {bool showTime = false, int seconds = 1, Offset sizeFactor = const Offset(1,1), Alignment alignment = Alignment.center, Color color = Colors.white, Color backgroundColor = Colors.black}) async {
+      {bool showTime = false, int seconds = 0, Offset sizeFactor = const Offset(1,1), Alignment alignment = Alignment.center, Color color = Colors.white, Color backgroundColor = Colors.black}) async {
     BuildContext? ctx = globalNavigatorKey.currentContext;
     if (ctx == null) return null;
     Dialogs.dialog = true; Dialogs.contexts.add(ctx);
@@ -280,8 +280,9 @@ abstract class TimedDialogState extends State<TimedDialog> {
   bool countingDown = false;
 
   @override
-  void initState() {
+  void initState() { //print("Millis: ${widget.milliseconds}");
     super.initState();
+
     countingDown = widget.milliseconds > 0;
     timeRemaining = widget.milliseconds;
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -289,7 +290,7 @@ abstract class TimedDialogState extends State<TimedDialog> {
     });
   }
 
-  Future<void> countdown() async {
+  Future<void> countdown() async { //print("Counting down");
     while (timeRemaining > 0) {
       await Future.delayed(Duration(milliseconds: widget.framerate)).then((value) {
         if (countingDown) {
