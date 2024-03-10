@@ -155,6 +155,7 @@ abstract class ZugClient extends ChangeNotifier {
       }
       else {
         currentArea = noArea;
+        update(); //TODO: can this be done for all games?
       }
       log.info("Switched to game: ${currentArea.title}");
     }
