@@ -6,8 +6,9 @@ class LobbyPage extends StatefulWidget {
   final ZugClient client;
   final String areaName;
   final Color foregroundColor, backgroundColor;
+  final ImageProvider? backgroundImage;
 
-  const LobbyPage(this.client, {this.areaName = "Area", this.foregroundColor = Colors.white, this.backgroundColor = Colors.black, super.key});
+  const LobbyPage(this.client, {this.backgroundImage, this.areaName = "Area", this.foregroundColor = Colors.white, this.backgroundColor = Colors.black, super.key});
 
   Widget selectedArea(BuildContext context) {
     return ListView(
@@ -18,11 +19,17 @@ class LobbyPage extends StatefulWidget {
     );
   }
 
+  Widget getHelp(BuildContext context, Widget buttons) { //TODO: make abstract
+    return buttons;
+  }
+
   @override
   State<StatefulWidget> createState() => _LobbyPageState();
 }
 
 class _LobbyPageState extends State<LobbyPage> {
+
+  bool showHelp = false;
 
   @override
   void initState() {
@@ -32,6 +39,9 @@ class _LobbyPageState extends State<LobbyPage> {
 
   @override
   Widget build(BuildContext context) {
+
+    if (showHelp) return widget.getHelp(context, getButtons());
+
     final double screenWidth = MediaQuery.of(context).size.width;
     final double screenHeight = MediaQuery.of(context).size.height;
     List<DropdownMenuItem<String>> games = List.empty(growable: true);
@@ -45,62 +55,99 @@ class _LobbyPageState extends State<LobbyPage> {
     }).toList());
 
     return Container(
-      color: widget.backgroundColor,
+      decoration: BoxDecoration(
+        color: widget.backgroundColor,
+        image: widget.backgroundImage != null ? DecorationImage(
+            image: widget.backgroundImage!,
+            fit: BoxFit.cover
+        ) : null,
+      ),
       child: Column(
         children: [ //Text(widget.client.userName),
-          Row(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text("Select ${widget.areaName}",style: TextStyle(color: widget.foregroundColor)),
-              const SizedBox(width: 8,),
-              DropdownButton(
-                  style: TextStyle(color: widget.foregroundColor, backgroundColor: widget.backgroundColor),
-                  value: widget.client.currentArea.exists ? widget.client.currentArea.title : null,
-                  items: games,
-                  onChanged: (String? title) {
-                    setState(() {
-                      widget.client.switchArea(title); //client.update();
-                    });
-                  }),
-            ],
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Padding(
-                  padding: const EdgeInsets.all(4),
-                  child: ElevatedButton(
-                    style: getButtonStyle(Colors.greenAccent,Colors.redAccent),
-                    onPressed: () => widget.client.newArea(),
-                    child: const Text("New"),
-                  )),
-              Padding(
-                padding: const EdgeInsets.all(4),
-                child: ElevatedButton(
-                    style: getButtonStyle(Colors.redAccent, Colors.purpleAccent),
-                    onPressed: () => widget.client.startArea(),
-                    child: const Text("Start")),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(4),
-                child: ElevatedButton(
-                    style: getButtonStyle(Colors.blueAccent, Colors.greenAccent),
-                    onPressed: () => widget.client.joinArea(),
-                    child: const Text("Join")),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(4),
-                child: ElevatedButton(
-                    style: getButtonStyle(Colors.black12, Colors.orangeAccent),
-                    onPressed: () => widget.client.partArea(),
-                    child: const Text("Leave")),
-              ),],
-          ),
+          Center(child: Container(
+            color: Colors.white,
+            child: Row(
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text("Select ${widget.areaName}",style: TextStyle(color: widget.foregroundColor)),
+                const SizedBox(width: 8,),
+                DropdownButton(
+                    style: TextStyle(color: widget.foregroundColor, backgroundColor: widget.backgroundColor),
+                    value: widget.client.currentArea.exists ? widget.client.currentArea.title : null,
+                    items: games,
+                    onChanged: (String? title) {
+                      setState(() {
+                        widget.client.switchArea(title); //client.update();
+                      });
+                    }),
+              ],
+            ),
+          )),
+          getButtons(),
           Expanded(child: widget.selectedArea(context)),
         ],
       )
     );
+  }
+
+  Widget getButtons() {
+    return Center(child: Container(
+        color: Colors.white,
+        child: showHelp ? Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton(
+                style: getButtonStyle(Colors.cyan, Colors.lightBlueAccent),
+                onPressed: () =>  setState(() {
+                  showHelp = false;
+                }),
+                child: const Text("Return")),
+          ],
+        )
+            : Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Padding(
+                padding: const EdgeInsets.all(4),
+                child: ElevatedButton(
+                  style: getButtonStyle(Colors.greenAccent,Colors.redAccent),
+                  onPressed: () => widget.client.newArea(),
+                  child: const Text("New"),
+                )),
+            Padding(
+              padding: const EdgeInsets.all(4),
+              child: ElevatedButton(
+                  style: getButtonStyle(Colors.redAccent, Colors.purpleAccent),
+                  onPressed: () => widget.client.startArea(),
+                  child: const Text("Start")),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(4),
+              child: ElevatedButton(
+                  style: getButtonStyle(Colors.blueAccent, Colors.greenAccent),
+                  onPressed: () => widget.client.joinArea(),
+                  child: const Text("Join")),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(4),
+              child: ElevatedButton(
+                  style: getButtonStyle(Colors.black26, Colors.orangeAccent),
+                  onPressed: () => widget.client.partArea(),
+                  child: const Text("Leave")),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(4),
+              child: ElevatedButton(
+                  style: getButtonStyle(Colors.cyan, Colors.lightBlueAccent),
+                  onPressed: () =>  setState(() {
+                    showHelp = true;
+                  }),
+                  child: const Text("Help")),
+            ),
+          ],
+        ),
+      ));
   }
 
   ButtonStyle getButtonStyle(Color c1, Color c2) {

@@ -27,3 +27,7 @@ Reworked Dialogs
 ## 0.0.8
 
 Added Widget selections and client-driven page flipping
+
+## 0.0.9
+
+added ZugChat and oauth token deletion

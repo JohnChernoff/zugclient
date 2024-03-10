@@ -68,8 +68,8 @@ class ZugHome extends StatefulWidget {
     return Theme.of(context).colorScheme.inversePrimary;
   }
 
-  Text getAppBarText(ZugClient client, {Color textColor = Colors.black}) {
-    return Text("${client.userName}: ${client.currentArea.exists ? client.currentArea.title : "-"}",
+  Text getAppBarText(ZugClient client, {String? text, Color textColor = Colors.black}) {
+    return Text(text ?? "${client.userName}: ${client.currentArea.exists ? client.currentArea.title : "-"}",
         style: TextStyle(color: textColor));
   }
 }

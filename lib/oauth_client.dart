@@ -67,7 +67,7 @@ class OauthClient {
     final headers = { "Authorization": "Bearer $token", };
     Uri uri = Uri.parse('https://$host/$tokenPath');
     http.delete(uri,headers: headers).then((value) {
-      _logMsg(value.body);
+      _logMsg("Deleted Token Response: ${value.body}");
     });
     SharedPreferences.getInstance().then((prefs) {
       prefs.remove("token");

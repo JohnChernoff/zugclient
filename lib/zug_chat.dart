@@ -66,6 +66,8 @@ class ZugChat extends StatefulWidget {
 
 class ZugChatState extends State<ZugChat> {
   final ScrollController scrollController = ScrollController();
+  final TextEditingController textInputController = TextEditingController();
+  final FocusNode textInputFocus = FocusNode();
   bool filterServerMessages = false;
 
   @override
@@ -124,6 +126,18 @@ class ZugChatState extends State<ZugChat> {
     );
   }
 
+  scrollDown(int millis, {int delay = 0}) {
+    Future.delayed(Duration(milliseconds: delay)).then((value) {
+      if (scrollController.hasClients) { //in case user switched away
+        scrollController.animateTo(
+          scrollController.position.maxScrollExtent,
+          curve: Curves.easeOut,
+          duration: Duration(milliseconds: millis),
+        );
+      }
+    });
+  }
+
   Widget getChatControl(Area cg) {
     return Row(
       children: [
@@ -154,6 +168,9 @@ class ZugChatState extends State<ZugChat> {
           child: Container(
               color: widget.cmdBkgColor,
               child: TextField(
+                controller: textInputController,
+                focusNode: textInputFocus,
+                autofocus: true,
                 style: TextStyle(
                     color: widget.cmdTxtColor,
                     backgroundColor: widget.cmdBkgColor),
@@ -165,6 +182,10 @@ class ZugChatState extends State<ZugChat> {
                         MessageScope.server => ClientMsg.servMsg,
                       },
                       data: {fieldTitle: cg.title, fieldMsg: txt});
+                  setState(() {
+                    textInputController.text = "";
+                  });
+                  textInputFocus.requestFocus();
                 },
               )),
         ),
@@ -176,16 +197,5 @@ class ZugChatState extends State<ZugChat> {
     );
   }
 
-  scrollDown(int millis, {int delay = 0}) {
-    Future.delayed(Duration(milliseconds: delay)).then((value) {
-      if (scrollController.hasClients) { //in case user switched away
-        scrollController.animateTo(
-          scrollController.position.maxScrollExtent,
-          curve: Curves.easeOut,
-          duration: Duration(milliseconds: millis),
-        );
-      }
-    });
-  }
-
 }
+

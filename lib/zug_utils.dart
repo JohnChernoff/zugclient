@@ -9,7 +9,9 @@ class ZugUtils {
   }
 
   static Future<Map<String,String>> getIniDefaults(String assetPath) {
-    return rootBundle.loadString(assetPath).then((value) => Config.fromString(value)).then((config) => config.defaults());
+    return rootBundle.loadString(assetPath)
+        .then((value) => Config.fromString(value), onError: (argh) => Config.fromString(""))
+        .then((config) => config.defaults());
   }
 
   static double getActualScreenHeight(BuildContext context) {

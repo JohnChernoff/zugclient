@@ -44,6 +44,7 @@ abstract class ZugClient extends ChangeNotifier {
   int port;
   String remoteEndpoint;
   String userName = "";
+  String userSource = "";
   bool isConnected = false;
   bool isLoggedIn = false;
   bool loggingIn = false;
@@ -74,6 +75,7 @@ abstract class ZugClient extends ChangeNotifier {
       ServMsg.logOK: loggedIn,
       ServMsg.errMsg: handleErrorMsg,
       ServMsg.servMsg: handleServMsg,
+      ServMsg.servUserMsg: handleServMsg,
       ServMsg.areaMsg: handleAreaMsg,
       ServMsg.areaUserMsg: handleAreaMsg,
       ServMsg.updateAreas: handleAreaList,
@@ -81,6 +83,7 @@ abstract class ZugClient extends ChangeNotifier {
       ServMsg.updateOccupant: handleUpdateOccupant,
       ServMsg.updateOccupants : handleUpdateOccupants,
       ServMsg.updateOptions : handleUpdateOptions,
+      ServMsg.createArea: handleCreateArea,
     });
   }
 
@@ -179,6 +182,11 @@ abstract class ZugClient extends ChangeNotifier {
     log.warning("Ergh");
   }
 
+  bool handleCreateArea(data) { //TODO: create defaultJoin property?
+    send(ClientMsg.joinArea,data : {fieldTitle: data[fieldTitle]});
+    return true;
+  }
+
   bool handleUpdateOccupant(data) { log.info("Occupant update: $data");
     Area area = getOrCreateArea(data[fieldTitle]);
     area.occupants[data["user"]["name"]] = data;
@@ -207,7 +215,7 @@ abstract class ZugClient extends ChangeNotifier {
     return true;
   }
 
-  bool handleAreaMsg(data, {Area? area}) { print(data);
+  bool handleAreaMsg(data, {Area? area}) { //print(data);
     area = area ?? getOrCreateArea(data[fieldTitle]);
     area.messages.add(data); //data[fieldMsg]);
     area.newMessages++;
@@ -250,7 +258,6 @@ abstract class ZugClient extends ChangeNotifier {
     }
   }
 
-  //TODO: option to remove stored token
   void authenticate(OauthClient oauthClient) {
     log.info("Authenticating");
     loggingIn = true;
@@ -312,6 +319,7 @@ abstract class ZugClient extends ChangeNotifier {
   bool loggedIn(data) {
     log.info("Logged in: ${data.toString()}");
     userName = data["name"];
+    userSource = data["source"];
     loggingIn = false;
     isLoggedIn = true;
     return true;
@@ -353,8 +361,23 @@ abstract class ZugClient extends ChangeNotifier {
     return sBuff.toString();
   }
 
+  String getSourceDomain(String source) {
+    return switch(source) {
+      "lichess" => "lichess.org",
+      String() => "error.com",
+    };
+  }
+
   void deleteToken() {
-    //TODO: ergh
+    if (authClient.credentials.accessToken.isNotEmpty) {
+      OauthClient(getSourceDomain(userSource), clientName).deleteToken(authClient.credentials.accessToken);
+      authClient = oauth2.Client(oauth2.Credentials(""));
+      if (kIsWeb) {
+        Dialogs.popup("Token deleted, reload page to login again");
+      } else {
+        Dialogs.popup("Token deleted, restart app to login again");
+      }
+    }
   }
 
 }
