@@ -76,6 +76,7 @@ abstract class ZugClient extends ChangeNotifier {
       ServMsg.noLog: loggedOut,
       ServMsg.logOK: loggedIn,
       ServMsg.errMsg: handleErrorMsg,
+      ServMsg.alertMsg: handleAlertMsg,
       ServMsg.servMsg: handleServMsg,
       ServMsg.servUserMsg: handleServMsg,
       ServMsg.areaMsg: handleAreaMsg,
@@ -238,6 +239,11 @@ abstract class ZugClient extends ChangeNotifier {
 
   bool handleErrorMsg(data) {
     Dialogs.popup("Error: ${data[fieldMsg]}");
+    return true;
+  }
+
+  bool handleAlertMsg(data) {
+    Dialogs.popup("Alert: ${data[fieldMsg]}");
     return true;
   }
 
