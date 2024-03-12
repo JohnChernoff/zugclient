@@ -1,8 +1,8 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:zugclient/dialogs.dart';
 import 'package:zugclient/zug_client.dart';
 import 'package:zugclient/zug_fields.dart';
+import 'package:zugclient/zug_utils.dart';
 
 class OptionsPage extends StatefulWidget {
   static int doubleDecimals = 2;
@@ -34,6 +34,15 @@ class _OptionsPageState extends State<OptionsPage> {
     return Column(
       children: [
         widget.header,
+        Container(
+            color: widget.optionsBackgroundColor,
+            //height: 72,
+            child: Center(child: Text("${widget.client.areaName} Options",style: TextStyle(
+                fontSize: 24,
+                color: widget.optionsTextColor,
+                //backgroundColor: widget.optionsBackgroundColor
+            ),))
+        ),
         Expanded(
             child: Container(
           color: widget.optionsBackgroundColor,
@@ -42,15 +51,16 @@ class _OptionsPageState extends State<OptionsPage> {
               children: List.generate(widgets.values.length,
                   (index) => widgets.values.elementAt(index))),
         )),
-        SizedBox(
+        Container(
+            color: widget.optionsBackgroundColor,
             height: 72,
             child: Center(child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 ElevatedButton(onPressed: () => widget.client.areaCmd(ClientMsg.setOptions, data: { fieldOptions : newOptions } ),
-                    child: const Text("Update")),
+                    child: Text("Update ${widget.client.areaName} Options")),
                 ElevatedButton(onPressed: () =>  widget.client.areaCmd(ClientMsg.getOptions),  //setState(() => loadOptions()),
-                    child: const Text("Revert")),
+                    child: Text("Reset ${widget.client.areaName} Options")),
               ],
             )),
         ),
@@ -86,7 +96,7 @@ class _OptionsPageState extends State<OptionsPage> {
             onChanged: (double value) { //print(value);
               if (value >= entry[fieldOptMin] && value <= entry[fieldOptMax]) {
                 setState(() { //print("Setting double field: $field -> $value");
-                  newOptions[field][fieldOptVal] = roundNumber(value,OptionsPage.doubleDecimals);
+                  newOptions[field][fieldOptVal] = ZugUtils.roundNumber(value,OptionsPage.doubleDecimals);
                 });
               }
             },
@@ -106,8 +116,5 @@ class _OptionsPageState extends State<OptionsPage> {
     return Center(child: entryWidget);
   }
 
-  double roundNumber(double value, int places) {
-    num val = pow(10.0, places);
-    return ((value * val).round().toDouble() / val);
-  }
+
 }

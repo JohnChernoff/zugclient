@@ -17,6 +17,11 @@ class ZugUtils {
   static double getActualScreenHeight(BuildContext context) {
     return MediaQuery.of(context).size.height - (AppBar().preferredSize.height + kBottomNavigationBarHeight) - 8;
   }
+
+  static double roundNumber(double value, int places) {
+    num val = pow(10.0, places);
+    return ((value * val).round().toDouble() / val);
+  }
 }
 
 extension HexColor on Color {

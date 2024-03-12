@@ -45,6 +45,7 @@ abstract class ZugClient extends ChangeNotifier {
   String remoteEndpoint;
   String userName = "";
   String userSource = "";
+  String areaName = "Area";
   bool isConnected = false;
   bool isLoggedIn = false;
   bool loggingIn = false;
@@ -70,6 +71,7 @@ abstract class ZugClient extends ChangeNotifier {
     });
     addFunctions({
       ServMsg.none: handleNoFun,
+      ServMsg.ping: handlePing,
       ServMsg.reqLogin: handleLogin,
       ServMsg.noLog: loggedOut,
       ServMsg.logOK: loggedIn,
@@ -181,6 +183,11 @@ abstract class ZugClient extends ChangeNotifier {
 
   void handleNoFun(data) {
     log.warning("Ergh");
+  }
+
+  bool handlePing(data) {
+    send(ClientMsg.pong);
+    return false;
   }
 
   bool handleCreateArea(data) { //TODO: create defaultJoin property?
