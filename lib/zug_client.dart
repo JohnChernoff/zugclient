@@ -14,12 +14,43 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+class UniqueName {
+  final String name, source;
+  UniqueName(this.name,this.source);
+  factory UniqueName.fromData(Map<String,dynamic> data) {
+    return UniqueName(data[fieldName],data[fieldAuthSource]);
+  }
+
+  dynamic toJSON() {
+    return { fieldName : name, fieldAuthSource : source };
+  }
+
+  @override
+  String toString() {
+    return "$name($source)";
+  }
+}
+
 abstract class Room {
   final String title;
   List<dynamic> messages = [];
   int newMessages = 0;
-  Map<String,dynamic> occupants = {};
+  Map<UniqueName,dynamic> occupants = {};
   Room(this.title);
+
+  String getOccupantName(UniqueName name) {
+    for (UniqueName uniqueName in occupants.keys) {
+      if (uniqueName.source != name.source &&
+          uniqueName.name.toLowerCase() == name.name.toLowerCase()) {
+        return name.toString();
+      }
+    }
+    return name.name;
+  }
+
+  String parseOccupantName(Map<String,dynamic> data) {
+    return getOccupantName(UniqueName.fromData(data));
+  }
 }
 
 abstract class Area extends Room {
@@ -196,13 +227,13 @@ abstract class ZugClient extends ChangeNotifier {
     return true;
   }
 
-  bool handleUpdateOccupant(data) { log.info("Occupant update: $data");
+  bool handleUpdateOccupant(data) { log.fine("Occupant update: $data");
     Area area = getOrCreateArea(data[fieldTitle]);
-    area.occupants[data["user"]["name"]] = data;
+    area.occupants.putIfAbsent(UniqueName.fromData(data["user"]), () => data);
     return true;
   }
 
-  bool handleUpdateArea(data) { log.info("Update Area: $data");
+  bool handleUpdateArea(data) { log.fine("Update Area: $data");
     Area area = getOrCreateArea(data[fieldTitle]);
     handleUpdateOccupants(data,area : area);
     handleUpdateOptions(data,area : area);
@@ -213,7 +244,7 @@ abstract class ZugClient extends ChangeNotifier {
     area = area ?? getOrCreateArea(data[fieldTitle]);
     area.occupants.clear();
     for (dynamic occupant in data["occupants"]) {
-      area.occupants.putIfAbsent(occupant["user"]["name"], () => occupant);
+      area.occupants.putIfAbsent(UniqueName.fromData(occupant["user"]), () => occupant);
     }
     return true;
   }

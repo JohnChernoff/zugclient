@@ -13,8 +13,7 @@ class LobbyPage extends StatefulWidget {
   Widget selectedArea(BuildContext context) {
     return ListView(
       children: List.generate(client.currentArea.occupants.values.length, (i) {
-        dynamic player = client.currentArea.occupants.values.elementAt(i);
-        return Text("${player['user']['name']}");
+        return Text(client.currentArea.getOccupantName(client.currentArea.occupants.keys.elementAt(i)));
       }),
     );
   }

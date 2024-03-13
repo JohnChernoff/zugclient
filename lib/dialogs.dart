@@ -1,4 +1,5 @@
 import 'dart:collection';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 final globalNavigatorKey = GlobalKey<NavigatorState>();
@@ -18,7 +19,7 @@ class Dialogs {
     dialog = false;
   }
 
-  static Future<bool> popup (String txt, { String imgFile = "" } ) async {
+  static Future<bool> popup(String txt, { String imgFile = "" } ) async {
     BuildContext? ctx = globalNavigatorKey.currentContext;
     if (ctx == null) return false;
     dialog = true;
@@ -31,6 +32,21 @@ class Dialogs {
           dialog = false;
           return ok ?? false;
         });
+  }
+
+  static Future<bool> confirm(String txt, { String imgFile = "" } ) async {
+    BuildContext? ctx = globalNavigatorKey.currentContext;
+    if (ctx == null) return false;
+    dialog = true;
+    return showDialog(
+        context: ctx,
+        builder: (BuildContext context) {
+          return Center(
+              child: ConfirmDialog(txt, imageFilename: imgFile));
+        }).then((ok)  {
+      dialog = false;
+      return ok ?? false;
+    });
   }
 
   static Future<String> getString(String prompt,String defTxt) async {
@@ -139,13 +155,17 @@ class TextDialog extends StatelessWidget {
 
 class ConfirmDialog extends StatelessWidget {
   final String txt;
-  const ConfirmDialog(this.txt, {super.key});
+  final String imageFilename;
+  const ConfirmDialog(this.txt, {this.imageFilename = "", super.key});
 
   @override
   Widget build(BuildContext context) {
     return SimpleDialog(
       children: [
-        Text(txt),
+        imageFilename.isEmpty
+            ? const SizedBox.shrink()
+            : Image.asset("assets/images/$imageFilename"),
+        Center(child: Text(txt)),
         SimpleDialogOption(
             onPressed: () { //print("True");
               Navigator.pop(context,true);
