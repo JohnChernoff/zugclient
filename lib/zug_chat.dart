@@ -5,6 +5,8 @@ import 'package:zugclient/zug_utils.dart';
 
 class ZugChat extends StatefulWidget {
   final ZugClient client;
+  final double? width;
+  final double? height;
   final Color foregroundColor;
   final Color backgroundColor;
   final Color cmdTxtColor;
@@ -22,6 +24,8 @@ class ZugChat extends StatefulWidget {
     this.cmdBkgColor = Colors.brown,
     this.chatCommandOnTop = false,
     this.autoScroll = true,
+    this.width,
+    this.height,
     super.key});
 
   bool usingRooms() { return false; }
@@ -79,7 +83,7 @@ class ZugChatState extends State<ZugChat> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.autoScroll) scrollDown(250,delay: 750);
+    if (widget.autoScroll) ZugUtils.scrollDown(scrollController,250,delay: 750);
 
     Area cg = widget.client.currentArea;
 
@@ -98,6 +102,8 @@ class ZugChatState extends State<ZugChat> {
 
     return Container(
       decoration: ZugChat.getDecoration(borderColor: widget.borderColor, borderWidth: widget.borderWidth),
+      width: widget.width,
+      height: widget.height,
       //margin:  const EdgeInsets.only(left: 16.0, right: 0.0),
       child: Column(
         children: [
@@ -124,18 +130,6 @@ class ZugChatState extends State<ZugChat> {
         ],
       ),
     );
-  }
-
-  scrollDown(int millis, {int delay = 0}) {
-    Future.delayed(Duration(milliseconds: delay)).then((value) {
-      if (scrollController.hasClients) { //in case user switched away
-        scrollController.animateTo(
-          scrollController.position.maxScrollExtent,
-          curve: Curves.easeOut,
-          duration: Duration(milliseconds: millis),
-        );
-      }
-    });
   }
 
   Widget getChatControl(Area cg) {

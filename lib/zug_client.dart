@@ -1,6 +1,7 @@
 library zugclient;
 
 import 'package:logging/logging.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zugclient/zug_app.dart';
 import 'zug_fields.dart';
 import 'zug_sock.dart';
@@ -90,6 +91,7 @@ abstract class ZugClient extends ChangeNotifier {
   final Map<Enum,Function> _functionMap = {};
   PageType switchPage = PageType.none;
   PageType selectedPage = PageType.none;
+  SharedPreferences? defaults;
 
   Area createArea(String title);
 
@@ -119,6 +121,7 @@ abstract class ZugClient extends ChangeNotifier {
       ServMsg.updateOptions : handleUpdateOptions,
       ServMsg.createArea: handleCreateArea,
     });
+    SharedPreferences.getInstance().then((prefs) => defaults = prefs);
   }
 
   void addFunctions(Map<Enum, Function> functions) {

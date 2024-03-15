@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ini/ini.dart';
+import 'package:zugclient/zug_client.dart';
 
 class ZugUtils {
   static Future<Config> getIniConfig(String assetPath) {
@@ -21,6 +22,41 @@ class ZugUtils {
   static double roundNumber(double value, int places) {
     num val = pow(10.0, places);
     return ((value * val).round().toDouble() / val);
+  }
+
+  static scrollDown(ScrollController scrollController, int millis, {int delay = 0}) {
+    Future.delayed(Duration(milliseconds: delay)).then((value) {
+      if (scrollController.hasClients) { //in case user switched away
+        scrollController.animateTo(
+          scrollController.position.maxScrollExtent,
+          curve: Curves.easeOut,
+          duration: Duration(milliseconds: millis),
+        );
+      }
+    });
+  }
+
+  static Row checkRow(ZugClient client, State state, String caption, String prop, bool defaultValue, {Function? onTrue, Function? onFalse}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text("$caption:"),
+        Checkbox(
+            value: client.defaults?.getBool(prop) ?? defaultValue,
+            onChanged: (b) {
+              client.defaults?.setBool(prop, b ?? defaultValue);
+              ZugClient.log.info("Setting $caption: $b");
+              if ((b ?? false)) {
+                if (onTrue != null) onTrue();
+              } else {
+                if (onFalse != null) { //ZugClient.log.info(onFalse.toString());
+                  onFalse();
+                }
+              }
+              state.setState(() {  /* prop toggled */ });
+            }),
+      ],
+    );
   }
 }
 

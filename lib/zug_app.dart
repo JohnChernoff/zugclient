@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
@@ -26,6 +28,7 @@ abstract class ZugApp extends StatelessWidget {
     return ChangeNotifierProvider(
         create: (context) => client,
         child: MaterialApp(
+          scrollBehavior: ZugScrollBehavior(),
           navigatorKey: globalNavigatorKey,
           title: appName,
           theme: ThemeData(
@@ -72,12 +75,19 @@ class ZugHome extends StatefulWidget {
     return Text(text ?? "${client.userName}: ${client.currentArea.exists ? client.currentArea.title : "-"}",
         style: TextStyle(color: textColor));
   }
+
+  BottomNavigationBarItem getMainNavigationBarItem() {
+    return const BottomNavigationBarItem(
+      icon: Icon(Icons.center_focus_strong),
+      label: 'Main',
+    );
+  }
 }
 
 enum PageType { main,lobby,options,none }
 
 class ZugHomeState extends State<ZugHome> {
-  var selectedIndex = 0;
+  var selectedIndex = 1;
   PageType selectedPage = PageType.lobby;
 
   @override
@@ -137,17 +147,15 @@ class ZugHomeState extends State<ZugHome> {
   SafeArea getSafeArea(ZugClient client) {
     return SafeArea(
       child: BottomNavigationBar(
+        fixedColor: Colors.black,
         type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.center_focus_strong),
-            label: 'Main',
-          ),
-          BottomNavigationBarItem(
+        items: [
+          widget.getMainNavigationBarItem(),
+          const BottomNavigationBarItem(
             icon: Icon(Icons.local_bar),
             label: 'Lobby',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.settings),
             label: 'Settings',
           ),
@@ -168,6 +176,13 @@ class ZugHomeState extends State<ZugHome> {
       ),
     );
   }
-
 }
 
+class ZugScrollBehavior extends MaterialScrollBehavior {
+  // Override behavior methods and getters like dragDevices
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+  };
+}

@@ -38,11 +38,11 @@ class _LobbyPageState extends State<LobbyPage> {
 
   @override
   Widget build(BuildContext context) {
-
-    if (showHelp) return widget.getHelp(context, getButtons());
-
     final double screenWidth = MediaQuery.of(context).size.width;
     final double screenHeight = MediaQuery.of(context).size.height;
+
+    if (showHelp) return widget.getHelp(context, getButtons(screenWidth));
+
     List<DropdownMenuItem<String>> games = List.empty(growable: true);
 
     games.add(const DropdownMenuItem<String>(value:ZugClient.noAreaTitle, child: Text(ZugClient.noAreaTitle)));
@@ -69,7 +69,7 @@ class _LobbyPageState extends State<LobbyPage> {
               mainAxisSize: MainAxisSize.max,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text("Select ${widget.areaName}",style: TextStyle(color: widget.foregroundColor)),
+                Text("Select ${widget.areaName}: ",style: TextStyle(color: widget.foregroundColor)),
                 const SizedBox(width: 8,),
                 DropdownButton(
                     style: TextStyle(color: widget.foregroundColor, backgroundColor: widget.backgroundColor),
@@ -83,15 +83,17 @@ class _LobbyPageState extends State<LobbyPage> {
               ],
             ),
           )),
-          getButtons(),
+          getButtons(screenWidth),
           Expanded(child: widget.selectedArea(context)),
         ],
       )
     );
   }
 
-  Widget getButtons() {
-    return Center(child: Container(
+  Widget getButtons(double width) {
+    return Container(
+        width: width,
+        height: 50,
         color: Colors.white,
         child: showHelp ? Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -104,9 +106,10 @@ class _LobbyPageState extends State<LobbyPage> {
                 child: const Text("Return")),
           ],
         )
-            : Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+            : Center(child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          //mainAxisAlignment: MainAxisAlignment.center,
+          child: Row(children: [
             Padding(
                 padding: const EdgeInsets.all(4),
                 child: ElevatedButton(
@@ -145,8 +148,8 @@ class _LobbyPageState extends State<LobbyPage> {
                   child: const Text("Help")),
             ),
           ],
-        ),
-      ));
+        ))),
+      );
   }
 
   ButtonStyle getButtonStyle(Color c1, Color c2) {
