@@ -1,14 +1,24 @@
+import 'package:flutter/foundation.dart';
+import "package:universal_html/html.dart" as html;
 import 'package:flutter/material.dart';
 import 'package:zugclient/zug_client.dart';
 import 'package:zugclient/zug_fields.dart';
+import 'package:zugclient/zug_utils.dart';
 
 class LobbyPage extends StatefulWidget {
   final ZugClient client;
   final String areaName;
   final Color foregroundColor, backgroundColor;
   final ImageProvider? backgroundImage;
+  final String helpPage;
 
-  const LobbyPage(this.client, {this.backgroundImage, this.areaName = "Area", this.foregroundColor = Colors.white, this.backgroundColor = Colors.black, super.key});
+  const LobbyPage(this.client, {
+    this.backgroundImage,
+    this.areaName = "Area",
+    this.foregroundColor = Colors.white,
+    this.backgroundColor = Colors.black,
+    this.helpPage = "",
+    super.key});
 
   Widget selectedArea(BuildContext context) {
     return ListView(
@@ -39,7 +49,6 @@ class _LobbyPageState extends State<LobbyPage> {
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
-    final double screenHeight = MediaQuery.of(context).size.height;
 
     if (showHelp) return widget.getHelp(context, getButtons(screenWidth));
 
@@ -142,9 +151,18 @@ class _LobbyPageState extends State<LobbyPage> {
               padding: const EdgeInsets.all(4),
               child: ElevatedButton(
                   style: getButtonStyle(Colors.cyan, Colors.lightBlueAccent),
-                  onPressed: () =>  setState(() {
-                    showHelp = true;
-                  }),
+                  onPressed: ()  {
+                    if (widget.helpPage.isNotEmpty) {
+                      if (kIsWeb) {
+                        html.window.open(widget.helpPage, 'new tab');
+                      } else {
+                        ZugUtils.launch(widget.helpPage, isNewTab: true);
+                      }
+                    }
+                    else {
+                      setState(() { showHelp = true; });
+                    }
+                  },
                   child: const Text("Help")),
             ),
           ],

@@ -1,7 +1,9 @@
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ini/ini.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:zugclient/zug_client.dart';
 
 class ZugUtils {
@@ -56,6 +58,17 @@ class ZugUtils {
               state.setState(() {  /* prop toggled */ });
             }),
       ],
+    );
+  }
+
+  static AssetImage getAssetImage(String path) {
+    return AssetImage("${(kDebugMode && kIsWeb)?"":"assets/"}$path");
+  }
+
+  static Future<void> launch(String url, {bool isNewTab = true}) async {
+    await launchUrl(
+      Uri.parse(url),
+      webOnlyWindowName: isNewTab ? '_blank' : '_self',
     );
   }
 }

@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:zugclient/splash_page.dart';
 import 'package:zugclient/zug_client.dart';
 import 'package:zugclient/zug_fields.dart';
+import 'package:zugclient/zug_utils.dart';
 import 'dialogs.dart';
 import 'lobby_page.dart';
 import 'options_page.dart';
@@ -53,7 +54,7 @@ abstract class ZugApp extends StatelessWidget {
   }
 
   Widget createSplashPage(client) {
-    return SplashPage(client,const Image(image: AssetImage("images/splash.jpg")));
+    return SplashPage(client,Image(image: ZugUtils.getAssetImage("images/splash.jpg")));
   }
 
   Widget createMainPage(client);
