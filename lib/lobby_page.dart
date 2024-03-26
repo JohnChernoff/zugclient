@@ -50,7 +50,7 @@ class _LobbyPageState extends State<LobbyPage> {
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
 
-    if (showHelp) return widget.getHelp(context, getButtons(screenWidth));
+    if (showHelp) return widget.getHelp(context, getCommandButtons(screenWidth));
 
     List<DropdownMenuItem<String>> games = List.empty(growable: true);
 
@@ -92,14 +92,60 @@ class _LobbyPageState extends State<LobbyPage> {
               ],
             ),
           )),
-          getButtons(screenWidth),
+          getCommandButtons(screenWidth),
           Expanded(child: widget.selectedArea(context)),
         ],
       )
     );
   }
 
-  Widget getButtons(double width) {
+  Widget getHelpButton() {
+    return ElevatedButton(
+        style: getButtonStyle(Colors.cyan, Colors.lightBlueAccent),
+        onPressed: ()  {
+          if (widget.helpPage.isNotEmpty) {
+            if (kIsWeb) {
+              html.window.open(widget.helpPage, 'new tab');
+            } else {
+              ZugUtils.launch(widget.helpPage, isNewTab: true);
+            }
+          }
+          else {
+            setState(() { showHelp = true; });
+          }
+        },
+        child: const Text("Help"));
+  }
+
+  Widget getJoinButton() {
+    return ElevatedButton(
+        style: getButtonStyle(Colors.blueAccent, Colors.greenAccent),
+        onPressed: () => widget.client.joinArea(),
+        child: const Text("Join"));
+  }
+
+  Widget getPartButton() {
+    return ElevatedButton(
+        style: getButtonStyle(Colors.black26, Colors.orangeAccent),
+        onPressed: () => widget.client.partArea(),
+        child: const Text("Leave"));
+  }
+
+  Widget getStartButton() {
+    return ElevatedButton(
+        style: getButtonStyle(Colors.redAccent, Colors.purpleAccent),
+        onPressed: () => widget.client.startArea(),
+        child: const Text("Start"));
+  }
+
+  Widget getCreateButton() {
+    return ElevatedButton(
+        style: getButtonStyle(Colors.greenAccent, Colors.redAccent),
+        onPressed: () => widget.client.newArea(),
+        child: const Text("New"));
+  }
+
+  Widget getCommandButtons(double width, {double padding = 4}) {
     return Container(
         width: width,
         height: 50,
@@ -119,52 +165,11 @@ class _LobbyPageState extends State<LobbyPage> {
           scrollDirection: Axis.horizontal,
           //mainAxisAlignment: MainAxisAlignment.center,
           child: Row(children: [
-            Padding(
-                padding: const EdgeInsets.all(4),
-                child: ElevatedButton(
-                  style: getButtonStyle(Colors.greenAccent,Colors.redAccent),
-                  onPressed: () => widget.client.newArea(),
-                  child: const Text("New"),
-                )),
-            Padding(
-              padding: const EdgeInsets.all(4),
-              child: ElevatedButton(
-                  style: getButtonStyle(Colors.redAccent, Colors.purpleAccent),
-                  onPressed: () => widget.client.startArea(),
-                  child: const Text("Start")),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(4),
-              child: ElevatedButton(
-                  style: getButtonStyle(Colors.blueAccent, Colors.greenAccent),
-                  onPressed: () => widget.client.joinArea(),
-                  child: const Text("Join")),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(4),
-              child: ElevatedButton(
-                  style: getButtonStyle(Colors.black26, Colors.orangeAccent),
-                  onPressed: () => widget.client.partArea(),
-                  child: const Text("Leave")),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(4),
-              child: ElevatedButton(
-                  style: getButtonStyle(Colors.cyan, Colors.lightBlueAccent),
-                  onPressed: ()  {
-                    if (widget.helpPage.isNotEmpty) {
-                      if (kIsWeb) {
-                        html.window.open(widget.helpPage, 'new tab');
-                      } else {
-                        ZugUtils.launch(widget.helpPage, isNewTab: true);
-                      }
-                    }
-                    else {
-                      setState(() { showHelp = true; });
-                    }
-                  },
-                  child: const Text("Help")),
-            ),
+            Padding(padding: EdgeInsets.all(padding),child: getCreateButton()),
+            Padding(padding: EdgeInsets.all(padding),child: getStartButton()),
+            Padding(padding: EdgeInsets.all(padding),child: getJoinButton()),
+            Padding(padding: EdgeInsets.all(padding),child: getPartButton()),
+            Padding(padding: EdgeInsets.all(padding),child: getHelpButton()),
           ],
         ))),
       );

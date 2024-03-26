@@ -1,5 +1,4 @@
 import 'dart:collection';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 final globalNavigatorKey = GlobalKey<NavigatorState>();
@@ -46,6 +45,20 @@ class Dialogs {
         }).then((ok)  {
       dialog = false;
       return ok ?? false;
+    });
+  }
+
+  static Future<dynamic> getValue(String prompt,ValueDialog valueDialog) async {
+    BuildContext? ctx = globalNavigatorKey.currentContext;
+    if (ctx == null) return "";
+    dialog = true;
+    return showDialog(
+        context: ctx,
+        builder: (BuildContext context) {
+          return Center(child: valueDialog);
+        }).then((value) {
+      dialog = false;
+      return value ?? "";
     });
   }
 
@@ -124,6 +137,31 @@ class Dialogs {
 
 }
 
+class ValueDialog extends StatelessWidget {
+  final String prompt;
+  final dynamic defVal;
+  final Color bkgColor;
+  final Color color;
+  final Widget options;
+
+  const ValueDialog(this.options, {
+    this.prompt = "",this.defVal = "",
+    this.bkgColor = Colors.black, this.color = Colors.white, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: bkgColor,
+      elevation: 10,
+      child: prompt.isEmpty ? options : Column(
+        children: [
+          Text(prompt, style: TextStyle(color: color)),
+          options
+        ],
+      ),
+    );
+  }
+}
 
 class TextDialog extends StatelessWidget {
   final TextEditingController titleControl = TextEditingController();
