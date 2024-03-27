@@ -15,7 +15,12 @@ abstract class ZugApp extends StatelessWidget {
   final String appName;
   final ZugClient client;
   final ColorScheme defaultColorScheme = ColorScheme.fromSeed(seedColor: Colors.deepPurple);
-  ZugApp(this.client, this.appName, { super.key, Level logLevel = Level.ALL }) {
+  final String splashLandscapeImgPath, splashPortraitImgPath;
+
+  ZugApp(this.client, this.appName, {
+    this.splashLandscapeImgPath = "images/splash_land.png",
+    this.splashPortraitImgPath = "images/splash_portrait.png",
+    super.key, Level logLevel = Level.ALL }) {
     Logger.root.level = logLevel;
     Logger.root.onRecord.listen((record) {
       print('${record.level.name}: ${record.time}: ${record.message}');
@@ -54,7 +59,10 @@ abstract class ZugApp extends StatelessWidget {
   }
 
   Widget createSplashPage(client) {
-    return SplashPage(client,Image(image: ZugUtils.getAssetImage("images/splash.jpg")));
+    return SplashPage(client,
+        imgLandscape: Image(image: ZugUtils.getAssetImage(splashLandscapeImgPath)),
+        imgPortrait: Image(image: ZugUtils.getAssetImage(splashPortraitImgPath)),
+    );
   }
 
   Widget createMainPage(client);

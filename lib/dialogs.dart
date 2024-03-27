@@ -48,7 +48,7 @@ class Dialogs {
     });
   }
 
-  static Future<dynamic> getValue(String prompt,ValueDialog valueDialog) async {
+  static Future<dynamic> getValue(ValueDialog valueDialog) async {
     BuildContext? ctx = globalNavigatorKey.currentContext;
     if (ctx == null) return "";
     dialog = true;
@@ -151,6 +151,7 @@ class ValueDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dialog(
+      alignment: Alignment.center,
       backgroundColor: bkgColor,
       elevation: 10,
       child: prompt.isEmpty ? options : Column(
