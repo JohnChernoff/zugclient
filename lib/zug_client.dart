@@ -62,6 +62,7 @@ abstract class Area extends Room {
   Area(super.title);
 }
 
+enum LoginType {guest,lichess}
 abstract class ZugClient extends ChangeNotifier {
 
   static final log = Logger('ClientLogger');
@@ -80,7 +81,7 @@ abstract class ZugClient extends ChangeNotifier {
   String areaName = "Area";
   bool isConnected = false;
   bool isLoggedIn = false;
-  bool loggingIn = false;
+  bool authenticating = false;
   ZugSock? sock;
   oauth2.Client authClient = oauth2.Client(oauth2.Credentials(""));
   Map<String,Area> areas = {};
@@ -92,6 +93,7 @@ abstract class ZugClient extends ChangeNotifier {
   PageType switchPage = PageType.none;
   PageType selectedPage = PageType.none;
   SharedPreferences? defaults;
+  LoginType? loginType;
 
   Area createArea(String title);
 
@@ -123,6 +125,7 @@ abstract class ZugClient extends ChangeNotifier {
       ServMsg.createArea: handleCreateArea,
     });
     SharedPreferences.getInstance().then((prefs) => defaults = prefs);
+    connect();
   }
 
   void addFunctions(Map<Enum, Function> functions) {
@@ -300,43 +303,52 @@ abstract class ZugClient extends ChangeNotifier {
     if (kIsWeb) {
       String code = Uri.base.queryParameters["code"]?.toString() ?? "";
       if (code.isNotEmpty) {
-        loggingIn = true;
+        authenticating = true;
         html.window.history.pushState(null, 'home', Uri.base.path);
-        oauthClient.decode(code, setAuthClient);
+        oauthClient.decode(code, handleAuthClient);
       }
     }
   }
 
   void authenticate(OauthClient oauthClient) {
     log.info("Authenticating");
-    loggingIn = true;
-    oauthClient.authenticate(setAuthClient);
+    authenticating = true;
+    oauthClient.authenticate(handleAuthClient);
   }
 
-  void setAuthClient(oauth2.Client client) {
+  void handleAuthClient(oauth2.Client client) {
     authClient = client;
-    if (!isConnected) {
-      connect();
-    } else if (!isLoggedIn) {
-      login();
+    authenticating = false;
+    if (!isLoggedIn) { //TODO: handle other login types
+      login(LoginType.lichess);
     }
   }
 
-  bool handleLogin(data) {
-    login();
+  bool handleLogin(data) { //TODO: create login dialog?
+    if (loginType != null) login(loginType);
     return false;
   }
 
-  void login() {
-    if (isAuthenticated()) {
-      log.info("Logging in with token");
-      send(ClientMsg.loginLichess, data: { fieldToken : authClient.credentials.accessToken });
-      notifyListeners(); //TODO: handle server login issues?
+  void login(LoginType? lt) {
+    if (isConnected) {
+      loginType = lt ?? LoginType.guest;
+      if (loginType == LoginType.lichess) {
+        if (isAuthenticated()) {
+          log.info("Logging in with token");
+          send(ClientMsg.loginLichess, data: { fieldToken : authClient.credentials.accessToken });
+        }
+        else {
+          authenticate(OauthClient("lichess.org", clientName));
+        }
+      }
+      else if (loginType == LoginType.guest) {
+        log.info("Logging in as guest");
+        send(ClientMsg.loginGuest);
+      }
+      notifyListeners();
     }
     else {
-      log.info("Logging in as guest");
-      send(ClientMsg.loginGuest);
-      notifyListeners();
+      Dialogs.popup("Not connected to server");
     }
   }
 
@@ -345,7 +357,6 @@ abstract class ZugClient extends ChangeNotifier {
   }
 
   void connect()  {
-    loggingIn = true;
     String address = getWebSockAddress();
     log.info("Connecting to $address");
     sock = ZugSock(address,connected,handleMsg,disconnected);
@@ -373,7 +384,6 @@ abstract class ZugClient extends ChangeNotifier {
     log.info("Logged in: ${data.toString()}");
     userName = data["name"];
     userSource = data["source"];
-    loggingIn = false;
     isLoggedIn = true;
     return true;
   }
@@ -381,7 +391,7 @@ abstract class ZugClient extends ChangeNotifier {
   bool loggedOut(data) {
     log.info("Logged out: $userName");
     isLoggedIn = false;
-    Dialogs.popup("Logged out - click to log back in").then((ok) { login(); });
+    Dialogs.popup("Logged out - click to log back in").then((ok) { login(loginType); });
     return true;
   }
 
@@ -393,7 +403,7 @@ abstract class ZugClient extends ChangeNotifier {
       sock!.send(jsonEncode( { fieldType: type.name, fieldData: data } ) );
     }
     else { //playClip("doink");
-      if (!loggingIn) tryReconnect();
+      tryReconnect();
     }
   }
 

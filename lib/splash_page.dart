@@ -25,20 +25,20 @@ class SplashPage extends StatelessWidget {
           children: [
             ElevatedButton(
               onPressed: () {
-                if (!client.loggingIn) client.connect();
+                client.login(LoginType.guest);
               },
               child: const Padding(padding: EdgeInsets.all(8), child: Text("Login as Guest")),
             ),
             ElevatedButton(
               onPressed: () {
-                if (!client.loggingIn) client.authenticate(OauthClient("lichess.org", client.clientName));
+                client.login(LoginType.lichess);
               },
               child: const Padding(padding: EdgeInsets.all(8), child: Text("Login with Lichess")),
             ),
           ],
         ),
         Expanded(
-          child: !kIsWeb && client.loggingIn
+          child: !kIsWeb && client.authenticating
               ? WebViewWidget(controller: OauthClient.webViewController)
               : img ?? const SizedBox(),
         ),
