@@ -101,6 +101,7 @@ abstract class ZugClient extends ChangeNotifier {
     PackageInfo.fromPlatform().then((PackageInfo info) {
       packageInfo = info;
       log.info(info.toString());
+      notifyListeners();
     });
     addFunctions({
       ServMsg.none: handleNoFun,
@@ -316,12 +317,16 @@ abstract class ZugClient extends ChangeNotifier {
     authClient = client;
     if (!isConnected) {
       connect();
-    } else if (!isLoggedIn) { //shouldn't occur
+    } else if (!isLoggedIn) {
       login();
     }
   }
 
-  bool handleLogin(data) { login(); return false; }
+  bool handleLogin(data) {
+    login();
+    return false;
+  }
+
   void login() {
     if (isAuthenticated()) {
       log.info("Logging in with token");

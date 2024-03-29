@@ -135,6 +135,38 @@ class Dialogs {
     });
   }
 
+  static Future<void> showClickableDialog(Widget widget) {
+    BuildContext? ctx = globalNavigatorKey.currentContext;
+    if (ctx == null) return Future(() => null);
+    dialog = true;
+    return showDialog(
+        context: ctx,
+        builder: (BuildContext context) {
+          return ClickableDialog(widget);
+        }).then((ok)  {
+      dialog = false;
+      return Future(() => null);
+    });
+  }
+
+}
+
+class ClickableDialog extends StatelessWidget {
+  final Widget widget;
+
+  const ClickableDialog(this.widget, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+      return Dialog(
+        alignment: Alignment.center,
+        elevation: 10,
+        child: GestureDetector(
+          onTap: () { Navigator.pop(context); },
+          child: widget,
+        )
+      );
+  }
 }
 
 class ValueDialog extends StatelessWidget {
