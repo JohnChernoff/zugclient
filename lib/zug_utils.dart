@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -5,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:ini/ini.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:zugclient/zug_client.dart';
+import 'package:http/http.dart' as http;
 
 class ZugUtils {
   static Future<Config> getIniConfig(String assetPath) {
@@ -70,6 +72,28 @@ class ZugUtils {
       Uri.parse(url),
       webOnlyWindowName: isNewTab ? '_blank' : '_self',
     );
+  }
+
+  static Future<String?> getIP() async {
+    try {
+      if (kIsWeb) {
+        var response =
+            await http.get(Uri(scheme: "https", host: 'api.ipify.org'));
+        if (response.statusCode == 200) {
+          ZugClient.log.fine(response.body);
+          return response.body;
+        } else {
+          ZugClient.log.info(response.body);
+          return null;
+        }
+      } else {
+          List<NetworkInterface> list = await NetworkInterface.list();
+          return list.first.addresses.first.address;
+      }
+    } catch (exception) {
+      ZugClient.log.info(exception);
+      return null;
+    }
   }
 }
 

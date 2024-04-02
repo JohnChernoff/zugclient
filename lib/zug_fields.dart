@@ -1,12 +1,13 @@
 enum MessageScope { room, area, server } //TODO: make server and client messages the same?
-enum ServMsg { none, ping, obs, unObs, reqLogin, logOK, noLog,
+enum ServMsg { none, ip, ipReq, ping, version, obs, unObs, reqLogin, logOK, noLog,
   errMsg, alertMsg, servMsg, servUserMsg, areaUserMsg, areaMsg, roomMsg, privMsg, joinArea, partArea, createArea, startArea,
   updateUsers, updateAreas, updateArea, updateRoom, updateServ, updateUser, updateOccupant, updateOccupants, updateOptions }
-enum ClientMsg { none, pong, obs, unObs, login, loginGuest, loginLichess,
+enum ClientMsg { none, ip, pong, version, obs, unObs, login, loginGuest, loginLichess,
   getOptions, setOptions, newRoom, joinRoom, newArea, joinArea, partArea, startArea,
   areaMsg, roomMsg, servMsg, privMsg, updateArea, updateRoom, updateServ, updateUser, updateOccupant, setMute }
 
 const fieldData = "data",
+    fieldAddress = "address",
     fieldServ = "serv",
     fieldName = "name",
     fieldType = "type",

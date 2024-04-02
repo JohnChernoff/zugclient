@@ -94,6 +94,7 @@ abstract class ZugClient extends ChangeNotifier {
   PageType selectedPage = PageType.none;
   SharedPreferences? defaults;
   LoginType? loginType;
+  String? serverVersion;
 
   Area createArea(String title);
 
@@ -123,6 +124,7 @@ abstract class ZugClient extends ChangeNotifier {
       ServMsg.updateOccupants : handleUpdateOccupants,
       ServMsg.updateOptions : handleUpdateOptions,
       ServMsg.createArea: handleCreateArea,
+      ServMsg.version : handleVersion,
     });
     SharedPreferences.getInstance().then((prefs) => defaults = prefs);
     connect();
@@ -227,6 +229,10 @@ abstract class ZugClient extends ChangeNotifier {
   bool handlePing(data) {
     send(ClientMsg.pong);
     return false;
+  }
+
+  void handleVersion(data) { //print(data);
+    serverVersion = data[fieldMsg];
   }
 
   bool handleCreateArea(data) { //TODO: create defaultJoin property?
