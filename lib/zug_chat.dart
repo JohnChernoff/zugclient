@@ -4,10 +4,11 @@ import 'package:zugclient/zug_fields.dart';
 import 'package:zugclient/zug_utils.dart';
 
 class ZugChat extends StatefulWidget {
+  static Map<String,Color> userColorMap = {};
   final ZugClient client;
   final double? width;
   final double? height;
-  final Color foregroundColor;
+  final Color foregroundColor; //no longer used?
   final Color backgroundColor;
   final Color cmdTxtColor;
   final Color cmdBkgColor;
@@ -15,8 +16,11 @@ class ZugChat extends StatefulWidget {
   final double borderWidth;
   final bool chatCommandOnTop;
   final bool autoScroll;
+  final bool usingServer,usingRooms,usingAreas;
+  final String serverName,areaName,roomName;
+  final MessageScope defScope;
 
-  const ZugChat(this.client, {this.foregroundColor = Colors.white,
+  ZugChat(this.client, {this.foregroundColor = Colors.white,
     this.backgroundColor = Colors.black,
     this.borderColor = Colors.greenAccent,
     this.borderWidth = 2,
@@ -24,26 +28,25 @@ class ZugChat extends StatefulWidget {
     this.cmdBkgColor = Colors.brown,
     this.chatCommandOnTop = false,
     this.autoScroll = true,
+    this.usingAreas = true,
+    this.usingRooms = false,
+    this.usingServer = true,
+    this.areaName = "Area",
+    this.roomName = "Room",
+    this.serverName = "Server",
+    this.defScope = MessageScope.room,
     this.width,
     this.height,
-    super.key});
+    super.key}) {
+    userColorMap.putIfAbsent("", () => foregroundColor);
+  }
 
-  bool usingRooms() { return false; }
-  String serverName() { return "Server"; }
-  String areaName() { return "Area"; }
-  String roomName() { return "Room"; }
-
-  Text buildMessage(dynamic msgData) {
-    if (msgData[fieldOccupant] != null) {
-      return Text("${msgData[fieldOccupant][fieldUser][fieldName]}: "
-          "${msgData[fieldMsg]}",
-        style: TextStyle(
-            color: HexColor.fromHex(msgData[fieldOccupant][fieldChatColor],defaultColor: foregroundColor),
-      ));
-    }
-    else {
-      return Text(msgData[fieldMsg], style: TextStyle(color: foregroundColor));
-    }
+  Text buildMessage(dynamic msgData) { //print("New message: " + msgData.toString());
+    String name = msgData[fieldOccupant]?[fieldUser]?[fieldName] ?? msgData[fieldUser]?[fieldName] ?? "";
+    String nameStr = name.isEmpty ? name : "$name:";
+    Color color = msgData[fieldOccupant]?[fieldChatColor] != null ?
+    HexColor.fromHex(msgData[fieldOccupant]?[fieldChatColor]) : userColorMap.putIfAbsent(name, () => HexColor.rndColor(pastel: true));
+    return Text("$nameStr ${msgData[fieldMsg]}", style: TextStyle(color: color));
   }
 
   static BoxDecoration getDecoration({Color color = Colors.grey, Color borderColor = Colors.grey, double borderWidth = 2, Color shadowColor = Colors.black, bool shadow = false}) {
@@ -72,12 +75,25 @@ class ZugChatState extends State<ZugChat> {
   final ScrollController scrollController = ScrollController();
   final TextEditingController textInputController = TextEditingController();
   final FocusNode textInputFocus = FocusNode();
+  final Map<MessageScope,bool> scopeMap = {};
+  MessageScope msgScope = MessageScope.room;
   bool filterServerMessages = false;
 
   @override
   void initState() {
     super.initState();
     filterServerMessages = false;
+    scopeMap.putIfAbsent(MessageScope.room, () => widget.usingRooms);
+    scopeMap.putIfAbsent(MessageScope.area, () => widget.usingAreas);
+    scopeMap.putIfAbsent(MessageScope.server, () => widget.usingServer);
+    msgScope = widget.defScope;
+    if (!(scopeMap[msgScope] ?? false)) {
+      msgScope = MessageScope.room;
+      if (!widget.usingRooms) {
+        msgScope = MessageScope.area;
+        if (!widget.usingAreas) msgScope = MessageScope.server;
+      }
+    }
     //WidgetsBinding.instance.addPostFrameCallback((_) { scrollDown(500); });
   }
 
@@ -87,7 +103,7 @@ class ZugChatState extends State<ZugChat> {
 
     Area cg = widget.client.currentArea;
 
-    List<dynamic> messageList = switch(cg.msgScope) {
+    List<dynamic> messageList = switch(msgScope) {
       MessageScope.room => cg.currentRoom?.messages ?? [],
       MessageScope.area => cg.messages,
       MessageScope.server => widget.client.messages,
@@ -136,26 +152,34 @@ class ZugChatState extends State<ZugChat> {
     return Row(
       children: [
         DropdownButton(
-            value: cg.msgScope,
+            value: msgScope,
             onChanged: (MessageScope? newScope) {
               setState(() {
-                cg.msgScope = newScope ?? MessageScope.area;
+                msgScope = newScope ?? MessageScope.area;
               });
             },
             items: [
               DropdownMenuItem(
                 value: MessageScope.room,
-                enabled: widget.usingRooms(),
-                child: widget.usingRooms()
-                    ? Text("${widget.roomName()} Message: ")
+                enabled: widget.usingRooms,
+                child: widget.usingRooms
+                    ? Text("${widget.roomName} Message: ")
                     : const SizedBox.shrink(),
               ),
               DropdownMenuItem(
                   value: MessageScope.area,
-                  child: Text("${widget.areaName()} Message: ")),
+                  enabled: widget.usingAreas,
+                  child: widget.usingAreas
+                      ? Text("${widget.areaName} Message: ")
+                      : const SizedBox.shrink(),
+              ),
               DropdownMenuItem(
                   value: MessageScope.server,
-                  child: Text("${widget.serverName()} Message: ")),
+                  enabled: widget.usingServer,
+                  child: widget.usingServer
+                      ? Text("${widget.serverName} Message: ")
+                      : const SizedBox.shrink(),
+              ),
             ]),
         const SizedBox(width: 4),
         Expanded(
@@ -170,7 +194,7 @@ class ZugChatState extends State<ZugChat> {
                     backgroundColor: widget.cmdBkgColor),
                 onSubmitted: (txt) {
                   widget.client.send(
-                      switch (cg.msgScope) {
+                      switch (msgScope) {
                         MessageScope.room => ClientMsg.roomMsg,
                         MessageScope.area => ClientMsg.areaMsg,
                         MessageScope.server => ClientMsg.servMsg,
@@ -183,10 +207,10 @@ class ZugChatState extends State<ZugChat> {
                 },
               )),
         ),
-        IconButton(
+        msgScope == MessageScope.area ? IconButton(
             onPressed: () => widget.client.areaCmd(ClientMsg.updateArea),
             icon: const Icon(Icons.update) //,size: iconHeight-16)
-        ),
+        ) : const SizedBox.shrink(),
       ],
     );
   }

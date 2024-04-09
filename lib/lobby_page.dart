@@ -11,6 +11,7 @@ class LobbyPage extends StatefulWidget {
   final Color foregroundColor, backgroundColor;
   final ImageProvider? backgroundImage;
   final String helpPage;
+  final double widthFactor;
 
   const LobbyPage(this.client, {
     this.backgroundImage,
@@ -18,6 +19,7 @@ class LobbyPage extends StatefulWidget {
     this.foregroundColor = Colors.white,
     this.backgroundColor = Colors.black,
     this.helpPage = "",
+    this.widthFactor = 1,
     super.key});
 
   Widget selectedArea(BuildContext context) {
@@ -48,9 +50,9 @@ class _LobbyPageState extends State<LobbyPage> {
 
   @override
   Widget build(BuildContext context) {
-    final double screenWidth = MediaQuery.of(context).size.width;
+    final double width = MediaQuery.of(context).size.width * widget.widthFactor;
 
-    if (showHelp) return widget.getHelp(context, getCommandButtons(screenWidth));
+    if (showHelp) return widget.getHelp(context, getCommandButtons(width));
 
     List<DropdownMenuItem<String>> games = List.empty(growable: true);
 
@@ -63,7 +65,8 @@ class _LobbyPageState extends State<LobbyPage> {
     }).toList());
 
     return Container(
-      decoration: BoxDecoration(
+        width: width,
+        decoration: BoxDecoration(
         color: widget.backgroundColor,
         image: widget.backgroundImage != null ? DecorationImage(
             image: widget.backgroundImage!,
@@ -92,7 +95,7 @@ class _LobbyPageState extends State<LobbyPage> {
               ],
             ),
           )),
-          getCommandButtons(screenWidth),
+          getCommandButtons(width),
           Expanded(child: widget.selectedArea(context)),
         ],
       )

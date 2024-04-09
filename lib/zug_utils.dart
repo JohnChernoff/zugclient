@@ -19,7 +19,7 @@ class ZugUtils {
         .then((config) => config.defaults());
   }
 
-  static double getActualScreenHeight(BuildContext context) {
+  static double getActualScreenHeight(BuildContext context) { //rename to approxScreenHeight?
     return MediaQuery.of(context).size.height - (AppBar().preferredSize.height + kBottomNavigationBarHeight) - 8;
   }
 
@@ -107,9 +107,19 @@ extension HexColor on Color {
     return Color(int.parse(buffer.toString(), radix: 16));
   }
 
-  static Color rndColor() {
-    return Color((Random().nextDouble() * 0xFFFFFF).toInt()).withOpacity(1.0);
+  static Color rndColor({pastel = false}) {
+    if (pastel) {
+      return Color.fromRGBO(
+          Random().nextInt(128) + 128,
+          Random().nextInt(128) + 128,
+          Random().nextInt(128) + 128, 1.0);
+    }
+    else {
+      return Color((Random().nextDouble() * 0xFFFFFF).toInt()).withOpacity(1.0);
+    }
   }
+
+
 
   /// Prefixes a hash sign if [leadingHashSign] is set to `true` (default is `true`).
   String toHex({bool leadingHashSign = true}) => '${leadingHashSign ? '#' : ''}'

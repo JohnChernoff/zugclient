@@ -35,3 +35,7 @@ added ZugChat and oauth token deletion
 ## 0.1.2
 
 Misc. bugfixes/tweaks/improvements
+
+## 0.1.5
+
+Sooo much.  Basically everything.

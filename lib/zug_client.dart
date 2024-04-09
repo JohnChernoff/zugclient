@@ -55,8 +55,8 @@ abstract class Room {
 }
 
 abstract class Area extends Room {
+  //MessageScope msgScope = MessageScope.area;
   Map<String,dynamic> options = {};
-  MessageScope msgScope = MessageScope.area;
   bool exists = true;
   Room? currentRoom;
   Area(super.title);
