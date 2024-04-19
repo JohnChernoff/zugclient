@@ -1,5 +1,6 @@
 library zugclient;
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:logging/logging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zugclient/zug_app.dart';
@@ -95,6 +96,9 @@ abstract class ZugClient extends ChangeNotifier {
   SharedPreferences? defaults;
   LoginType? loginType;
   String? serverVersion;
+  final audio = AudioPlayer();
+  double volume = .5;
+  static bool defaultSound = false;
 
   Area createArea(String title);
 
@@ -447,6 +451,18 @@ abstract class ZugClient extends ChangeNotifier {
         Dialogs.popup("Token deleted, restart app to login again");
       }
     }
+  }
+
+  bool soundCheck() {
+    return defaults?.getBool("sound") ?? defaultSound;
+  }
+
+  void playTrack(track) {
+    if (soundCheck()) audio.play(AssetSource('audio/tracks/$track.mp3'), volume: volume);
+  }
+
+  void playClip(clip) {
+    if (soundCheck()) audio.play(AssetSource('audio/clips/$clip.mp3'), volume: volume);
   }
 
 }
