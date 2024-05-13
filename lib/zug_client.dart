@@ -272,15 +272,30 @@ abstract class ZugClient extends ChangeNotifier {
     return true;
   }
 
+  void addAreaMsg(String msg, String title, {hidden = false}) {
+    handleAreaMsg({
+      fieldMsg : msg,
+      fieldTitle : title,
+      fieldHidden : hidden
+    });
+  }
+
   bool handleAreaMsg(data, {Area? area}) { //print(data);
     area = area ?? getOrCreateArea(data[fieldTitle]);
-    area.messages.add(data); //data[fieldMsg]);
+    area.messages.add(data);
     area.newMessages++;
     return true;
   }
 
+  void addAServMsg(String msg, {hidden = false}) {
+    handleServMsg({
+      fieldMsg : msg,
+      fieldHidden : hidden
+    });
+  }
+
   bool handleServMsg(data) {
-    messages.add(data); //data[fieldMsg]);
+    messages.add(data);
     newMessages++;
     return true;
   }

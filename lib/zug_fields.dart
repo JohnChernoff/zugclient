@@ -4,7 +4,7 @@ enum ServMsg { none, ip, ipReq, ping, version, obs, unObs, reqLogin, logOK, noLo
   updateUsers, updateAreas, updateArea, updateRoom, updateServ, updateUser, updateOccupant, updateOccupants, updateOptions }
 enum ClientMsg { none, ip, pong, version, obs, unObs, login, loginGuest, loginLichess,
   getOptions, setOptions, newRoom, joinRoom, newArea, joinArea, partArea, startArea,
-  areaMsg, roomMsg, servMsg, privMsg, updateArea, updateRoom, updateServ, updateUser, updateOccupant, setMute }
+  areaMsg, roomMsg, servMsg, privMsg, updateArea, updateRoom, updateServ, updateUser, updateOccupant, setMute, ban }
 
 const fieldData = "data",
     fieldAddress = "address",
@@ -31,6 +31,7 @@ const fieldData = "data",
     fieldOptions = "options",
     fieldAuthSource = "source",
     fieldChatColor = "chat_color",
-    fieldColor = "color";
+    fieldColor = "color",
+    fieldHidden = "hidden";
 
 

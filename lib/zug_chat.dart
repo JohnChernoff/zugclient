@@ -41,12 +41,13 @@ class ZugChat extends StatefulWidget {
     userColorMap.putIfAbsent("", () => foregroundColor);
   }
 
-  Text buildMessage(dynamic msgData) { //print("New message: " + msgData.toString());
+  Widget buildMessage(dynamic msgData) { //print("New message: " + msgData.toString());
     String name = msgData[fieldOccupant]?[fieldUser]?[fieldName] ?? msgData[fieldUser]?[fieldName] ?? "";
     String nameStr = name.isEmpty ? name : "$name:";
     Color color = msgData[fieldOccupant]?[fieldChatColor] != null ?
     HexColor.fromHex(msgData[fieldOccupant]?[fieldChatColor]) : userColorMap.putIfAbsent(name, () => HexColor.rndColor(pastel: true));
-    return Text("$nameStr ${msgData[fieldMsg]}", style: TextStyle(color: color));
+    bool hidden = msgData[fieldHidden] ?? false;
+    return ZugChatLine("$nameStr ${msgData[fieldMsg]}",color,hidden);
   }
 
   static BoxDecoration getDecoration({Color color = Colors.grey, Color borderColor = Colors.grey, double borderWidth = 2, Color shadowColor = Colors.black, bool shadow = false}) {
@@ -112,7 +113,8 @@ class ZugChatState extends State<ZugChat> {
     List<Widget> widgetMsgList = [];
     for (var msg in messageList) {
       if (!filterServerMessages || msg[fieldOccupant] != null) {
-        widgetMsgList.add(Center(child: widget.buildMessage(msg)));
+        //widgetMsgList.add(Center(child: widget.buildMessage(msg)));
+        widgetMsgList.add(widget.buildMessage(msg));
       }
     }
 
@@ -217,3 +219,37 @@ class ZugChatState extends State<ZugChat> {
 
 }
 
+class ZugChatLine extends StatefulWidget {
+  final String text;
+  final Color color;
+  final bool hidden;
+  const ZugChatLine(this.text, this.color, this.hidden, {super.key});
+
+  @override
+  State<StatefulWidget> createState() => ZugChatLineState();
+
+}
+
+class ZugChatLineState extends State<ZugChatLine> {
+  bool hidden = false;
+
+  @override
+  void initState() {
+    super.initState();
+    hidden = widget.hidden;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        if (widget.hidden) {
+          setState(() {
+            hidden = !hidden;
+          });
+        }
+      },
+      child: Text( hidden ? "(hidden)" : widget.text, style: TextStyle(color: widget.color)),
+    );
+  }
+}
