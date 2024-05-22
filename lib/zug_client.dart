@@ -99,6 +99,7 @@ abstract class ZugClient extends ChangeNotifier {
   final audio = AudioPlayer();
   double volume = .5;
   static bool defaultSound = false;
+  int? id;
 
   Area createArea(String title);
 
@@ -113,11 +114,14 @@ abstract class ZugClient extends ChangeNotifier {
     addFunctions({
       ServMsg.none: handleNoFun,
       ServMsg.ping: handlePing,
+      ServMsg.obs: handleObs,
+      ServMsg.unObs: handleUnObs,
       ServMsg.reqLogin: handleLogin,
       ServMsg.noLog: loggedOut,
       ServMsg.logOK: loggedIn,
       ServMsg.errMsg: handleErrorMsg,
       ServMsg.alertMsg: handleAlertMsg,
+      ServMsg.privMsg: handlePrivMsg,
       ServMsg.servMsg: handleServMsg,
       ServMsg.servUserMsg: handleServMsg,
       ServMsg.areaMsg: handleAreaMsg,
@@ -151,7 +155,7 @@ abstract class ZugClient extends ChangeNotifier {
   dynamic getUniqueName(dynamic userData) {
     return {
       fieldName: userData[fieldName],
-      fieldAuthSource: userData[fieldAuthSource][fieldName]
+      fieldAuthSource: userData[fieldAuthSource], //?[fieldName]
     };
   }
 
@@ -198,7 +202,10 @@ abstract class ZugClient extends ChangeNotifier {
       if (areas[t] != null) {
         if (currentArea.exists) send(ClientMsg.unObs,data:{ fieldTitle : currentArea.title });
         currentArea = areas[t]!; // ?? noGame;
-        if (currentArea.exists ) send(ClientMsg.updateArea,data:{fieldTitle:title}); //send(ClientTypes.obs,data: { fieldTitle : currentGame.title });
+        if (currentArea.exists ) {
+          send(ClientMsg.obs,data:{fieldTitle:currentArea.title});
+          send(ClientMsg.updateArea,data:{fieldTitle:title});
+        }
       }
       else {
         currentArea = noArea;
@@ -237,6 +244,14 @@ abstract class ZugClient extends ChangeNotifier {
 
   void handleVersion(data) { //print(data);
     serverVersion = data[fieldMsg];
+  }
+
+  void handleObs(data) {
+    log.info("Observing: ${data[fieldTitle]}");
+  }
+
+  void handleUnObs(data) {
+    log.info("No longer observing: ${data[fieldTitle]}");
   }
 
   bool handleCreateArea(data) { //TODO: create defaultJoin property?
@@ -300,6 +315,12 @@ abstract class ZugClient extends ChangeNotifier {
     return true;
   }
 
+  bool handlePrivMsg(data) {
+    print("Private message from: ${data[fieldUser]}");
+    addAServMsg("Private Message from ${UniqueName.fromData(data[fieldUser])}: ${data[fieldMsg]}");
+    return true;
+  }
+
   bool handleErrorMsg(data) {
     Dialogs.popup("Error: ${data[fieldMsg]}");
     return true;
@@ -350,6 +371,7 @@ abstract class ZugClient extends ChangeNotifier {
   }
 
   bool handleLogin(data) { //TODO: create login dialog?
+    id = data[fieldID]; log.info("Connection ID: $id");
     if (loginType != null) login(loginType);
     return false;
   }

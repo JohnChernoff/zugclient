@@ -32,6 +32,7 @@ const fieldData = "data",
     fieldAuthSource = "source",
     fieldChatColor = "chat_color",
     fieldColor = "color",
-    fieldHidden = "hidden";
+    fieldHidden = "hidden",
+    fieldID = "id";
 
 
