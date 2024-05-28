@@ -28,9 +28,20 @@ class _OptionsPageState extends State<OptionsPage> {
   Widget build(BuildContext context) {
     newOptions = widget.client.currentArea.options; //print("Options: $newOptions");
     Map<String,Widget> widgets = {};
-    for (String field in newOptions.keys) {
+    List<String> optionFields = newOptions.keys.toList();
+    optionFields.sort((a, b) {
+      int fieldCmp = newOptions[a][fieldOptVal].runtimeType.hashCode.compareTo(newOptions[b][fieldOptVal].runtimeType.hashCode);
+      if (fieldCmp == 0) {
+        return a.compareTo(b);
+      } else {
+        return fieldCmp;
+      }
+    });
+
+    for (String field in optionFields) { //newOptions.keys
       widgets[field] = parseOptionEntry(field, newOptions[field]);
     }
+
     return Column(
       children: [
         widget.header,
