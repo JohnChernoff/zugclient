@@ -14,7 +14,7 @@ void main() {
   });
   TestClient testClient = TestClient("example.com", 8000, "test");
   testClient.noServer = true;
-  TestArea testArea = testClient.getOrCreateArea("testArea") as TestArea;
+  TestArea testArea = testClient.getOrCreateArea({"title" : "testArea"}) as TestArea;
   testArea.options = {
     "fooName" : { fieldOptVal : "Name" },
     "fooInt" : { fieldOptVal : 2, fieldOptMin : 0, fieldOptMax : 12, fieldOptInc : 2 },
@@ -59,7 +59,7 @@ class TestClient extends ZugClient {
 
   TestClient(super.domain, super.port, super.remoteEndpoint) {
     addFunctions({
-      TestServMsg.whee.name: whee,
+      TestServMsg.whee: whee,
     });
     checkRedirect(OauthClient("lichess.org", "testClient"));
   }
@@ -69,8 +69,8 @@ class TestClient extends ZugClient {
   }
 
   @override
-  Area createArea(String title) {
-    return TestArea(title);
+  Area createArea(dynamic data) {
+    return TestArea(data);
   }
 
 }

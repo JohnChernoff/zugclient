@@ -34,11 +34,13 @@ class UniqueName {
 }
 
 abstract class Room {
-  final String title;
+  late final String title;
   List<dynamic> messages = [];
   int newMessages = 0;
   Map<UniqueName,dynamic> occupants = {};
-  Room(this.title);
+  Room(dynamic data) {
+    title = data?[fieldTitle] ?? ZugClient.noAreaTitle;
+  }
 
   String getOccupantName(UniqueName name) {
     for (UniqueName uniqueName in occupants.keys) {
@@ -56,11 +58,10 @@ abstract class Room {
 }
 
 abstract class Area extends Room {
-  //MessageScope msgScope = MessageScope.area;
   Map<String,dynamic> options = {};
   bool exists = true;
   Room? currentRoom;
-  Area(super.title);
+  Area(dynamic data) : super(data);
 }
 
 enum LoginType {guest,lichess}
@@ -101,10 +102,10 @@ abstract class ZugClient extends ChangeNotifier {
   static bool defaultSound = false;
   int? id;
 
-  Area createArea(String title);
+  Area createArea(dynamic data);
 
   ZugClient(this.domain,this.port,this.remoteEndpoint, {this.localServer = false}) {
-    noArea = createArea(noAreaTitle);
+    noArea = createArea(null); //noAreaTitle);
     currentArea = noArea;
     PackageInfo.fromPlatform().then((PackageInfo info) {
       packageInfo = info;
@@ -176,9 +177,9 @@ abstract class ZugClient extends ChangeNotifier {
     areaCmd(ClientMsg.startArea);
   }
 
-  Area getOrCreateArea(String title) {
-    return areas.putIfAbsent(title, () {
-      return createArea(title);
+  Area getOrCreateArea(dynamic data) {
+    return areas.putIfAbsent(data?[fieldTitle] ?? noAreaTitle, () {
+      return createArea(data);
     });
   }
 
@@ -260,20 +261,20 @@ abstract class ZugClient extends ChangeNotifier {
   }
 
   bool handleUpdateOccupant(data) { log.fine("Occupant update: $data");
-    Area area = getOrCreateArea(data[fieldTitle]);
+    Area area = getOrCreateArea(data);
     area.occupants.putIfAbsent(UniqueName.fromData(data["user"]), () => data);
     return true;
   }
 
   bool handleUpdateArea(data) { log.fine("Update Area: $data");
-    Area area = getOrCreateArea(data[fieldTitle]);
+    Area area = getOrCreateArea(data);
     handleUpdateOccupants(data,area : area);
     handleUpdateOptions(data,area : area);
     return true;
   }
 
   bool handleUpdateOccupants(data, {Area? area}) {
-    area = area ?? getOrCreateArea(data[fieldTitle]);
+    area = area ?? getOrCreateArea(data);
     area.occupants.clear();
     for (dynamic occupant in data["occupants"]) {
       area.occupants.putIfAbsent(UniqueName.fromData(occupant["user"]), () => occupant);
@@ -282,7 +283,7 @@ abstract class ZugClient extends ChangeNotifier {
   }
 
   bool handleUpdateOptions(data, {Area? area}) { //print("Options: $data");
-    area = area ?? getOrCreateArea(data[fieldTitle]);
+    area = area ?? getOrCreateArea(data);
     area.options = data["options"] ?? {};
     return true;
   }
@@ -296,7 +297,7 @@ abstract class ZugClient extends ChangeNotifier {
   }
 
   bool handleAreaMsg(data, {Area? area}) { //print(data);
-    area = area ?? getOrCreateArea(data[fieldTitle]);
+    area = area ?? getOrCreateArea(data);
     area.messages.add(data);
     area.newMessages++;
     return true;
@@ -315,8 +316,7 @@ abstract class ZugClient extends ChangeNotifier {
     return true;
   }
 
-  bool handlePrivMsg(data) {
-    print("Private message from: ${data[fieldUser]}");
+  bool handlePrivMsg(data) { //print("Private message from: ${data[fieldUser]}");
     addAServMsg("Private Message from ${UniqueName.fromData(data[fieldUser])}: ${data[fieldMsg]}");
     return true;
   }
@@ -336,7 +336,7 @@ abstract class ZugClient extends ChangeNotifier {
       area.exists = false;
     }
     for (var area in data[fieldAreas]) {
-      getOrCreateArea(area[fieldTitle]).exists = true;
+      getOrCreateArea(area).exists = true;
     }
     areas.removeWhere((key, value) => !value.exists);
     if (currentArea != noArea && !currentArea.exists) {

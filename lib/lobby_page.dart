@@ -30,8 +30,52 @@ class LobbyPage extends StatefulWidget {
     );
   }
 
+  Widget getAreaItem(String? title) {
+    return Text(title ?? "",style: TextStyle(backgroundColor: backgroundColor, color: foregroundColor));
+  }
+
   Widget getHelp(BuildContext context, Widget buttons) { //TODO: make abstract
     return buttons;
+  }
+
+  Widget getSocialMediaButtons() {
+    return const SizedBox.shrink();
+  }
+
+  Widget getJoinButton() {
+    return ElevatedButton(
+        style: getButtonStyle(Colors.blueAccent, Colors.greenAccent),
+        onPressed: () => client.joinArea(),
+        child: const Text("Join"));
+  }
+
+  Widget getPartButton() {
+    return ElevatedButton(
+        style: getButtonStyle(Colors.black26, Colors.orangeAccent),
+        onPressed: () => client.partArea(),
+        child: const Text("Leave"));
+  }
+
+  Widget getStartButton() {
+    return ElevatedButton(
+        style: getButtonStyle(Colors.redAccent, Colors.purpleAccent),
+        onPressed: () => client.startArea(),
+        child: const Text("Start"));
+  }
+
+  Widget getCreateButton() {
+    return ElevatedButton(
+        style: getButtonStyle(Colors.greenAccent, Colors.redAccent),
+        onPressed: () => client.newArea(),
+        child: const Text("New"));
+  }
+
+  ButtonStyle getButtonStyle(Color c1, Color c2) {
+    return ButtonStyle(backgroundColor:
+    MaterialStateProperty.resolveWith<Color?>((Set<MaterialState> states) {
+      if (states.contains(MaterialState.pressed)) return c2;
+      return c1;
+    }));
   }
 
   @override
@@ -48,19 +92,22 @@ class _LobbyPageState extends State<LobbyPage> {
     widget.client.areaCmd(ClientMsg.setMute,data:{fieldMuted:true}); //TODO: put in main.dart
   }
 
+
+
   @override
   Widget build(BuildContext context) {
     final double width = MediaQuery.of(context).size.width * widget.widthFactor;
 
     if (showHelp) return widget.getHelp(context, getCommandButtons(width));
 
-    List<DropdownMenuItem<String>> games = List.empty(growable: true);
+    List<DropdownMenuItem<String>> games = []; //List.empty(growable: true);
 
-    games.add(const DropdownMenuItem<String>(value:ZugClient.noAreaTitle, child: Text(ZugClient.noAreaTitle)));
+    //games.add(const DropdownMenuItem<String>(value:ZugClient.noAreaTitle, child: Text(ZugClient.noAreaTitle)));
+    games.add(DropdownMenuItem<String>(value:ZugClient.noAreaTitle, child: widget.getAreaItem(ZugClient.noAreaTitle)));
     games.addAll(widget.client.areas.keys.map<DropdownMenuItem<String>>((String title) {  //print("Adding: $title");
       return DropdownMenuItem<String>(
         value: title,
-        child: Text(title,style: TextStyle(backgroundColor: widget.backgroundColor, color: widget.foregroundColor)),
+        child: widget.getAreaItem(title),
       );
     }).toList());
 
@@ -104,7 +151,7 @@ class _LobbyPageState extends State<LobbyPage> {
 
   Widget getHelpButton() {
     return ElevatedButton(
-        style: getButtonStyle(Colors.cyan, Colors.lightBlueAccent),
+        style: widget.getButtonStyle(Colors.cyan, Colors.lightBlueAccent),
         onPressed: ()  {
           if (widget.helpPage.isNotEmpty) {
             if (kIsWeb) {
@@ -120,34 +167,6 @@ class _LobbyPageState extends State<LobbyPage> {
         child: const Text("Help"));
   }
 
-  Widget getJoinButton() {
-    return ElevatedButton(
-        style: getButtonStyle(Colors.blueAccent, Colors.greenAccent),
-        onPressed: () => widget.client.joinArea(),
-        child: const Text("Join"));
-  }
-
-  Widget getPartButton() {
-    return ElevatedButton(
-        style: getButtonStyle(Colors.black26, Colors.orangeAccent),
-        onPressed: () => widget.client.partArea(),
-        child: const Text("Leave"));
-  }
-
-  Widget getStartButton() {
-    return ElevatedButton(
-        style: getButtonStyle(Colors.redAccent, Colors.purpleAccent),
-        onPressed: () => widget.client.startArea(),
-        child: const Text("Start"));
-  }
-
-  Widget getCreateButton() {
-    return ElevatedButton(
-        style: getButtonStyle(Colors.greenAccent, Colors.redAccent),
-        onPressed: () => widget.client.newArea(),
-        child: const Text("New"));
-  }
-
   Widget getCommandButtons(double width, {double padding = 4}) {
     return Container(
         width: width,
@@ -157,7 +176,7 @@ class _LobbyPageState extends State<LobbyPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             ElevatedButton(
-                style: getButtonStyle(Colors.cyan, Colors.lightBlueAccent),
+                style: widget.getButtonStyle(Colors.cyan, Colors.lightBlueAccent),
                 onPressed: () =>  setState(() {
                   showHelp = false;
                 }),
@@ -168,22 +187,15 @@ class _LobbyPageState extends State<LobbyPage> {
           scrollDirection: Axis.horizontal,
           //mainAxisAlignment: MainAxisAlignment.center,
           child: Row(children: [
-            Padding(padding: EdgeInsets.all(padding),child: getCreateButton()),
-            Padding(padding: EdgeInsets.all(padding),child: getStartButton()),
-            Padding(padding: EdgeInsets.all(padding),child: getJoinButton()),
-            Padding(padding: EdgeInsets.all(padding),child: getPartButton()),
+            Padding(padding: EdgeInsets.all(padding),child: widget.getCreateButton()),
+            Padding(padding: EdgeInsets.all(padding),child: widget.getStartButton()),
+            Padding(padding: EdgeInsets.all(padding),child: widget.getJoinButton()),
+            Padding(padding: EdgeInsets.all(padding),child: widget.getPartButton()),
             Padding(padding: EdgeInsets.all(padding),child: getHelpButton()),
+            Padding(padding: EdgeInsets.all(padding),child: widget.getSocialMediaButtons()),
           ],
         ))),
       );
-  }
-
-  ButtonStyle getButtonStyle(Color c1, Color c2) {
-    return ButtonStyle(backgroundColor:
-    MaterialStateProperty.resolveWith<Color?>((Set<MaterialState> states) {
-      if (states.contains(MaterialState.pressed)) return c2;
-      return c1;
-    }));
   }
 
 }
