@@ -34,6 +34,12 @@ class LobbyPage extends StatefulWidget {
     return Text(title ?? "",style: TextStyle(backgroundColor: backgroundColor, color: foregroundColor));
   }
 
+  int compareGames(Area? a, Area? b) {
+    if (a == null || b == null) return 0;
+    return a.title.compareTo(b.title);
+  }
+
+
   Widget getHelp(BuildContext context, Widget buttons) { //TODO: make abstract
     return buttons;
   }
@@ -92,11 +98,6 @@ class _LobbyPageState extends State<LobbyPage> {
     widget.client.areaCmd(ClientMsg.setMute,data:{fieldMuted:true}); //TODO: put in main.dart
   }
 
-  int compareGames(Area? a, Area? b) {
-    if (a == null || b == null) return 0;
-    return a.title.compareTo(b.title);
-  }
-
   @override
   Widget build(BuildContext context) {
     final double width = MediaQuery.of(context).size.width * widget.widthFactor;
@@ -113,7 +114,7 @@ class _LobbyPageState extends State<LobbyPage> {
       );
     }).toList());
 
-    games.sort((a,b) => compareGames(widget.client.areas[a],widget.client.areas[b]));
+    games.sort((a,b) => widget.compareGames(widget.client.areas[a],widget.client.areas[b]));
 
     return Container(
         width: width,
