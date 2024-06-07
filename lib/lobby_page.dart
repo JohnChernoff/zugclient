@@ -92,7 +92,10 @@ class _LobbyPageState extends State<LobbyPage> {
     widget.client.areaCmd(ClientMsg.setMute,data:{fieldMuted:true}); //TODO: put in main.dart
   }
 
-
+  int compareGames(Area? a, Area? b) {
+    if (a == null || b == null) return 0;
+    return a.title.compareTo(b.title);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -102,7 +105,6 @@ class _LobbyPageState extends State<LobbyPage> {
 
     List<DropdownMenuItem<String>> games = []; //List.empty(growable: true);
 
-    //games.add(const DropdownMenuItem<String>(value:ZugClient.noAreaTitle, child: Text(ZugClient.noAreaTitle)));
     games.add(DropdownMenuItem<String>(value:ZugClient.noAreaTitle, child: widget.getAreaItem(ZugClient.noAreaTitle)));
     games.addAll(widget.client.areas.keys.map<DropdownMenuItem<String>>((String title) {  //print("Adding: $title");
       return DropdownMenuItem<String>(
@@ -110,6 +112,8 @@ class _LobbyPageState extends State<LobbyPage> {
         child: widget.getAreaItem(title),
       );
     }).toList());
+
+    games.sort((a,b) => compareGames(widget.client.areas[a],widget.client.areas[b]));
 
     return Container(
         width: width,
