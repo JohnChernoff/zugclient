@@ -114,7 +114,7 @@ class _LobbyPageState extends State<LobbyPage> {
       );
     }).toList());
 
-    games.sort((a,b) => widget.compareGames(widget.client.areas[a],widget.client.areas[b]));
+    games.sort((a,b) => widget.compareGames(widget.client.areas[a.value],widget.client.areas[b.value]));
 
     return Container(
         width: width,

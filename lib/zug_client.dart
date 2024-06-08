@@ -35,9 +35,11 @@ class UniqueName {
 
 abstract class Room {
   late final String title;
+  dynamic jsonData = {};
   List<dynamic> messages = [];
   int newMessages = 0;
   Map<UniqueName,dynamic> occupants = {};
+
   Room(dynamic data) {
     title = data?[fieldTitle] ?? ZugClient.noAreaTitle;
   }
@@ -58,6 +60,7 @@ abstract class Room {
 }
 
 abstract class Area extends Room {
+  dynamic listData = {};
   Map<String,dynamic> options = {};
   bool exists = true;
   Room? currentRoom;
@@ -127,13 +130,14 @@ abstract class ZugClient extends ChangeNotifier {
       ServMsg.servUserMsg: handleServMsg,
       ServMsg.areaMsg: handleAreaMsg,
       ServMsg.areaUserMsg: handleAreaMsg,
-      ServMsg.updateAreas: handleAreaList,
+      ServMsg.areaList: handleAreaList,
       ServMsg.updateArea: handleUpdateArea,
       ServMsg.updateOccupant: handleUpdateOccupant,
-      ServMsg.updateOccupants : handleUpdateOccupants,
-      ServMsg.updateOptions : handleUpdateOptions,
+      ServMsg.updateOccupants: handleUpdateOccupants,
+      ServMsg.updateOptions: handleUpdateOptions,
       ServMsg.createArea: handleCreateArea,
-      ServMsg.version : handleVersion,
+      ServMsg.updateAreaList: handleUpdateAreaList,
+      ServMsg.version: handleVersion,
     });
     SharedPreferences.getInstance().then((prefs) => defaults = prefs);
     connect();
@@ -255,7 +259,7 @@ abstract class ZugClient extends ChangeNotifier {
     log.info("No longer observing: ${data[fieldTitle]}");
   }
 
-  bool handleCreateArea(data) { //TODO: create defaultJoin property?
+  bool handleCreateArea(data) { //print("Created Area: $data"); //TODO: create defaultJoin property?
     send(ClientMsg.joinArea,data : {fieldTitle: data[fieldTitle]});
     return true;
   }
@@ -268,24 +272,30 @@ abstract class ZugClient extends ChangeNotifier {
 
   bool handleUpdateArea(data) { log.fine("Update Area: $data");
     Area area = getOrCreateArea(data);
-    handleUpdateOccupants(data,area : area);
+    handleUpdateOccupants(data,area : area); //TODO: why use named argument?
     handleUpdateOptions(data,area : area);
     return true;
   }
 
   bool handleUpdateOccupants(data, {Area? area}) {
-    area = area ?? getOrCreateArea(data);
-    area.occupants.clear();
-    for (dynamic occupant in data["occupants"]) {
-      area.occupants.putIfAbsent(UniqueName.fromData(occupant["user"]), () => occupant);
+    if (data[fieldOccupants] != null) {
+      area = area ?? getOrCreateArea(data);
+      area.occupants.clear();
+      for (dynamic occupant in data[fieldOccupants]) {
+        area.occupants.putIfAbsent(UniqueName.fromData(occupant["user"]), () => occupant);
+      }
+      return true;
     }
-    return true;
+    return false;
   }
 
   bool handleUpdateOptions(data, {Area? area}) { //print("Options: $data");
-    area = area ?? getOrCreateArea(data);
-    area.options = data["options"] ?? {};
-    return true;
+    if (data[fieldOptions] != null) {
+      area = area ?? getOrCreateArea(data);
+      area.options = data[fieldOptions] ?? {};
+      return true;
+    }
+    return false;
   }
 
   void addAreaMsg(String msg, String title, {hidden = false}) {
@@ -336,11 +346,29 @@ abstract class ZugClient extends ChangeNotifier {
       area.exists = false;
     }
     for (var area in data[fieldAreas]) {
-      getOrCreateArea(area).exists = true;
+      Area a = getOrCreateArea(area);
+      a.exists = true;
+      a.listData = area; //print("Area: $area");
     }
     areas.removeWhere((key, value) => !value.exists);
     if (currentArea != noArea && !currentArea.exists) {
       currentArea = noArea;
+    }
+    return true;
+  }
+
+  bool handleUpdateAreaList(data) { //print("Area List Update: $data");
+    Area area = getOrCreateArea(data[fieldArea]);
+    if (data[fieldAreaChange] == AreaChange.created.name) {
+      area.exists = true;
+      area.listData = data[fieldArea];  //print("Area List Data: ${area.listData}");
+    }
+    else if (data[fieldAreaChange] == AreaChange.deleted.name) {
+      areas.remove(area.title);
+      if (currentArea.title == area.title) switchArea(noAreaTitle);
+    }
+    else if (data[fieldAreaChange] == AreaChange.updated.name) {
+      area.listData = data[fieldArea];
     }
     return true;
   }
