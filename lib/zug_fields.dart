@@ -12,6 +12,7 @@ enum AreaChange {created,updated,deleted}
 const fieldData = "data",
     fieldAddress = "address",
     fieldServ = "serv",
+    fieldUniqueName = "uname",
     fieldName = "name",
     fieldType = "type",
     fieldMsg = "msg",

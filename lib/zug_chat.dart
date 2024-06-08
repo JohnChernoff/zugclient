@@ -42,7 +42,8 @@ class ZugChat extends StatefulWidget {
   }
 
   Widget buildMessage(dynamic msgData) { //print("New message: " + msgData.toString());
-    String name = msgData[fieldOccupant]?[fieldUser]?[fieldName] ?? msgData[fieldUser]?[fieldName] ?? "";
+    dynamic user = msgData[fieldOccupant]?[fieldUser] ?? msgData[fieldUser];
+    String name = user == null ? "" : UniqueName.fromData(user).toString();
     String nameStr = name.isEmpty ? name : "$name:";
     Color color = msgData[fieldOccupant]?[fieldChatColor] != null ?
     HexColor.fromHex(msgData[fieldOccupant]?[fieldChatColor]) : userColorMap.putIfAbsent(name, () => HexColor.rndColor(pastel: true));

@@ -7,6 +7,7 @@ import 'package:ini/ini.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:zugclient/zug_client.dart';
 import 'package:http/http.dart' as http;
+import 'package:zugclient/zug_fields.dart';
 
 class ZugUtils {
   static Future<Config> getIniConfig(String assetPath) {
@@ -40,6 +41,16 @@ class ZugUtils {
     });
   }
 
+  static getOccupantName(dynamic occupant, {short = false}) {
+    return getUserName(occupant[fieldUser],short: short);
+  }
+
+  static getUserName(dynamic user, {short = false}) {
+    String name = user?[fieldUniqueName]?[fieldName] ?? "";
+    return short || name.isEmpty ? name : "$name@${user?[fieldUniqueName]?[fieldAuthSource] ?? "?"}";
+  }
+
+  //TODO: remove?
   static Row checkRow(ZugClient client, State state, String caption, String prop, bool defaultValue, {Function? onTrue, Function? onFalse}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,

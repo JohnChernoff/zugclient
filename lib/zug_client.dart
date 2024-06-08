@@ -20,7 +20,7 @@ class UniqueName {
   final String name, source;
   UniqueName(this.name,this.source);
   factory UniqueName.fromData(Map<String,dynamic> data) {
-    return UniqueName(data[fieldName],data[fieldAuthSource]);
+    return UniqueName(data[fieldUniqueName]?[fieldName] ?? "?",data[fieldUniqueName]?[fieldAuthSource] ?? "?");
   }
 
   dynamic toJSON() {
@@ -81,8 +81,9 @@ abstract class ZugClient extends ChangeNotifier {
   String domain;
   int port;
   String remoteEndpoint;
-  String userName = "";
-  String userSource = "";
+  //String userName = "";
+  //String userSource = "";
+  UniqueName? user;
   String areaName = "Area";
   bool isConnected = false;
   bool isLoggedIn = false;
@@ -149,23 +150,8 @@ abstract class ZugClient extends ChangeNotifier {
 
   Map<Enum,Function> getFunctions() { return _functionMap; }
 
-  String getUserName(dynamic data) {
-    return data[fieldUser][fieldName];
-  }
-
-  String getPlayerName(dynamic data) {
-    return getUserName(data[fieldPlayer]);
-  }
-
-  dynamic getUniqueName(dynamic userData) {
-    return {
-      fieldName: userData[fieldName],
-      fieldAuthSource: userData[fieldAuthSource], //?[fieldName]
-    };
-  }
-
   void newArea() {
-    Dialogs.getString('Choose Game Title',userName)
+    Dialogs.getString('Choose Game Title',user?.name ?? "?")
         .then((title) => send(ClientMsg.newArea, data: {fieldTitle: title}));
   }
 
@@ -447,7 +433,7 @@ abstract class ZugClient extends ChangeNotifier {
 
   void disconnected() {
     isConnected = false; isLoggedIn = false;
-    log.info("Disconnected: $userName");
+    log.info("Disconnected: $user");
     tryReconnect();
   }
 
@@ -457,14 +443,14 @@ abstract class ZugClient extends ChangeNotifier {
 
   bool loggedIn(data) {
     log.info("Logged in: ${data.toString()}");
-    userName = data["name"];
-    userSource = data["source"];
+    user = UniqueName.fromData(data);
+    //userName = data["name"]; userSource = data["source"];
     isLoggedIn = true;
     return true;
   }
 
   bool loggedOut(data) {
-    log.info("Logged out: $userName");
+    log.info("Logged out: $user");
     isLoggedIn = false;
     Dialogs.popup("Logged out - click to log back in").then((ok) { login(loginType); });
     return true;
@@ -499,16 +485,17 @@ abstract class ZugClient extends ChangeNotifier {
     return sBuff.toString();
   }
 
-  String getSourceDomain(String source) {
+  String getSourceDomain(String? source) {
     return switch(source) {
       "lichess" => "lichess.org",
       String() => "error.com",
+      null => "null.com",
     };
   }
 
   void deleteToken() {
     if (authClient.credentials.accessToken.isNotEmpty) {
-      OauthClient(getSourceDomain(userSource), clientName).deleteToken(authClient.credentials.accessToken);
+      OauthClient(getSourceDomain(user?.source), clientName).deleteToken(authClient.credentials.accessToken);
       authClient = oauth2.Client(oauth2.Credentials(""));
       if (kIsWeb) {
         Dialogs.popup("Token deleted, reload page to login again");
