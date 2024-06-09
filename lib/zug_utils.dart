@@ -41,11 +41,11 @@ class ZugUtils {
     });
   }
 
-  static getOccupantName(dynamic occupant, {short = false}) {
+  static String getOccupantName(dynamic occupant, {short = false}) {
     return getUserName(occupant[fieldUser],short: short);
   }
 
-  static getUserName(dynamic user, {short = false}) {
+  static String getUserName(dynamic user, {short = false}) {
     String name = user?[fieldUniqueName]?[fieldName] ?? "";
     return short || name.isEmpty ? name : "$name@${user?[fieldUniqueName]?[fieldAuthSource] ?? "?"}";
   }

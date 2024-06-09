@@ -23,6 +23,11 @@ class UniqueName {
     return UniqueName(data[fieldUniqueName]?[fieldName] ?? "?",data[fieldUniqueName]?[fieldAuthSource] ?? "?");
   }
 
+  bool eq(UniqueName? uName) {
+    if (uName == null) return false;
+    return (uName.name == name && uName.source == source);
+  }
+
   dynamic toJSON() {
     return { fieldName : name, fieldAuthSource : source };
   }
@@ -351,7 +356,7 @@ abstract class ZugClient extends ChangeNotifier {
     }
     else if (data[fieldAreaChange] == AreaChange.deleted.name) {
       areas.remove(area.title);
-      if (currentArea.title == area.title) switchArea(noAreaTitle);
+      if (currentArea.title == area.title) switchArea(noAreaTitle); //TODO: delete from gamelist somehow
     }
     else if (data[fieldAreaChange] == AreaChange.updated.name) {
       area.listData = data[fieldArea];
