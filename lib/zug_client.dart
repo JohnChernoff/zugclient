@@ -72,7 +72,8 @@ abstract class Area extends Room {
   Area(dynamic data) : super(data);
 }
 
-enum LoginType {guest,lichess}
+enum LoginType {none,lichess}
+
 abstract class ZugClient extends ChangeNotifier {
 
   static final log = Logger('ClientLogger');
@@ -211,7 +212,7 @@ abstract class ZugClient extends ChangeNotifier {
     }
   }
 
-  Enum handleMsg(String msg) {
+  Enum handleMsg(String msg) { print(msg);
     log.fine("Incoming msg: $msg");
     final json = jsonDecode(msg);
     String type = json[fieldType]; //logMsg("Handling: $type");
@@ -397,19 +398,19 @@ abstract class ZugClient extends ChangeNotifier {
 
   void login(LoginType? lt) {
     if (isConnected) {
-      loginType = lt ?? LoginType.guest;
+      loginType = lt ?? LoginType.none;
       if (loginType == LoginType.lichess) {
         if (isAuthenticated()) {
           log.info("Logging in with token");
-          send(ClientMsg.loginLichess, data: { fieldToken : authClient.credentials.accessToken });
+          send(ClientMsg.login, data: { fieldLoginType: LoginType.lichess.name, fieldToken : authClient.credentials.accessToken });
         }
         else {
           authenticate(OauthClient("lichess.org", clientName));
         }
       }
-      else if (loginType == LoginType.guest) {
+      else if (loginType == LoginType.none) {
         log.info("Logging in as guest");
-        send(ClientMsg.loginGuest);
+        send(ClientMsg.login, data: { fieldLoginType: LoginType.none.name });
       }
       notifyListeners();
     }

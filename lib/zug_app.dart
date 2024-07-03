@@ -18,8 +18,8 @@ abstract class ZugApp extends StatelessWidget {
 
   ZugApp(this.client, this.appName, {
     this.splashLandscapeImgPath = "images/splash_land.png",
-    this.splashPortraitImgPath = "images/splash_portrait.png",
-    super.key, Level logLevel = Level.ALL }) {
+    this.splashPortraitImgPath = "images/splash_port.png",
+    super.key, Level logLevel = Level.INFO }) {
     Logger.root.level = logLevel;
     Logger.root.onRecord.listen((record) {
       print('${record.level.name}: ${record.time}: ${record.message}');

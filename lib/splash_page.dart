@@ -25,7 +25,7 @@ class SplashPage extends StatelessWidget {
           children: [
             ElevatedButton(
               onPressed: () {
-                client.login(LoginType.guest);
+                client.login(LoginType.none);
               },
               child: const Padding(padding: EdgeInsets.all(8), child: Text("Login as Guest")),
             ),

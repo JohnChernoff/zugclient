@@ -2,8 +2,8 @@ import 'package:flutter/foundation.dart';
 import "package:universal_html/html.dart" as html;
 import 'package:flutter/material.dart';
 import 'package:zugclient/zug_client.dart';
-import 'package:zugclient/zug_fields.dart';
 import 'package:zugclient/zug_utils.dart';
+import 'package:zugclient/zug_fields.dart';
 
 class LobbyPage extends StatefulWidget {
   final ZugClient client;
@@ -95,7 +95,7 @@ class _LobbyPageState extends State<LobbyPage> {
   @override
   void initState() {
     super.initState();
-    widget.client.areaCmd(ClientMsg.setMute,data:{fieldMuted:true}); //TODO: put in main.dart
+    //widget.client.areaCmd(ClientMsg.setMute,data:{fieldMuted:true}); //TODO: put in main.dart
   }
 
   @override
