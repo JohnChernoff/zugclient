@@ -24,8 +24,8 @@ class LobbyPage extends StatefulWidget {
 
   Widget selectedArea(BuildContext context) {
     return ListView(
-      children: List.generate(client.currentArea.occupants.values.length, (i) {
-        return Text(client.currentArea.getOccupantName(client.currentArea.occupants.keys.elementAt(i)));
+      children: List.generate(client.currentArea.occupantMap.values.length, (i) {
+        return Text(client.currentArea.getOccupantName(client.currentArea.occupantMap.keys.elementAt(i)));
       }),
     );
   }

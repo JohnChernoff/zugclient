@@ -40,17 +40,16 @@ class UniqueName {
 
 abstract class Room {
   late final String title;
-  dynamic jsonData = {};
   List<dynamic> messages = [];
   int newMessages = 0;
-  Map<UniqueName,dynamic> occupants = {};
+  Map<UniqueName,dynamic> occupantMap = {};
 
   Room(dynamic data) {
     title = data?[fieldTitle] ?? ZugClient.noAreaTitle;
   }
 
   String getOccupantName(UniqueName name) {
-    for (UniqueName uniqueName in occupants.keys) {
+    for (UniqueName uniqueName in occupantMap.keys) {
       if (uniqueName.source != name.source &&
           uniqueName.name.toLowerCase() == name.name.toLowerCase()) {
         return name.toString();
@@ -61,6 +60,23 @@ abstract class Room {
 
   String parseOccupantName(Map<String,dynamic> data) {
     return getOccupantName(UniqueName.fromData(data));
+  }
+
+  bool updateOccupants(Map<String,dynamic> data) {
+    if (data[fieldOccupants] == null) return false;
+    occupantMap.clear();
+    for (dynamic occupant in data[fieldOccupants]) {
+      UniqueName uname = UniqueName.fromData(occupant[fieldUser]);
+      occupantMap.putIfAbsent(uname, () => occupant);
+    }
+    return true;
+  }
+
+  dynamic getOccupant(UniqueName name) {
+    for (UniqueName uname in occupantMap.keys) {
+      if (uname.eq(name)) return occupantMap[uname];
+    }
+    return null;
   }
 }
 
@@ -87,8 +103,6 @@ abstract class ZugClient extends ChangeNotifier {
   String domain;
   int port;
   String remoteEndpoint;
-  //String userName = "";
-  //String userSource = "";
   UniqueName? user;
   String areaName = "Area";
   bool isConnected = false;
@@ -212,7 +226,7 @@ abstract class ZugClient extends ChangeNotifier {
     }
   }
 
-  Enum handleMsg(String msg) { print(msg);
+  Enum handleMsg(String msg) { print(msg); print(""); print("***"); print("");
     log.fine("Incoming msg: $msg");
     final json = jsonDecode(msg);
     String type = json[fieldType]; //logMsg("Handling: $type");
@@ -258,7 +272,7 @@ abstract class ZugClient extends ChangeNotifier {
 
   bool handleUpdateOccupant(data) { log.fine("Occupant update: $data");
     Area area = getOrCreateArea(data);
-    area.occupants.putIfAbsent(UniqueName.fromData(data["user"]), () => data);
+    area.occupantMap.putIfAbsent(UniqueName.fromData(data["user"]), () => data);
     return true;
   }
 
@@ -270,15 +284,8 @@ abstract class ZugClient extends ChangeNotifier {
   }
 
   bool handleUpdateOccupants(data, {Area? area}) {
-    if (data[fieldOccupants] != null) {
-      area = area ?? getOrCreateArea(data);
-      area.occupants.clear();
-      for (dynamic occupant in data[fieldOccupants]) {
-        area.occupants.putIfAbsent(UniqueName.fromData(occupant["user"]), () => occupant);
-      }
-      return true;
-    }
-    return false;
+    area = area ?? getOrCreateArea(data);
+    return area.updateOccupants(data);
   }
 
   bool handleUpdateOptions(data, {Area? area}) { //print("Options: $data");

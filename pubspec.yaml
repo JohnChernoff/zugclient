@@ -65,3 +65,7 @@ flutter:
   #
   # For details regarding fonts in packages, see
   # https://flutter.dev/custom-fonts/#from-packages
+
+assets:
+  - images/splash_land.jpg
+  - images/splash_port.jpg
