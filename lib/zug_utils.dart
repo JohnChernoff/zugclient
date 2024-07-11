@@ -57,9 +57,9 @@ class ZugUtils {
       children: [
         Text("$caption:"),
         Checkbox(
-            value: client.defaults?.getBool(prop) ?? defaultValue,
+            value: client.prefs?.getBool(prop) ?? defaultValue,
             onChanged: (b) {
-              client.defaults?.setBool(prop, b ?? defaultValue);
+              client.prefs?.setBool(prop, b ?? defaultValue);
               ZugClient.log.info("Setting $caption: $b");
               if ((b ?? false)) {
                 if (onTrue != null) onTrue();

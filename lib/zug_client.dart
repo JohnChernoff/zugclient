@@ -86,6 +86,11 @@ abstract class Area extends Room {
   bool exists = true;
   Room? currentRoom;
   Area(dynamic data) : super(data);
+
+  bool updateArea(Map<String,dynamic> data) {
+    listData = data; //TODO: eeeeh
+    return updateOccupants(data);
+  }
 }
 
 enum LoginType {none,lichess}
@@ -118,23 +123,25 @@ abstract class ZugClient extends ChangeNotifier {
   final Map<Enum,Function> _functionMap = {};
   PageType switchPage = PageType.none;
   PageType selectedPage = PageType.none;
-  SharedPreferences? defaults;
+  SharedPreferences? prefs;
   LoginType? loginType;
   String? serverVersion;
   final audio = AudioPlayer();
   double volume = .5;
   static bool defaultSound = false;
   int? id;
+  bool autoLog = false;
+  String? autoJoinTitle;
 
   Area createArea(dynamic data);
 
-  ZugClient(this.domain,this.port,this.remoteEndpoint, {this.localServer = false}) {
+  ZugClient(this.domain,this.port,this.remoteEndpoint, SharedPreferences prefs, {this.localServer = false}) {
     noArea = createArea(null); //noAreaTitle);
     currentArea = noArea;
     PackageInfo.fromPlatform().then((PackageInfo info) {
       packageInfo = info;
       log.info(info.toString());
-      notifyListeners();
+      notifyListeners(); //why?
     });
     addFunctions({
       ServMsg.none: handleNoFun,
@@ -160,7 +167,6 @@ abstract class ZugClient extends ChangeNotifier {
       ServMsg.updateAreaList: handleUpdateAreaList,
       ServMsg.version: handleVersion,
     });
-    SharedPreferences.getInstance().then((prefs) => defaults = prefs);
     connect();
   }
 
@@ -226,7 +232,7 @@ abstract class ZugClient extends ChangeNotifier {
     }
   }
 
-  Enum handleMsg(String msg) { print(msg); print(""); print("***"); print("");
+  Enum handleMsg(String msg) { //print(msg); print(""); print("***"); print("");
     log.fine("Incoming msg: $msg");
     final json = jsonDecode(msg);
     String type = json[fieldType]; //logMsg("Handling: $type");
@@ -340,14 +346,14 @@ abstract class ZugClient extends ChangeNotifier {
     return true;
   }
 
-  bool handleAreaList(data) {
+  bool handleAreaList(data) { //print("Area List: $data");
     for (Area area in areas.values) {
       area.exists = false;
     }
     for (var area in data[fieldAreas]) {
       Area a = getOrCreateArea(area);
       a.exists = true;
-      a.listData = area; //print("Area: $area");
+      a.updateArea(area);
     }
     areas.removeWhere((key, value) => !value.exists);
     if (currentArea != noArea && !currentArea.exists) {
@@ -360,18 +366,20 @@ abstract class ZugClient extends ChangeNotifier {
     Area area = getOrCreateArea(data[fieldArea]);
     if (data[fieldAreaChange] == AreaChange.created.name) {
       area.exists = true;
-      area.listData = data[fieldArea];  //print("Area List Data: ${area.listData}");
+      area.updateArea(data[fieldArea]);
+      //area.listData = data[fieldArea];  //print("Area List Data: ${area.listData}");
     }
     else if (data[fieldAreaChange] == AreaChange.deleted.name) {
       areas.remove(area.title);
       if (currentArea.title == area.title) switchArea(noAreaTitle); //TODO: delete from gamelist somehow
     }
     else if (data[fieldAreaChange] == AreaChange.updated.name) {
-      area.listData = data[fieldArea];
+      area.updateArea(data[fieldArea]);
     }
     return true;
   }
 
+  //TODO: generalize
   void checkRedirect(OauthClient oauthClient) {
     if (kIsWeb) {
       String code = Uri.base.queryParameters["code"]?.toString() ?? "";
@@ -380,7 +388,26 @@ abstract class ZugClient extends ChangeNotifier {
         html.window.history.pushState(null, 'home', Uri.base.path);
         oauthClient.decode(code, handleAuthClient);
       }
+      else {
+        String goto = Uri.base.queryParameters["goto"]?.toString() ?? "";
+        if (goto.isNotEmpty) {
+          html.window.history.pushState(null, 'home', Uri.base.path);
+          autoJoinTitle = goto;
+          print("Autologging into game: $autoJoinTitle");
+          autoLogin();
+        }
+      }
     }
+  }
+
+  void autoLogin() {
+     autoLog = true;
+     String? prevLogType = prefs?.getString(fieldLoginType);
+     LoginType logType = LoginType.none;
+     for (LoginType lt in LoginType.values) {
+       if (lt.name == prevLogType) logType = lt;
+     }
+     login(logType);
   }
 
   void authenticate(OauthClient oauthClient) {
@@ -399,12 +426,16 @@ abstract class ZugClient extends ChangeNotifier {
 
   bool handleLogin(data) { //TODO: create login dialog?
     id = data[fieldID]; log.info("Connection ID: $id");
-    if (loginType != null) login(loginType);
+    if (!autoLog && loginType != null) {
+      login(loginType);
+    }
     return false;
   }
 
   void login(LoginType? lt) {
+    //autoLog = false;
     if (isConnected) {
+      prefs?.setString(fieldLoginType, lt.toString());
       loginType = lt ?? LoginType.none;
       if (loginType == LoginType.lichess) {
         if (isAuthenticated()) {
@@ -442,6 +473,7 @@ abstract class ZugClient extends ChangeNotifier {
 
   void connected() { log.info("Connected!");
     isConnected = true;
+    if (autoLog) autoLogin();
   }
 
   void disconnected() {
@@ -457,8 +489,8 @@ abstract class ZugClient extends ChangeNotifier {
   bool loggedIn(data) {
     log.info("Logged in: ${data.toString()}");
     user = UniqueName.fromData(data);
-    //userName = data["name"]; userSource = data["source"];
     isLoggedIn = true;
+    if (autoJoinTitle != null) send(ClientMsg.joinArea,data: { fieldTitle : autoJoinTitle});
     return true;
   }
 
@@ -519,7 +551,7 @@ abstract class ZugClient extends ChangeNotifier {
   }
 
   bool soundCheck() {
-    return defaults?.getBool("sound") ?? defaultSound;
+    return prefs?.getBool("sound") ?? defaultSound;
   }
 
   void playTrack(track) {
