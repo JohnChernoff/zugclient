@@ -97,6 +97,7 @@ enum LoginType {none,lichess}
 
 abstract class ZugClient extends ChangeNotifier {
 
+  static const bool showServMess = true;
   static final log = Logger('ClientLogger');
   static const noAreaTitle = "";
   static const servString = "serv";
@@ -232,7 +233,10 @@ abstract class ZugClient extends ChangeNotifier {
     }
   }
 
-  Enum handleMsg(String msg) { //print(msg); print(""); print("***"); print("");
+  Enum handleMsg(String msg) {
+    if (showServMess) {
+      print(msg); print(""); print("***"); print("");
+    }
     log.fine("Incoming msg: $msg");
     final json = jsonDecode(msg);
     String type = json[fieldType]; //logMsg("Handling: $type");
@@ -490,7 +494,10 @@ abstract class ZugClient extends ChangeNotifier {
     log.info("Logged in: ${data.toString()}");
     user = UniqueName.fromData(data);
     isLoggedIn = true;
-    if (autoJoinTitle != null) send(ClientMsg.joinArea,data: { fieldTitle : autoJoinTitle});
+    if (autoJoinTitle != null) {
+      send(ClientMsg.joinArea,data: { fieldTitle : autoJoinTitle});
+      autoJoinTitle = null;
+    }
     return true;
   }
 
