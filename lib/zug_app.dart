@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:zugclient/splash_page.dart';
+import 'package:zugclient/zug_chat.dart';
 import 'package:zugclient/zug_client.dart';
 import 'package:zugclient/zug_fields.dart';
 import 'package:zugclient/zug_utils.dart';
@@ -54,7 +55,9 @@ abstract class ZugApp extends StatelessWidget {
   }
 
   Widget createLobbyPage(client) {
-    return LobbyPage(client, foregroundColor: defaultColorScheme.onBackground, backgroundColor: defaultColorScheme.background);
+    return LobbyPage(client,
+        chatArea: ZugChat(client, widthFactor: .33, defScope: MessageScope.server),
+        foregroundColor: defaultColorScheme.onBackground, backgroundColor: defaultColorScheme.background);
   }
 
   Widget createSplashPage(client) {
