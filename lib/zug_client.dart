@@ -136,7 +136,8 @@ abstract class ZugClient extends ChangeNotifier {
 
   Area createArea(dynamic data);
 
-  ZugClient(this.domain,this.port,this.remoteEndpoint, SharedPreferences? prefs, {this.localServer = false}) {
+  ZugClient(this.domain,this.port,this.remoteEndpoint, this.prefs, {this.localServer = false}) {
+    log.info("Prefs: ${prefs.toString()}");
     noArea = createArea(null); //noAreaTitle);
     currentArea = noArea;
     PackageInfo.fromPlatform().then((PackageInfo info) {

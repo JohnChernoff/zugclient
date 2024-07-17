@@ -39,3 +39,8 @@ Misc. bugfixes/tweaks/improvements
 ## 0.1.5
 
 Sooo much.  Basically everything.
+
+## 0.2.0
+
+extra event handling, streamlined Areas/Rooms, added ZugChat to Lobby, etc.
+

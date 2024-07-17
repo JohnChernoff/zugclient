@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:zugclient/zug_chat.dart';
 import 'package:zugclient/zug_client.dart';
 import 'package:zugclient/zug_utils.dart';
-import 'package:zugclient/zug_fields.dart';
 
 class LobbyPage extends StatefulWidget {
   final ZugClient client;

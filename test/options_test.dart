@@ -12,7 +12,7 @@ void main() {
   Logger.root.onRecord.listen((record) {
     print('${record.level.name}: ${record.time}: ${record.message}');
   });
-  TestClient testClient = TestClient("example.com", 8000, "test");
+  TestClient testClient = TestClient("example.com", 8000, "test",null);
   testClient.noServer = true;
   TestArea testArea = testClient.getOrCreateArea({"title" : "testArea"}) as TestArea;
   testArea.options = {
@@ -57,7 +57,7 @@ class TestArea extends Area {
 enum TestServMsg {whee}
 class TestClient extends ZugClient {
 
-  TestClient(super.domain, super.port, super.remoteEndpoint) {
+  TestClient(super.domain, super.port, super.remoteEndpoint, super.prefs) {
     addFunctions({
       TestServMsg.whee: whee,
     });

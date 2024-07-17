@@ -24,8 +24,8 @@ class TestClient extends ZugClient {
   }
 
   @override
-  Area createArea(String title) {
-    return TestArea(title);
+  Area createArea(dynamic data) {
+    return TestArea(data);
   }
 
 }

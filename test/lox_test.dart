@@ -13,7 +13,7 @@ void main() {
     print('${record.level.name}: ${record.time}: ${record.message}');
   });
   WidgetsFlutterBinding.ensureInitialized();
-  LoxClient testClient = LoxClient("zugaddict.com", 9999, "test");
+  LoxClient testClient = LoxClient("zugaddict.com", 9999, "test", null);
   testClient.localServer = true;
   testClient.connect();
   runApp(LoxApp(testClient));
@@ -53,7 +53,7 @@ class LoxHome extends StatelessWidget {
 }
 
 class LoxClient extends ZugClient {
-  LoxClient(super.domain, super.port, super.remoteEndpoint) {
+  LoxClient(super.domain, super.port, super.remoteEndpoint, super.prefs) {
     checkRedirect(OauthClient("lichess.org", "testClient"));
   }
 
@@ -70,8 +70,8 @@ class LoxClient extends ZugClient {
   }
 
   @override
-  Area createArea(String title) {
-    return LoxArea(title);
+  Area createArea(dynamic data) {
+    return LoxArea(data);
   }
 
 }

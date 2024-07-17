@@ -61,7 +61,7 @@ class ZugUtils {
   }
 
   //TODO: remove?
-  static Row checkRow(ZugClient client, State state, String caption, String prop, bool defaultValue, {Function? onTrue, Function? onFalse}) {
+  static Row checkRow(ZugClient client, String caption, String prop, bool defaultValue, Function onChange, {Function? onTrue, Function? onFalse}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -69,8 +69,10 @@ class ZugUtils {
         Checkbox(
             value: client.prefs?.getBool(prop) ?? defaultValue,
             onChanged: (b) {
-              client.prefs?.setBool(prop, b ?? defaultValue);
-              ZugClient.log.info("Setting $caption: $b");
+              client.prefs?.setBool(prop, b ?? defaultValue).then((value) {
+                ZugClient.log.info("Setting $caption: $b");
+                onChange();
+              });
               if ((b ?? false)) {
                 if (onTrue != null) onTrue();
               } else {
@@ -78,7 +80,6 @@ class ZugUtils {
                   onFalse();
                 }
               }
-              state.setState(() {  /* prop toggled */ });
             }),
       ],
     );
