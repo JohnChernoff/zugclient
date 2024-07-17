@@ -4,10 +4,16 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ini/ini.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:zugclient/zug_client.dart';
 import 'package:http/http.dart' as http;
 import 'package:zugclient/zug_fields.dart';
+
+class ScreenDim {
+  final double width,height;
+  ScreenDim(this.width,this.height);
+}
 
 class ZugUtils {
   static Future<Config> getIniConfig(String assetPath) {
@@ -22,6 +28,10 @@ class ZugUtils {
 
   static double getActualScreenHeight(BuildContext context) { //rename to approxScreenHeight?
     return MediaQuery.of(context).size.height - (AppBar().preferredSize.height + kBottomNavigationBarHeight) - 8;
+  }
+
+  static ScreenDim getScreenDimensions(BuildContext context) {
+    return ScreenDim(MediaQuery.of(context).size.width,getActualScreenHeight(context));
   }
 
   static double roundNumber(double value, int places) {
@@ -105,6 +115,10 @@ class ZugUtils {
       ZugClient.log.info(exception);
       return null;
     }
+  }
+
+  static Future<SharedPreferences?> getPrefs() async {
+    return await SharedPreferences.getInstance();
   }
 }
 

@@ -136,7 +136,7 @@ abstract class ZugClient extends ChangeNotifier {
 
   Area createArea(dynamic data);
 
-  ZugClient(this.domain,this.port,this.remoteEndpoint, SharedPreferences prefs, {this.localServer = false}) {
+  ZugClient(this.domain,this.port,this.remoteEndpoint, SharedPreferences? prefs, {this.localServer = false}) {
     noArea = createArea(null); //noAreaTitle);
     currentArea = noArea;
     PackageInfo.fromPlatform().then((PackageInfo info) {
@@ -160,6 +160,9 @@ abstract class ZugClient extends ChangeNotifier {
       ServMsg.areaMsg: handleAreaMsg,
       ServMsg.areaUserMsg: handleAreaMsg,
       ServMsg.areaList: handleAreaList,
+      ServMsg.joinArea : handleJoin,
+      ServMsg.partArea : handlePart,
+      ServMsg.startArea : handleStart,
       ServMsg.updateArea: handleUpdateArea,
       ServMsg.updateOccupant: handleUpdateOccupant,
       ServMsg.updateOccupants: handleUpdateOccupants,
@@ -235,9 +238,11 @@ abstract class ZugClient extends ChangeNotifier {
 
   Enum handleMsg(String msg) {
     if (showServMess) {
-      print(msg); print(""); print("***"); print("");
+      log.info("Incoming msg: $msg"); //print(msg); print(""); print("***"); print("");
     }
-    log.fine("Incoming msg: $msg");
+    else {
+      log.fine("Incoming msg: $msg");
+    }
     final json = jsonDecode(msg);
     String type = json[fieldType]; //logMsg("Handling: $type");
     Enum funEnum = _functionMap.keys.singleWhere((element) => element.name == type, orElse: () => ClientMsg.none);
@@ -322,7 +327,7 @@ abstract class ZugClient extends ChangeNotifier {
     return true;
   }
 
-  void addAServMsg(String msg, {hidden = false}) {
+  void addServMsg(String msg, {hidden = false}) {
     handleServMsg({
       fieldMsg : msg,
       fieldHidden : hidden
@@ -336,7 +341,7 @@ abstract class ZugClient extends ChangeNotifier {
   }
 
   bool handlePrivMsg(data) { //print("Private message from: ${data[fieldUser]}");
-    addAServMsg("Private Message from ${UniqueName.fromData(data[fieldUser])}: ${data[fieldMsg]}");
+    addServMsg("Private Message from ${UniqueName.fromData(data[fieldUser])}: ${data[fieldMsg]}");
     return true;
   }
 
@@ -348,6 +353,18 @@ abstract class ZugClient extends ChangeNotifier {
   bool handleAlertMsg(data) {
     Dialogs.popup("Alert: ${data[fieldMsg]}");
     return true;
+  }
+
+  void handleJoin(data) { //print("Joining");
+    switchArea(data[fieldTitle]);
+  }
+
+  void handlePart(data) {
+    addServMsg("Leaving: ${data[fieldTitle]}");
+  }
+
+  void handleStart(data) {
+    switchPage = PageType.main;
   }
 
   bool handleAreaList(data) { //print("Area List: $data");
@@ -371,11 +388,10 @@ abstract class ZugClient extends ChangeNotifier {
     if (data[fieldAreaChange] == AreaChange.created.name) {
       area.exists = true;
       area.updateArea(data[fieldArea]);
-      //area.listData = data[fieldArea];  //print("Area List Data: ${area.listData}");
     }
-    else if (data[fieldAreaChange] == AreaChange.deleted.name) {
+    else if (data[fieldAreaChange] == AreaChange.deleted.name) { //print("Removing: ${area.title}");
       areas.remove(area.title);
-      if (currentArea.title == area.title) switchArea(noAreaTitle); //TODO: delete from gamelist somehow
+      if (currentArea.title == area.title) switchArea(noAreaTitle);
     }
     else if (data[fieldAreaChange] == AreaChange.updated.name) {
       area.updateArea(data[fieldArea]);
@@ -397,7 +413,7 @@ abstract class ZugClient extends ChangeNotifier {
         if (goto.isNotEmpty) {
           html.window.history.pushState(null, 'home', Uri.base.path);
           autoJoinTitle = goto;
-          print("Autologging into game: $autoJoinTitle");
+          log.info("Autologging into game: $autoJoinTitle");
           autoLogin();
         }
       }
@@ -407,9 +423,9 @@ abstract class ZugClient extends ChangeNotifier {
   void autoLogin() {
      autoLog = true;
      String? prevLogType = prefs?.getString(fieldLoginType);
-     LoginType logType = LoginType.none;
+     LoginType logType = LoginType.lichess; //TODO: generalize?
      for (LoginType lt in LoginType.values) {
-       if (lt.name == prevLogType) logType = lt;
+       if (lt != LoginType.none && lt.name == prevLogType) logType = lt;
      }
      login(logType);
   }

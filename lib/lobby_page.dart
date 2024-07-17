@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import "package:universal_html/html.dart" as html;
 import 'package:flutter/material.dart';
+import 'package:zugclient/zug_chat.dart';
 import 'package:zugclient/zug_client.dart';
 import 'package:zugclient/zug_utils.dart';
 import 'package:zugclient/zug_fields.dart';
@@ -11,7 +12,7 @@ class LobbyPage extends StatefulWidget {
   final Color foregroundColor, backgroundColor;
   final ImageProvider? backgroundImage;
   final String helpPage;
-  final double widthFactor;
+  final ZugChat? chatArea;
 
   const LobbyPage(this.client, {
     this.backgroundImage,
@@ -19,8 +20,7 @@ class LobbyPage extends StatefulWidget {
     this.foregroundColor = Colors.white,
     this.backgroundColor = Colors.black,
     this.helpPage = "",
-    this.widthFactor = 1,
-    super.key});
+    super.key, this.chatArea});
 
   Widget selectedArea(BuildContext context) {
     return ListView(
@@ -52,28 +52,28 @@ class LobbyPage extends StatefulWidget {
     return ElevatedButton(
         style: getButtonStyle(Colors.blueAccent, Colors.greenAccent),
         onPressed: () => client.joinArea(),
-        child: const Text("Join"));
+        child: Text("Join",style: getButtonTextStyle()));
   }
 
   Widget getPartButton() {
     return ElevatedButton(
         style: getButtonStyle(Colors.black26, Colors.orangeAccent),
         onPressed: () => client.partArea(),
-        child: const Text("Leave"));
+        child: Text("Leave",style: getButtonTextStyle()));
   }
 
   Widget getStartButton() {
     return ElevatedButton(
         style: getButtonStyle(Colors.redAccent, Colors.purpleAccent),
         onPressed: () => client.startArea(),
-        child: const Text("Start"));
+        child: Text("Start",style: getButtonTextStyle()));
   }
 
   Widget getCreateButton() {
     return ElevatedButton(
         style: getButtonStyle(Colors.greenAccent, Colors.redAccent),
         onPressed: () => client.newArea(),
-        child: const Text("New"));
+        child: Text("New",style: getButtonTextStyle()));
   }
 
   ButtonStyle getButtonStyle(Color c1, Color c2) {
@@ -82,6 +82,10 @@ class LobbyPage extends StatefulWidget {
       if (states.contains(MaterialState.pressed)) return c2;
       return c1;
     }));
+  }
+
+  TextStyle getButtonTextStyle() {
+    return const TextStyle(color: Colors.black);
   }
 
   @override
@@ -98,9 +102,15 @@ class _LobbyPageState extends State<LobbyPage> {
     //widget.client.areaCmd(ClientMsg.setMute,data:{fieldMuted:true}); //TODO: put in main.dart
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final double width = MediaQuery.of(context).size.width * widget.widthFactor;
+  Widget getAreaArea(BuildContext context) {
+    ScreenDim dim = ZugUtils.getScreenDimensions(context);
+    final double width;
+    if (widget.chatArea == null) {
+      width = dim.width;
+    } else {
+      width = dim.width - (widget.chatArea?.width ?? ((widget.chatArea?.widthFactor ?? 0 ) * dim.width));
+    }
+    //final double width = MediaQuery.of(context).size.width * (1 - (widget.chatArea?.widthFactor ?? 0));
 
     if (showHelp) return widget.getHelp(context, getCommandButtons(width));
 
@@ -119,38 +129,48 @@ class _LobbyPageState extends State<LobbyPage> {
     return Container(
         width: width,
         decoration: BoxDecoration(
-        color: widget.backgroundColor,
-        image: widget.backgroundImage != null ? DecorationImage(
-            image: widget.backgroundImage!,
-            fit: BoxFit.cover
-        ) : null,
-      ),
-      child: Column(
-        children: [ //Text(widget.client.userName),
-          Center(child: Container(
-            color: Colors.white,
-            child: Row(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text("Select ${widget.areaName}: ",style: TextStyle(color: widget.foregroundColor)),
-                const SizedBox(width: 8,),
-                DropdownButton(
-                    style: TextStyle(color: widget.foregroundColor, backgroundColor: widget.backgroundColor),
-                    value: widget.client.currentArea.exists ? widget.client.currentArea.title : null,
-                    items: games,
-                    onChanged: (String? title) {
-                      setState(() {
-                        widget.client.switchArea(title); //client.update();
-                      });
-                    }),
-              ],
-            ),
-          )),
-          getCommandButtons(width),
-          Expanded(child: widget.selectedArea(context)),
-        ],
-      )
+          color: widget.backgroundColor,
+          image: widget.backgroundImage != null ? DecorationImage(
+              image: widget.backgroundImage!,
+              fit: BoxFit.cover
+          ) : null,
+        ),
+        child: Column(
+          children: [ //Text(widget.client.userName),
+            Center(child: Container(
+              color: Colors.white,
+              child: Row(
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text("Select ${widget.areaName}: ",style: TextStyle(color: widget.foregroundColor)),
+                  const SizedBox(width: 8,),
+                  DropdownButton(
+                      style: TextStyle(color: widget.foregroundColor, backgroundColor: widget.backgroundColor),
+                      value: widget.client.currentArea.exists ? widget.client.currentArea.title : null,
+                      items: games,
+                      onChanged: (String? title) {
+                        setState(() {
+                          widget.client.switchArea(title); //client.update();
+                        });
+                      }),
+                ],
+              ),
+            )),
+            getCommandButtons(width),
+            Expanded(child: widget.selectedArea(context)),
+          ],
+        )
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        getAreaArea(context),
+        widget.chatArea ?? const SizedBox.shrink(),
+      ],
     );
   }
 
@@ -169,7 +189,7 @@ class _LobbyPageState extends State<LobbyPage> {
             setState(() { showHelp = true; });
           }
         },
-        child: const Text("Help"));
+        child: Text("Help",style: widget.getButtonTextStyle()));
   }
 
   Widget getCommandButtons(double width, {double padding = 4}) {
@@ -185,7 +205,7 @@ class _LobbyPageState extends State<LobbyPage> {
                 onPressed: () =>  setState(() {
                   showHelp = false;
                 }),
-                child: const Text("Return")),
+                child: Text("Return",style: widget.getButtonTextStyle())),
           ],
         )
             : Center(child: SingleChildScrollView(

@@ -6,6 +6,8 @@ import 'package:zugclient/zug_utils.dart';
 class ZugChat extends StatefulWidget {
   static Map<String,Color> userColorMap = {};
   final ZugClient client;
+  final double? widthFactor;
+  final double? heightFactor;
   final double? width;
   final double? height;
   final Color foregroundColor; //no longer used?
@@ -35,6 +37,8 @@ class ZugChat extends StatefulWidget {
     this.roomName = "Room",
     this.serverName = "Server",
     this.defScope = MessageScope.room,
+    this.widthFactor,
+    this.heightFactor,
     this.width,
     this.height,
     super.key}) {
@@ -101,6 +105,7 @@ class ZugChatState extends State<ZugChat> {
 
   @override
   Widget build(BuildContext context) {
+    ScreenDim dim = ZugUtils.getScreenDimensions(context);
     if (widget.autoScroll) ZugUtils.scrollDown(scrollController,250,delay: 750);
 
     Area cg = widget.client.currentArea;
@@ -121,8 +126,8 @@ class ZugChatState extends State<ZugChat> {
 
     return Container(
       decoration: ZugChat.getDecoration(borderColor: widget.borderColor, borderWidth: widget.borderWidth),
-      width: widget.width,
-      height: widget.height,
+      width: widget.width ?? (dim.width * (widget.widthFactor ?? 1)),
+      height: widget.height ?? (dim.height * (widget.heightFactor ?? 1)),
       //margin:  const EdgeInsets.only(left: 16.0, right: 0.0),
       child: Column(
         children: [
