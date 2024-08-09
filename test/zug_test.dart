@@ -4,7 +4,7 @@ import 'package:zugclient/zug_app.dart';
 import 'package:zugclient/zug_client.dart';
 
 void main() {
-  TestClient testClient = TestClient("example.com", 9999, "test",localServer : true);
+  TestClient testClient = TestClient("example.com", 9999, "test",localServer : true, null);
   runApp(TestApp(testClient,"TestApp"));
 }
 
@@ -19,7 +19,7 @@ class TestApp extends ZugApp {
 }
 
 class TestClient extends ZugClient {
-  TestClient(super.domain, super.port, super.remoteEndpoint, {super.localServer}) {
+  TestClient(super.domain, super.port, super.remoteEndpoint, super.prefs, {super.localServer}) {
     checkRedirect(OauthClient("lichess.org", clientName));
   }
 

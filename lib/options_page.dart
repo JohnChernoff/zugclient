@@ -25,6 +25,12 @@ class _OptionsPageState extends State<OptionsPage> {
   Map<String,dynamic> newOptions = {};
 
   @override
+  void initState() {
+    super.initState();
+    widget.client.areaCmd(ClientMsg.setDeaf,data:{fieldDeafened:true}); //TODO: put in main.dart
+  }
+
+  @override
   Widget build(BuildContext context) {
     newOptions = widget.client.currentArea.options; //print("Options: $newOptions");
     Map<String,Widget> widgets = {};

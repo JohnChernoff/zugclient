@@ -4,6 +4,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:logging/logging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zugclient/zug_app.dart';
+import 'package:zugclient/zug_utils.dart';
 import 'zug_fields.dart';
 import 'zug_sock.dart';
 import 'dialogs.dart';
@@ -18,8 +19,9 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 class UniqueName {
   final String name, source;
-  UniqueName(this.name,this.source);
-  factory UniqueName.fromData(Map<String,dynamic> data) {
+  const UniqueName(this.name,this.source);
+  factory UniqueName.fromData(Map<String,dynamic>? data, {defaultName = const UniqueName("?","?"),}) {
+    if (data == null) return defaultName;
     return UniqueName(data[fieldUniqueName]?[fieldName] ?? "?",data[fieldUniqueName]?[fieldAuthSource] ?? "?");
   }
 
@@ -34,11 +36,11 @@ class UniqueName {
 
   @override
   String toString() {
-    return "$name($source)";
+    return "$name@$source";
   }
 }
 
-abstract class Room {
+abstract class Room with Timerable {
   late final String title;
   List<dynamic> messages = [];
   int newMessages = 0;
@@ -96,12 +98,11 @@ abstract class Area extends Room {
 enum LoginType {none,lichess}
 
 abstract class ZugClient extends ChangeNotifier {
-
-  static const bool showServMess = true;
   static final log = Logger('ClientLogger');
   static const noAreaTitle = "";
   static const servString = "serv";
 
+  bool showServMess;
   bool localServer;
   bool noServer = false;
   String clientName = "ZugClient";
@@ -109,7 +110,7 @@ abstract class ZugClient extends ChangeNotifier {
   String domain;
   int port;
   String remoteEndpoint;
-  UniqueName? user;
+  UniqueName? userName;
   String areaName = "Area";
   bool isConnected = false;
   bool isLoggedIn = false;
@@ -136,7 +137,7 @@ abstract class ZugClient extends ChangeNotifier {
 
   Area createArea(dynamic data);
 
-  ZugClient(this.domain,this.port,this.remoteEndpoint, this.prefs, {this.localServer = false}) {
+  ZugClient(this.domain,this.port,this.remoteEndpoint, this.prefs, {this.showServMess = false, this.localServer = false}) {
     log.info("Prefs: ${prefs.toString()}");
     noArea = createArea(null); //noAreaTitle);
     currentArea = noArea;
@@ -182,12 +183,12 @@ abstract class ZugClient extends ChangeNotifier {
   Map<Enum,Function> getFunctions() { return _functionMap; }
 
   void newArea() {
-    Dialogs.getString('Choose Game Title',user?.name ?? "?")
+    Dialogs.getString('Choose Game Title',userName?.name ?? "?")
         .then((title) => send(ClientMsg.newArea, data: {fieldTitle: title}));
   }
 
-  void joinArea() {
-    areaCmd(ClientMsg.joinArea);
+  void joinArea(String title) {
+    areaCmd(ClientMsg.joinArea,title: title);
   }
 
   void partArea() {
@@ -282,7 +283,7 @@ abstract class ZugClient extends ChangeNotifier {
   }
 
   bool handleCreateArea(data) { //print("Created Area: $data"); //TODO: create defaultJoin property?
-    send(ClientMsg.joinArea,data : {fieldTitle: data[fieldTitle]});
+    joinArea(data[fieldTitle]); //send(ClientMsg.joinArea,data : {fieldTitle: });
     return true;
   }
 
@@ -296,6 +297,7 @@ abstract class ZugClient extends ChangeNotifier {
     Area area = getOrCreateArea(data);
     handleUpdateOccupants(data,area : area); //TODO: why use named argument?
     handleUpdateOptions(data,area : area);
+    //if (data[fieldPhaseTimeRemaining] != null && data[fieldPhaseTimeRemaining] > 0) { area.setTimer(data[fieldPhaseTimeRemaining], 1000); }
     return true;
   }
 
@@ -365,6 +367,7 @@ abstract class ZugClient extends ChangeNotifier {
   }
 
   void handleStart(data) {
+    handleUpdateArea(data);
     switchPage = PageType.main;
   }
 
@@ -499,7 +502,7 @@ abstract class ZugClient extends ChangeNotifier {
 
   void disconnected() {
     isConnected = false; isLoggedIn = false;
-    log.info("Disconnected: $user");
+    log.info("Disconnected: $userName");
     tryReconnect();
   }
 
@@ -509,17 +512,17 @@ abstract class ZugClient extends ChangeNotifier {
 
   bool loggedIn(data) {
     log.info("Logged in: ${data.toString()}");
-    user = UniqueName.fromData(data);
+    userName = UniqueName.fromData(data);
     isLoggedIn = true;
     if (autoJoinTitle != null) {
-      send(ClientMsg.joinArea,data: { fieldTitle : autoJoinTitle});
+      joinArea(autoJoinTitle!); //send(ClientMsg.joinArea,data: { fieldTitle : autoJoinTitle});
       autoJoinTitle = null;
     }
     return true;
   }
 
   bool loggedOut(data) {
-    log.info("Logged out: $user");
+    log.info("Logged out: $userName");
     isLoggedIn = false;
     Dialogs.popup("Logged out - click to log back in").then((ok) { login(loginType); });
     return true;
@@ -564,7 +567,7 @@ abstract class ZugClient extends ChangeNotifier {
 
   void deleteToken() {
     if (authClient.credentials.accessToken.isNotEmpty) {
-      OauthClient(getSourceDomain(user?.source), clientName).deleteToken(authClient.credentials.accessToken);
+      OauthClient(getSourceDomain(userName?.source), clientName).deleteToken(authClient.credentials.accessToken);
       authClient = oauth2.Client(oauth2.Credentials(""));
       if (kIsWeb) {
         Dialogs.popup("Token deleted, reload page to login again");

@@ -365,7 +365,14 @@ abstract class TimedDialog extends StatefulWidget {
   final bool showTime;
   final int milliseconds;
   final int framerate;
-  const TimedDialog(this.milliseconds,this.showTime, {this.framerate = 1000, super.key});
+  bool timeOut = false;
+  Future<dynamic>? countThread;
+  TimedDialog(this.milliseconds,this.showTime, {this.framerate = 1000, super.key});
+
+  void cancel() {
+    timeOut = true;
+    countThread?.timeout(const Duration(milliseconds: 50));
+  }
 }
 
 abstract class TimedDialogState extends State<TimedDialog> {
@@ -375,7 +382,6 @@ abstract class TimedDialogState extends State<TimedDialog> {
   @override
   void initState() { //print("Millis: ${widget.milliseconds}");
     super.initState();
-
     countingDown = widget.milliseconds > 0;
     timeRemaining = widget.milliseconds;
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -385,11 +391,12 @@ abstract class TimedDialogState extends State<TimedDialog> {
 
   Future<void> countdown() async { //print("Counting down");
     while (timeRemaining > 0) {
-      await Future.delayed(Duration(milliseconds: widget.framerate)).then((value) {
+      widget.countThread = Future.delayed(Duration(milliseconds: widget.framerate)).then((value) {
         if (countingDown) {
           setState(() { timeRemaining -= widget.framerate; });
         }
       });
+      await widget.countThread;
     } //countingDown = false;
   }
 
@@ -400,7 +407,7 @@ abstract class TimedDialogState extends State<TimedDialog> {
   }
 
   bool checkTime() {
-    if ((countingDown && timeRemaining <= 0)) {
+    if (widget.timeOut || (countingDown && timeRemaining <= 0)) {
       Navigator.pop(context,null);
       return true;
     }
@@ -420,7 +427,7 @@ class WidgetSelectDialog extends TimedDialog {
   final String prompt;
   final Offset sizeFactor;
   final List<Widget> widgets;
-  const WidgetSelectDialog(this.prompt, this.widgets, this.axisCount,
+  WidgetSelectDialog(this.prompt, this.widgets, this.axisCount,
       {seconds = 0, showTime = false, this.buffer = 8, this.sizeFactor = const Offset(1, 1), this.color = Colors.white, this.backgroundColor = Colors.black, super.key}) : super(seconds * 1000, showTime);
 
   @override
@@ -435,7 +442,7 @@ class _WidgetSelectState extends TimedDialogState {
     var w = widget;
     if (w is WidgetSelectDialog) {
       if (checkTime() || w.widgets.isEmpty) {
-        return const Text("");
+        return const SizedBox.shrink();
       }
       else {
         final double dialogWidth = MediaQuery.of(context).size.width * w.sizeFactor.dx;
@@ -492,7 +499,7 @@ class WidgetDim {
 
 abstract class AnimationDialog extends TimedDialog {
   final double sizeFactor;
-  const AnimationDialog(milliseconds, {this.sizeFactor = 1, framerate = 0, showTime = false, super.key}) : super(milliseconds, showTime, framerate : framerate > 0 ? framerate : milliseconds);
+  AnimationDialog(milliseconds, {this.sizeFactor = 1, framerate = 0, showTime = false, super.key}) : super(milliseconds, showTime, framerate : framerate > 0 ? framerate : milliseconds);
 }
 
 abstract class AnimationDialogState extends TimedDialogState {

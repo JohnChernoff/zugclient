@@ -40,6 +40,8 @@ const fieldData = "data",
     fieldHidden = "hidden",
     fieldID = "id",
     fieldLoginType = "login_type",
+    fieldPhase = "phase",
+    fieldPhaseTimeRemaining = "phase_time_remaining",
     fieldAreaChange = "area_change";
 
 

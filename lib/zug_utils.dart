@@ -10,6 +10,8 @@ import 'package:zugclient/zug_client.dart';
 import 'package:http/http.dart' as http;
 import 'package:zugclient/zug_fields.dart';
 
+enum ZugEnum { unknown }
+
 class ScreenDim {
   final double width,height;
   ScreenDim(this.width,this.height);
@@ -121,6 +123,80 @@ class ZugUtils {
   static Future<SharedPreferences?> getPrefs() async {
     return await SharedPreferences.getInstance();
   }
+
+}
+
+mixin Timerable {
+  int? startTime;
+  int? duration;
+  int? inc;
+
+  void setTimer(int dur, int i) {
+    startTime = DateTime.now().millisecondsSinceEpoch; duration = dur; inc = i;
+  }
+}
+
+abstract class TimedWidget extends StatefulWidget {
+  final Timerable source;
+  const TimedWidget(this.source,{super.key});
+}
+
+abstract class TimedWidgetState extends State<TimedWidget> {
+  int timeRemaining = 0;
+  int tick = 0;
+  bool finished = false;
+  int startTime = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    setTimer();
+    ZugClient.log.fine("Initializing TimedWidget: ${widget.source.duration}");
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _countdownLoop();
+    });
+  }
+
+  void setTimer() {
+    startTime = widget.source.startTime ?? 0;
+    timeRemaining = (widget.source.duration ?? 0) - getElapsedTime();
+  }
+
+  void updateTimer() {
+    setState(() {
+      timeRemaining -= (widget.source.inc ?? 0);
+      tick++;
+    });
+  }
+
+  int getElapsedTime() {
+    return DateTime.now().millisecondsSinceEpoch - (widget.source.startTime ?? 0);
+  }
+
+  double getPercentDone() {
+    return widget.source.duration != 0 ? getElapsedTime() / (widget.source.duration ?? 1) : 0;
+  }
+
+  void _countdownLoop() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    ZugClient.log.fine("Starting countdown");
+    while (!finished) {
+      await Future.delayed(Duration(milliseconds: widget.source.inc ?? 0), () {
+        if (mounted && timeRemaining > 0) {
+          if (startTime != widget.source.startTime) {
+            setTimer();
+          } else {
+            updateTimer();
+          }
+        }
+        else {
+          finished = true;
+        }
+      });
+    }
+    ZugClient.log.fine("Ending countdown");
+  }
+
 }
 
 extension HexColor on Color {

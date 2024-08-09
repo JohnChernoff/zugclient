@@ -3,6 +3,7 @@ import "package:universal_html/html.dart" as html;
 import 'package:flutter/material.dart';
 import 'package:zugclient/zug_chat.dart';
 import 'package:zugclient/zug_client.dart';
+import 'package:zugclient/zug_fields.dart';
 import 'package:zugclient/zug_utils.dart';
 
 class LobbyPage extends StatefulWidget {
@@ -33,7 +34,7 @@ class LobbyPage extends StatefulWidget {
     return Text(title ?? "",style: TextStyle(backgroundColor: backgroundColor, color: foregroundColor));
   }
 
-  int compareGames(Area? a, Area? b) {
+  int compareAreas(Area? a, Area? b) {
     if (a == null || b == null) return 0;
     return a.title.compareTo(b.title);
   }
@@ -50,7 +51,7 @@ class LobbyPage extends StatefulWidget {
   Widget getJoinButton() {
     return ElevatedButton(
         style: getButtonStyle(Colors.blueAccent, Colors.greenAccent),
-        onPressed: () => client.joinArea(),
+        onPressed: () => client.joinArea(client.currentArea.title),
         child: Text("Join",style: getButtonTextStyle()));
   }
 
@@ -98,7 +99,7 @@ class _LobbyPageState extends State<LobbyPage> {
   @override
   void initState() {
     super.initState();
-    //widget.client.areaCmd(ClientMsg.setMute,data:{fieldMuted:true}); //TODO: put in main.dart
+    widget.client.areaCmd(ClientMsg.setDeaf,data:{fieldDeafened:true}); //TODO: put in main.dart
   }
 
   Widget getAreaArea(BuildContext context) {
@@ -123,7 +124,7 @@ class _LobbyPageState extends State<LobbyPage> {
       );
     }).toList());
 
-    games.sort((a,b) => widget.compareGames(widget.client.areas[a.value],widget.client.areas[b.value]));
+    games.sort((a,b) => widget.compareAreas(widget.client.areas[a.value],widget.client.areas[b.value]));
 
     return Container(
         width: width,
