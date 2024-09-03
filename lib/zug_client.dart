@@ -147,6 +147,7 @@ abstract class ZugClient extends ChangeNotifier {
       notifyListeners(); //why?
     });
     addFunctions({
+      //ServMsg.createArea: handleCreateArea,
       ServMsg.none: handleNoFun,
       ServMsg.ping: handlePing,
       ServMsg.obs: handleObs,
@@ -169,7 +170,6 @@ abstract class ZugClient extends ChangeNotifier {
       ServMsg.updateOccupant: handleUpdateOccupant,
       ServMsg.updateOccupants: handleUpdateOccupants,
       ServMsg.updateOptions: handleUpdateOptions,
-      ServMsg.createArea: handleCreateArea,
       ServMsg.updateAreaList: handleUpdateAreaList,
       ServMsg.version: handleVersion,
     });
