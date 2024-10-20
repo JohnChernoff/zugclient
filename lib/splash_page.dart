@@ -1,24 +1,25 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_oauth/flutter_oauth.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:zug_utils/zug_utils.dart';
 import 'package:zugclient/zug_client.dart';
-import 'package:zugclient/zug_utils.dart';
-import 'oauth_client.dart';
 
 class SplashPage extends StatelessWidget {
   final ZugClient client;
   final Image? imgLandscape, imgPortrait;
+  final bool dark;
 
-  const SplashPage(this.client,{this.imgLandscape,this.imgPortrait,super.key});
+  const SplashPage(this.client,{this.imgLandscape,this.imgPortrait,this.dark = true,super.key});
 
   @override
   Widget build(BuildContext context) {
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final double screenHeight = ZugUtils.getActualScreenHeight(context);
-    final bool landscape = screenWidth > screenHeight;
-    final Image? img = landscape ? imgLandscape : imgPortrait;
+    final dim = ZugUtils.getScreenDimensions(context);
+    final Image? img = dim.getMainAxis() == Axis.horizontal ? imgLandscape : imgPortrait;
+    final txtStyle = TextStyle(color: dark ? Colors.black : Colors.white);
 
-    return Column(
+    return LayoutBuilder(builder: (BuildContext ctx, BoxConstraints constraints) =>
+      Container(color: dark ? Colors.black : Colors.white, width: constraints.maxWidth, height: constraints.maxHeight, child: Column(
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -27,23 +28,24 @@ class SplashPage extends StatelessWidget {
               onPressed: () {
                 client.login(LoginType.none);
               },
-              child: const Padding(padding: EdgeInsets.all(8), child: Text("Login as Guest")),
+              child: Padding(padding: const EdgeInsets.all(8), child: Text("Login as Guest",style: txtStyle)),
+             // style: ButtonStyle(backgroundColor: dark ? Colors.black : Colors.white, foregroundColor: dark ? Colors.white : Colors.black)
             ),
             ElevatedButton(
               onPressed: () {
                 client.login(LoginType.lichess);
               },
-              child: const Padding(padding: EdgeInsets.all(8), child: Text("Login with Lichess")),
+              child: Padding(padding: const EdgeInsets.all(8), child: Text("Login with Lichess",style: txtStyle)),
             ),
           ],
         ),
         Expanded(
           child: !kIsWeb && client.authenticating
               ? WebViewWidget(controller: OauthClient.webViewController)
-              : img ?? const SizedBox(),
+              : SizedBox(child: img), //?? const SizedBox()
         ),
       ],
-    );
+    )));
   }
 
 }

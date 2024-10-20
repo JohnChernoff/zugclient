@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
 import "package:universal_html/html.dart" as html;
 import 'package:flutter/material.dart';
+import 'package:zug_utils/zug_utils.dart';
 import 'package:zugclient/zug_chat.dart';
 import 'package:zugclient/zug_client.dart';
 import 'package:zugclient/zug_fields.dart';
-import 'package:zugclient/zug_utils.dart';
 
 class LobbyPage extends StatefulWidget {
   final ZugClient client;
@@ -44,8 +44,31 @@ class LobbyPage extends StatefulWidget {
     return buttons;
   }
 
+  Widget getHelpButton() {
+    if (helpPage.isNotEmpty) {
+      return ElevatedButton(
+          style: getButtonStyle(Colors.cyan, Colors.lightBlueAccent),
+          onPressed: ()  {
+            if (kIsWeb) {
+              html.window.open(helpPage, 'new tab');
+            } else {
+              ZugUtils.launch(helpPage, isNewTab: true);
+            }
+          },
+          child: Text("Help",style: getButtonTextStyle()));
+    }
+    return const SizedBox.shrink();
+  }
+
   Widget getSocialMediaButtons() {
     return const SizedBox.shrink();
+  }
+
+  Widget getSeekButton() {
+    return ElevatedButton(
+        style: getButtonStyle(Colors.orangeAccent, Colors.greenAccent),
+        onPressed: () => client.seekArea(),
+        child: Text("Seek",style: getButtonTextStyle()));
   }
 
   Widget getJoinButton() {
@@ -78,8 +101,8 @@ class LobbyPage extends StatefulWidget {
 
   ButtonStyle getButtonStyle(Color c1, Color c2) {
     return ButtonStyle(backgroundColor:
-    MaterialStateProperty.resolveWith<Color?>((Set<MaterialState> states) {
-      if (states.contains(MaterialState.pressed)) return c2;
+    WidgetStateProperty.resolveWith<Color?>((Set<WidgetState> states) {
+      if (states.contains(WidgetState.pressed)) return c2;
       return c1;
     }));
   }
@@ -174,24 +197,6 @@ class _LobbyPageState extends State<LobbyPage> {
     );
   }
 
-  Widget getHelpButton() {
-    return ElevatedButton(
-        style: widget.getButtonStyle(Colors.cyan, Colors.lightBlueAccent),
-        onPressed: ()  {
-          if (widget.helpPage.isNotEmpty) {
-            if (kIsWeb) {
-              html.window.open(widget.helpPage, 'new tab');
-            } else {
-              ZugUtils.launch(widget.helpPage, isNewTab: true);
-            }
-          }
-          else {
-            setState(() { showHelp = true; });
-          }
-        },
-        child: Text("Help",style: widget.getButtonTextStyle()));
-  }
-
   Widget getCommandButtons(double width, {double padding = 4}) {
     return Container(
         width: width,
@@ -212,11 +217,12 @@ class _LobbyPageState extends State<LobbyPage> {
           scrollDirection: Axis.horizontal,
           //mainAxisAlignment: MainAxisAlignment.center,
           child: Row(children: [
+            Padding(padding: EdgeInsets.all(padding),child: widget.getSeekButton()),
             Padding(padding: EdgeInsets.all(padding),child: widget.getCreateButton()),
             Padding(padding: EdgeInsets.all(padding),child: widget.getStartButton()),
             Padding(padding: EdgeInsets.all(padding),child: widget.getJoinButton()),
             Padding(padding: EdgeInsets.all(padding),child: widget.getPartButton()),
-            Padding(padding: EdgeInsets.all(padding),child: getHelpButton()),
+            Padding(padding: EdgeInsets.all(padding),child: widget.getHelpButton()),
             Padding(padding: EdgeInsets.all(padding),child: widget.getSocialMediaButtons()),
           ],
         ))),

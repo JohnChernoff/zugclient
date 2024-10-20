@@ -1,14 +1,15 @@
 library zugclient;
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter_oauth/flutter_oauth.dart';
 import 'package:logging/logging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:zug_net/zug_sock.dart';
+import 'package:zug_utils/zug_utils.dart';
 import 'package:zugclient/zug_app.dart';
-import 'package:zugclient/zug_utils.dart';
 import 'zug_fields.dart';
-import 'zug_sock.dart';
+//import 'zug_sock.dart';
 import 'dialogs.dart';
-import 'oauth_client.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:oauth2/oauth2.dart' as oauth2;
@@ -116,7 +117,7 @@ abstract class ZugClient extends ChangeNotifier {
   bool isLoggedIn = false;
   bool authenticating = false;
   ZugSock? sock;
-  oauth2.Client authClient = oauth2.Client(oauth2.Credentials(""));
+  oauth2.Client? authClient; // = oauth2.Client(oauth2.Credentials(""));
   Map<String,Area> areas = {};
   int newMessages = 0;
   List<dynamic> messages = [];
@@ -167,6 +168,7 @@ abstract class ZugClient extends ChangeNotifier {
       ServMsg.partArea : handlePart,
       ServMsg.startArea : handleStart,
       ServMsg.updateArea: handleUpdateArea,
+      ServMsg.createArea : handleCreateArea,
       ServMsg.updateOccupant: handleUpdateOccupant,
       ServMsg.updateOccupants: handleUpdateOccupants,
       ServMsg.updateOptions: handleUpdateOptions,
@@ -182,9 +184,18 @@ abstract class ZugClient extends ChangeNotifier {
 
   Map<Enum,Function> getFunctions() { return _functionMap; }
 
-  void newArea() {
-    Dialogs.getString('Choose Game Title',userName?.name ?? "?")
-        .then((title) => send(ClientMsg.newArea, data: {fieldTitle: title}));
+  void newArea({String? title}) {
+    if (title != null) {
+      send(ClientMsg.newArea, data: {fieldTitle: title});
+    }
+    else {
+      Dialogs.getString('Choose Game Title',userName?.name ?? "?")
+          .then((t) => send(ClientMsg.newArea, data: {fieldTitle: t}));
+    }
+  }
+
+  void seekArea() {
+    send(ClientMsg.joinArea);
   }
 
   void joinArea(String title) {
@@ -238,7 +249,7 @@ abstract class ZugClient extends ChangeNotifier {
     }
   }
 
-  Enum handleMsg(String msg) {
+  void handleMsg(dynamic msg) {
     if (showServMess) {
       log.info("Incoming msg: $msg"); //print(msg); print(""); print("***"); print("");
     }
@@ -258,7 +269,7 @@ abstract class ZugClient extends ChangeNotifier {
     } else {
       log.warning("Function not found: $type");
     }
-    return funEnum;
+    //return funEnum;
   }
 
   void handleNoFun(data) {
@@ -283,7 +294,8 @@ abstract class ZugClient extends ChangeNotifier {
   }
 
   bool handleCreateArea(data) { //print("Created Area: $data"); //TODO: create defaultJoin property?
-    joinArea(data[fieldTitle]); //send(ClientMsg.joinArea,data : {fieldTitle: });
+    //joinArea(data[fieldTitle]); //send(ClientMsg.joinArea,data : {fieldTitle: }); Area area = getOrCreateArea(data);
+    log.info("Created: $data");
     return true;
   }
 
@@ -362,7 +374,7 @@ abstract class ZugClient extends ChangeNotifier {
     switchArea(data[fieldTitle]);
   }
 
-  void handlePart(data) {
+  void handlePart(data) { //print("Parting: $data");
     addServMsg("Leaving: ${data[fieldTitle]}");
   }
 
@@ -440,7 +452,7 @@ abstract class ZugClient extends ChangeNotifier {
     oauthClient.authenticate(handleAuthClient);
   }
 
-  void handleAuthClient(oauth2.Client client) {
+  void handleAuthClient(oauth2.Client? client) {
     authClient = client;
     authenticating = false;
     if (!isLoggedIn) { //TODO: handle other login types
@@ -464,7 +476,7 @@ abstract class ZugClient extends ChangeNotifier {
       if (loginType == LoginType.lichess) {
         if (isAuthenticated()) {
           log.info("Logging in with token");
-          send(ClientMsg.login, data: { fieldLoginType: LoginType.lichess.name, fieldToken : authClient.credentials.accessToken });
+          send(ClientMsg.login, data: { fieldLoginType: LoginType.lichess.name, fieldToken : authClient?.credentials.accessToken });
         }
         else {
           authenticate(OauthClient("lichess.org", clientName));
@@ -492,7 +504,7 @@ abstract class ZugClient extends ChangeNotifier {
   }
 
   bool isAuthenticated() {
-    return authClient.credentials.accessToken.isNotEmpty;
+    return authClient?.credentials.accessToken.isNotEmpty ?? false;
   }
 
   void connected() { log.info("Connected!");
@@ -529,6 +541,7 @@ abstract class ZugClient extends ChangeNotifier {
   }
 
   void send(Enum type, { var data = "" }) {
+    if (showServMess) log.info("Sending: $type, $data");
     if (noServer) {
       log.fine("Sending: ${type.toString()} -> ${data.toString()}");
     }
@@ -566,8 +579,8 @@ abstract class ZugClient extends ChangeNotifier {
   }
 
   void deleteToken() {
-    if (authClient.credentials.accessToken.isNotEmpty) {
-      OauthClient(getSourceDomain(userName?.source), clientName).deleteToken(authClient.credentials.accessToken);
+    if (authClient?.credentials.accessToken.isNotEmpty ?? false) {
+      OauthClient(getSourceDomain(userName?.source), clientName).deleteToken(authClient?.credentials.accessToken);
       authClient = oauth2.Client(oauth2.Credentials(""));
       if (kIsWeb) {
         Dialogs.popup("Token deleted, reload page to login again");
@@ -581,11 +594,11 @@ abstract class ZugClient extends ChangeNotifier {
     return prefs?.getBool("sound") ?? defaultSound;
   }
 
-  void playTrack(track) {
+  void playTrack(String track) {
     if (soundCheck()) audio.play(AssetSource('audio/tracks/$track.mp3'), volume: volume);
   }
 
-  void playClip(clip) {
+  void playClip(String clip) {
     if (soundCheck()) audio.play(AssetSource('audio/clips/$clip.mp3'), volume: volume);
   }
 

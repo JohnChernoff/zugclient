@@ -18,11 +18,17 @@ dependencies:
   webview_flutter: ^4.4.2
   package_info_plus: ^4.2.0
   universal_html: ^2.2.4
-  flutter:
-    sdk: flutter
   logging: ^1.2.0
   ini: ^2.1.0
   audioplayers: ^6.0.0
+  zug_net:
+    path: "C:/Users/jac107/IdeaProjects/flutter/zug_net"
+  zug_utils:
+    path: "C:/Users/jac107/IdeaProjects/flutter/zug_utils"
+  flutter_oauth:
+    path: "C:/Users/jac107/IdeaProjects/flutter/flutter_oauth"
+  flutter:
+    sdk: flutter
 
 dev_dependencies:
   flutter_test:
@@ -33,7 +39,7 @@ dev_dependencies:
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
-flutter:
+#flutter:
 
   # To add assets to your package, add an assets section, like this:
   # assets:

@@ -1,10 +1,10 @@
 import 'package:web_socket_channel/web_socket_channel.dart';
 
-class ZugSock {
+class ZugSockz {
   late final WebSocketChannel _channel;
   Function onClose;
 
-  ZugSock(address,onConnect,onMsg,this.onClose) {
+  ZugSockz(String address,onConnect,onMsg,this.onClose) {
 
     _channel = WebSocketChannel.connect(
       Uri.parse(address),
