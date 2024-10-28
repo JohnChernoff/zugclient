@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:zug_utils/zug_dialogs.dart';
 import 'package:zug_utils/zug_utils.dart';
-import 'package:zugclient/dialogs.dart';
 import 'package:zugclient/zug_client.dart';
 import 'package:zugclient/zug_fields.dart';
 
@@ -90,7 +90,7 @@ class _OptionsPageState extends State<OptionsPage> {
     dynamic val = entry[fieldOptVal];
     if (val is String) {
       entryWidget = TextButton(onPressed: () {
-        Dialogs.getString('Enter new $field',val).then((txt) {
+        ZugDialogs.getString('Enter new $field',val).then((txt) {
           setState(() {
             newOptions[field][fieldOptVal] = txt;
           });

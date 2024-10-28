@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:zugclient/oauth_client.dart';
 import 'package:zugclient/zug_app.dart';
 import 'package:zugclient/zug_client.dart';
 
@@ -20,7 +19,7 @@ class TestApp extends ZugApp {
 
 class TestClient extends ZugClient {
   TestClient(super.domain, super.port, super.remoteEndpoint, super.prefs, {super.localServer}) {
-    checkRedirect(OauthClient("lichess.org", clientName));
+    checkRedirect("lichess.org");
   }
 
   @override

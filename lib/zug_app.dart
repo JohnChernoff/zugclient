@@ -2,14 +2,16 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
+import 'package:zug_utils/zug_dialogs.dart';
 import 'package:zug_utils/zug_utils.dart';
 import 'package:zugclient/splash_page.dart';
 import 'package:zugclient/zug_chat.dart';
 import 'package:zugclient/zug_client.dart';
 import 'package:zugclient/zug_fields.dart';
-import 'dialogs.dart';
 import 'lobby_page.dart';
 import 'options_page.dart';
+
+final zugAppNavigatorKey = GlobalKey<NavigatorState>();
 
 abstract class ZugApp extends StatelessWidget {
   final String appName;
@@ -22,6 +24,7 @@ abstract class ZugApp extends StatelessWidget {
     this.splashLandscapeImgPath = "images/splash_land.png",
     this.splashPortraitImgPath = "images/splash_port.png",
     super.key, Level logLevel = Level.INFO, this.noNav = false}) {
+    ZugDialogs.setNavigatorKey(zugAppNavigatorKey);
     Logger.root.level = logLevel;
     Logger.root.onRecord.listen((record) {
       print('${record.level.name}: ${record.time}: ${record.message}');
@@ -36,7 +39,7 @@ abstract class ZugApp extends StatelessWidget {
         create: (context) => client,
         child: MaterialApp(
           scrollBehavior: ZugScrollBehavior(),
-          navigatorKey: globalNavigatorKey,
+          navigatorKey: zugAppNavigatorKey,
           title: appName,
           theme: ThemeData(
             colorScheme: defaultColorScheme,
@@ -181,7 +184,7 @@ class _ZugHomeState extends State<ZugHome> {
         ],
         currentIndex: selectedIndex,
         onTap: (value) {
-          if (!Dialogs.dialog) {
+          if (!ZugDialogs.dialog) {
             setState(() {
               selectedIndex = value;
               PageType newPage = PageType.values.elementAt(selectedIndex);

@@ -1,15 +1,15 @@
 library zugclient;
 
+import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_oauth/flutter_oauth.dart';
 import 'package:logging/logging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zug_net/zug_sock.dart';
+import 'package:zug_utils/zug_dialogs.dart';
 import 'package:zug_utils/zug_utils.dart';
 import 'package:zugclient/zug_app.dart';
 import 'zug_fields.dart';
-//import 'zug_sock.dart';
-import 'dialogs.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:oauth2/oauth2.dart' as oauth2;
@@ -96,6 +96,8 @@ abstract class Area extends Room {
   }
 }
 
+enum AudioType {sound,music}
+
 enum LoginType {none,lichess}
 
 abstract class ZugClient extends ChangeNotifier {
@@ -129,16 +131,19 @@ abstract class ZugClient extends ChangeNotifier {
   SharedPreferences? prefs;
   LoginType? loginType;
   String? serverVersion;
-  final audio = AudioPlayer();
+  final clipPlayer = AudioPlayer();
+  final trackPlayer = AudioPlayer();
   double volume = .5;
   static bool defaultSound = false;
   int? id;
   bool autoLog = false;
   String? autoJoinTitle;
+  StreamSubscription<void>? _endClipListener,_endTrackListener;
 
   Area createArea(dynamic data);
 
   ZugClient(this.domain,this.port,this.remoteEndpoint, this.prefs, {this.showServMess = false, this.localServer = false}) {
+    //_endClipListener = clipPlayer.onPlayerComplete.listen((v) => log.info("done"));
     log.info("Prefs: ${prefs.toString()}");
     noArea = createArea(null); //noAreaTitle);
     currentArea = noArea;
@@ -189,7 +194,7 @@ abstract class ZugClient extends ChangeNotifier {
       send(ClientMsg.newArea, data: {fieldTitle: title});
     }
     else {
-      Dialogs.getString('Choose Game Title',userName?.name ?? "?")
+      ZugDialogs.getString('Choose Game Title',userName?.name ?? "?")
           .then((t) => send(ClientMsg.newArea, data: {fieldTitle: t}));
     }
   }
@@ -249,7 +254,7 @@ abstract class ZugClient extends ChangeNotifier {
     }
   }
 
-  void handleMsg(dynamic msg) {
+  Enum handleMsg(dynamic msg) {
     if (showServMess) {
       log.info("Incoming msg: $msg"); //print(msg); print(""); print("***"); print("");
     }
@@ -269,7 +274,7 @@ abstract class ZugClient extends ChangeNotifier {
     } else {
       log.warning("Function not found: $type");
     }
-    //return funEnum;
+    return funEnum;
   }
 
   void handleNoFun(data) {
@@ -361,12 +366,12 @@ abstract class ZugClient extends ChangeNotifier {
   }
 
   bool handleErrorMsg(data) {
-    Dialogs.popup("Error: ${data[fieldMsg]}");
+    ZugDialogs.popup("Error: ${data[fieldMsg]}");
     return true;
   }
 
   bool handleAlertMsg(data) {
-    Dialogs.popup("Alert: ${data[fieldMsg]}");
+    ZugDialogs.popup("Alert: ${data[fieldMsg]}");
     return true;
   }
 
@@ -415,8 +420,11 @@ abstract class ZugClient extends ChangeNotifier {
     return true;
   }
 
+  void checkRedirect(String authSrc) {
+    checkRedirectOauth(OauthClient(authSrc,clientName));
+  }
   //TODO: generalize
-  void checkRedirect(OauthClient oauthClient) {
+  void checkRedirectOauth(OauthClient oauthClient) {
     if (kIsWeb) {
       String code = Uri.base.queryParameters["code"]?.toString() ?? "";
       if (code.isNotEmpty) {
@@ -489,7 +497,7 @@ abstract class ZugClient extends ChangeNotifier {
       notifyListeners();
     }
     else {
-      Dialogs.popup("Not connected to server");
+      ZugDialogs.popup("Not connected to server");
     }
   }
 
@@ -519,7 +527,7 @@ abstract class ZugClient extends ChangeNotifier {
   }
 
   void tryReconnect() {
-    Dialogs.popup("Disconnected - click to reconnect").then((ok) { connect(); });
+    ZugDialogs.popup("Disconnected - click to reconnect").then((ok) { connect(); });
   }
 
   bool loggedIn(data) {
@@ -536,7 +544,7 @@ abstract class ZugClient extends ChangeNotifier {
   bool loggedOut(data) {
     log.info("Logged out: $userName");
     isLoggedIn = false;
-    Dialogs.popup("Logged out - click to log back in").then((ok) { login(loginType); });
+    ZugDialogs.popup("Logged out - click to log back in").then((ok) { login(loginType); });
     return true;
   }
 
@@ -583,23 +591,42 @@ abstract class ZugClient extends ChangeNotifier {
       OauthClient(getSourceDomain(userName?.source), clientName).deleteToken(authClient?.credentials.accessToken);
       authClient = oauth2.Client(oauth2.Credentials(""));
       if (kIsWeb) {
-        Dialogs.popup("Token deleted, reload page to login again");
+        ZugDialogs.popup("Token deleted, reload page to login again");
       } else {
-        Dialogs.popup("Token deleted, restart app to login again");
+        ZugDialogs.popup("Token deleted, restart app to login again");
       }
     }
   }
 
-  bool soundCheck() {
-    return prefs?.getBool("sound") ?? defaultSound;
+  bool soundCheck(AudioType type) {
+    return prefs?.getBool(type.name) ?? defaultSound;
   }
 
-  void playTrack(String track) {
-    if (soundCheck()) audio.play(AssetSource('audio/tracks/$track.mp3'), volume: volume);
+  Completer<void>? playTrack(String track) {
+    Completer<void> trackCompleter = Completer();
+    if (soundCheck(AudioType.music)) {
+      _endTrackListener?.cancel();
+      _endTrackListener = trackPlayer.onPlayerComplete.listen((event) { //print("Finished clip: $clip");
+        if (!trackCompleter.isCompleted) trackCompleter.complete();
+      });
+      trackPlayer.play(AssetSource('audio/tracks/$track.mp3'), volume: volume);
+      return trackCompleter;
+    }
+    return null;
   }
 
-  void playClip(String clip) {
-    if (soundCheck()) audio.play(AssetSource('audio/clips/$clip.mp3'), volume: volume);
+  Completer<void>? playClip(String clip, {interruptTrack = true}) { //print("Playing clip: $clip");
+    Completer<void> clipCompleter = Completer();
+    if (soundCheck(AudioType.sound)) {
+      if (interruptTrack && trackPlayer.state == PlayerState.playing) trackPlayer.pause();
+      _endClipListener?.cancel();
+      _endClipListener = clipPlayer.onPlayerComplete.listen((event) { //print("Finished clip: $clip");
+        if (trackPlayer.state == PlayerState.paused) trackPlayer.resume();
+        if (!clipCompleter.isCompleted) clipCompleter.complete();
+      });
+      clipPlayer.play(AssetSource('audio/clips/$clip.mp3'), volume: volume);
+      return clipCompleter;
+    }
+    return null;
   }
-
 }

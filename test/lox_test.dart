@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
-import 'package:zugclient/dialogs.dart';
-import 'package:zugclient/oauth_client.dart';
 import 'package:zugclient/options_page.dart';
 import 'package:zugclient/zug_client.dart';
 import 'package:zugclient/zug_fields.dart';
@@ -28,8 +26,7 @@ class LoxApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (context) => client,
-      child: MaterialApp(
-          navigatorKey: globalNavigatorKey,
+      child: MaterialApp( //navigatorKey: zugclientDialogNavigatorKey,
           title: 'Test',
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
@@ -54,7 +51,7 @@ class LoxHome extends StatelessWidget {
 
 class LoxClient extends ZugClient {
   LoxClient(super.domain, super.port, super.remoteEndpoint, super.prefs) {
-    checkRedirect(OauthClient("lichess.org", "testClient"));
+    checkRedirect("lichess.org");
   }
 
   @override
