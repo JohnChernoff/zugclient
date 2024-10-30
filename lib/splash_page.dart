@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_oauth/flutter_oauth.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:zug_net/oauth_client.dart';
 import 'package:zug_utils/zug_utils.dart';
 import 'package:zugclient/zug_client.dart';
 

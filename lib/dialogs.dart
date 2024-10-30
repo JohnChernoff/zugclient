@@ -23,7 +23,7 @@ class MusicStackDialogState extends State<MusicStackDialog> {
   @override
   void initState() {
     super.initState();
-    if (widget.client.soundCheck()) {
+    if (widget.client.soundCheck(AudioType.music)) {
       playTrack();
     }
   }

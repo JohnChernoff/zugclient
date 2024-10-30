@@ -22,11 +22,11 @@ dependencies:
   ini: ^2.1.0
   audioplayers: ^6.0.0
   zug_net:
-    path: "C:/Users/jac107/IdeaProjects/flutter/zug_net"
+    git: "https://github.com/JohnChernoff/ZugNetFlutter"
   zug_utils:
-    path: "C:/Users/jac107/IdeaProjects/flutter/zug_utils"
-  flutter_oauth:
-    path: "C:/Users/jac107/IdeaProjects/flutter/flutter_oauth"
+    git: "https://github.com/JohnChernoff/zug_utils"
+  #flutter_oauth:
+    #git: "C:/Users/jac107/IdeaProjects/flutter/flutter_oauth"
   flutter:
     sdk: flutter
 

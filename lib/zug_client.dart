@@ -2,9 +2,9 @@ library zugclient;
 
 import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:flutter_oauth/flutter_oauth.dart';
 import 'package:logging/logging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:zug_net/oauth_client.dart';
 import 'package:zug_net/zug_sock.dart';
 import 'package:zug_utils/zug_dialogs.dart';
 import 'package:zug_utils/zug_utils.dart';
