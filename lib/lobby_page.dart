@@ -9,7 +9,7 @@ import 'package:zugclient/zug_fields.dart';
 class LobbyPage extends StatefulWidget {
   final ZugClient client;
   final String areaName;
-  final Color foregroundColor, backgroundColor;
+  final Color buttonsBkgColor; //, areaSelectColorTheme;
   final ImageProvider? backgroundImage;
   final String helpPage;
   final ZugChat? chatArea;
@@ -17,8 +17,7 @@ class LobbyPage extends StatefulWidget {
   const LobbyPage(this.client, {
     this.backgroundImage,
     this.areaName = "Area",
-    this.foregroundColor = Colors.white,
-    this.backgroundColor = Colors.black,
+    this.buttonsBkgColor = Colors.white,
     this.helpPage = "",
     super.key, this.chatArea});
 
@@ -30,8 +29,8 @@ class LobbyPage extends StatefulWidget {
     );
   }
 
-  Widget getAreaItem(String? title) {
-    return Text(title ?? "",style: TextStyle(backgroundColor: backgroundColor, color: foregroundColor));
+  Widget getAreaItem(String? title, BuildContext context) {
+    return Text(title ?? "", style: TextStyle(color: Theme.of(context).colorScheme.onPrimary));
   }
 
   int compareAreas(Area? a, Area? b) {
@@ -80,7 +79,7 @@ class LobbyPage extends StatefulWidget {
 
   Widget getPartButton() {
     return ElevatedButton(
-        style: getButtonStyle(Colors.black26, Colors.orangeAccent),
+        style: getButtonStyle(Colors.grey, Colors.orangeAccent),
         onPressed: () => client.partArea(),
         child: Text("Leave",style: getButtonTextStyle()));
   }
@@ -133,17 +132,16 @@ class _LobbyPageState extends State<LobbyPage> {
     } else {
       width = dim.width - (widget.chatArea?.width ?? ((widget.chatArea?.widthFactor ?? 0 ) * dim.width));
     }
-    //final double width = MediaQuery.of(context).size.width * (1 - (widget.chatArea?.widthFactor ?? 0));
 
     if (showHelp) return widget.getHelp(context, getCommandButtons(width));
 
     List<DropdownMenuItem<String>> games = []; //List.empty(growable: true);
 
-    games.add(DropdownMenuItem<String>(value:ZugClient.noAreaTitle, child: widget.getAreaItem(ZugClient.noAreaTitle)));
+    games.add(DropdownMenuItem<String>(value:ZugClient.noAreaTitle, child: widget.getAreaItem(ZugClient.noAreaTitle,context)));
     games.addAll(widget.client.areas.keys.map<DropdownMenuItem<String>>((String title) {  //print("Adding: $title");
       return DropdownMenuItem<String>(
         value: title,
-        child: widget.getAreaItem(title),
+        child: widget.getAreaItem(title,context),
       );
     }).toList());
 
@@ -152,7 +150,7 @@ class _LobbyPageState extends State<LobbyPage> {
     return Container(
         width: width,
         decoration: BoxDecoration(
-          color: widget.backgroundColor,
+          color: Theme.of(context).primaryColor, //widget.backgroundColor,
           image: widget.backgroundImage != null ? DecorationImage(
               image: widget.backgroundImage!,
               fit: BoxFit.cover
@@ -160,16 +158,18 @@ class _LobbyPageState extends State<LobbyPage> {
         ),
         child: Column(
           children: [ //Text(widget.client.userName),
-            Center(child: Container(
-              color: Colors.greenAccent, //Colors.white,
+            getCommandButtons(width),
+            Center(
+              child: Container(
+              color: Theme.of(context).primaryColor, //widget.areaSelectBkgColor,
               child: Row(
                 mainAxisSize: MainAxisSize.max,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text("Select ${widget.areaName}: ",style: TextStyle(color: widget.foregroundColor)),
+                  Text("Select ${widget.areaName}: ", style: TextStyle(color: Theme.of(context).colorScheme.onPrimary)),
                   const SizedBox(width: 8,),
                   DropdownButton(
-                      style: TextStyle(color: widget.foregroundColor, backgroundColor: widget.backgroundColor),
+                      dropdownColor: Theme.of(context).colorScheme.primary,
                       value: widget.client.currentArea.exists ? widget.client.currentArea.title : null,
                       items: games,
                       onChanged: (String? title) {
@@ -180,7 +180,6 @@ class _LobbyPageState extends State<LobbyPage> {
                 ],
               ),
             )),
-            getCommandButtons(width),
             Expanded(child: widget.selectedArea(context)),
           ],
         )
@@ -201,7 +200,7 @@ class _LobbyPageState extends State<LobbyPage> {
     return Container(
         width: width,
         height: 50,
-        color: Colors.white,
+        color: widget.buttonsBkgColor,
         child: showHelp ? Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

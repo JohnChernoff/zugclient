@@ -16,14 +16,16 @@ final zugAppNavigatorKey = GlobalKey<NavigatorState>();
 abstract class ZugApp extends StatelessWidget {
   final String appName;
   final ZugClient client;
-  final ColorScheme defaultColorScheme = ColorScheme.fromSeed(seedColor: Colors.deepPurple);
+  final Color colorSeed;
+  final ColorScheme colorScheme;
   final String splashLandscapeImgPath, splashPortraitImgPath;
   final bool noNav;
 
   ZugApp(this.client, this.appName, {
+    this.colorSeed = Colors.green,
     this.splashLandscapeImgPath = "images/splash_land.png",
     this.splashPortraitImgPath = "images/splash_port.png",
-    super.key, Level logLevel = Level.INFO, this.noNav = false}) {
+    super.key, Level logLevel = Level.INFO, this.noNav = false}) : colorScheme = ColorScheme.fromSeed(seedColor: colorSeed) {
     ZugDialogs.setNavigatorKey(zugAppNavigatorKey);
     Logger.root.level = logLevel;
     Logger.root.onRecord.listen((record) {
@@ -42,7 +44,7 @@ abstract class ZugApp extends StatelessWidget {
           navigatorKey: zugAppNavigatorKey,
           title: appName,
           theme: ThemeData(
-            colorScheme: defaultColorScheme,
+            colorScheme: colorScheme,
             useMaterial3: true,
           ),
           home: createHomePage(this),
@@ -60,8 +62,8 @@ abstract class ZugApp extends StatelessWidget {
 
   Widget createLobbyPage(client) {
     return LobbyPage(client,
-        chatArea: ZugChat(client, widthFactor: .33, defScope: MessageScope.server),
-        foregroundColor: defaultColorScheme.onSurface, backgroundColor: defaultColorScheme.surface);
+        chatArea: ZugChat(client, widthFactor: .33, defScope: MessageScope.server)); //,
+        //foregroundColor: colorScheme.onSurface, backgroundColor: colorScheme.surface)
   }
 
   Widget createSplashPage(client) {
