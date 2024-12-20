@@ -161,7 +161,7 @@ class _LobbyPageState extends State<LobbyPage> {
         child: Column(
           children: [ //Text(widget.client.userName),
             Center(child: Container(
-              color: Colors.white,
+              color: Colors.greenAccent, //Colors.white,
               child: Row(
                 mainAxisSize: MainAxisSize.max,
                 mainAxisAlignment: MainAxisAlignment.center,

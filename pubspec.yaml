@@ -1,6 +1,6 @@
 name: zugclient
 description: Flutter client framework for the ZugServ library
-version: 0.2.0
+version: 0.2.1
 homepage: https://github.com/JohnChernoff/zugclient
 
 environment:
@@ -25,8 +25,6 @@ dependencies:
     git: "https://github.com/JohnChernoff/ZugNetFlutter"
   zug_utils:
     git: "https://github.com/JohnChernoff/zug_utils"
-  #flutter_oauth:
-    #git: "C:/Users/jac107/IdeaProjects/flutter/flutter_oauth"
   flutter:
     sdk: flutter
 

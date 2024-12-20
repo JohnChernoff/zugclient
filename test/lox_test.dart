@@ -55,7 +55,7 @@ class LoxClient extends ZugClient {
   }
 
   @override
-  bool loggedIn(data) {
+  Future<bool> loggedIn(data) async {
     super.loggedIn(data);
     send(ClientMsg.newArea,data: {fieldTitle : "testArea"});
     Future.delayed(const Duration(seconds: 5)).then((value) {

@@ -13,7 +13,7 @@ class SplashPage extends StatelessWidget {
   const SplashPage(this.client,{this.imgLandscape,this.imgPortrait,this.dark = true,super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) { //TODO: generalize
     final dim = ZugUtils.getScreenDimensions(context);
     final Image? img = dim.getMainAxis() == Axis.horizontal ? imgLandscape : imgPortrait;
     final txtStyle = TextStyle(color: dark ? Colors.black : Colors.white);
@@ -31,6 +31,7 @@ class SplashPage extends StatelessWidget {
               child: Padding(padding: const EdgeInsets.all(8), child: Text("Login as Guest",style: txtStyle)),
              // style: ButtonStyle(backgroundColor: dark ? Colors.black : Colors.white, foregroundColor: dark ? Colors.white : Colors.black)
             ),
+            const SizedBox(width: 36),
             ElevatedButton(
               onPressed: () {
                 client.login(LoginType.lichess);

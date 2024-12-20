@@ -104,6 +104,7 @@ abstract class ZugClient extends ChangeNotifier {
   static final log = Logger('ClientLogger');
   static const noAreaTitle = "";
   static const servString = "serv";
+  static const LoginType defLogType = LoginType.lichess;
 
   bool showServMess;
   bool localServer;
@@ -145,7 +146,7 @@ abstract class ZugClient extends ChangeNotifier {
   ZugClient(this.domain,this.port,this.remoteEndpoint, this.prefs, {this.showServMess = false, this.localServer = false}) {
     //_endClipListener = clipPlayer.onPlayerComplete.listen((v) => log.info("done"));
     log.info("Prefs: ${prefs.toString()}");
-    noArea = createArea(null); //noAreaTitle);
+    noArea = createArea(null);
     currentArea = noArea;
     PackageInfo.fromPlatform().then((PackageInfo info) {
       packageInfo = info;
@@ -153,7 +154,6 @@ abstract class ZugClient extends ChangeNotifier {
       notifyListeners(); //why?
     });
     addFunctions({
-      //ServMsg.createArea: handleCreateArea,
       ServMsg.none: handleNoFun,
       ServMsg.ping: handlePing,
       ServMsg.obs: handleObs,
@@ -420,8 +420,8 @@ abstract class ZugClient extends ChangeNotifier {
     return true;
   }
 
-  void checkRedirect(String authSrc) {
-    checkRedirectOauth(OauthClient(authSrc,clientName));
+  void checkRedirect(String host) {
+    checkRedirectOauth(OauthClient(host,clientName));
   }
   //TODO: generalize
   void checkRedirectOauth(OauthClient oauthClient) {
@@ -433,21 +433,25 @@ abstract class ZugClient extends ChangeNotifier {
         oauthClient.decode(code, handleAuthClient);
       }
       else {
-        String goto = Uri.base.queryParameters["goto"]?.toString() ?? "";
-        if (goto.isNotEmpty) {
-          html.window.history.pushState(null, 'home', Uri.base.path);
-          autoJoinTitle = goto;
-          log.info("Autologging into game: $autoJoinTitle");
-          autoLogin();
-        }
+        checkGoto();
       }
+    }
+  }
+
+  void checkGoto() {
+    String goto = Uri.base.queryParameters["goto"]?.toString() ?? "";
+    if (goto.isNotEmpty) {
+      html.window.history.pushState(null, 'home', Uri.base.path);
+      autoJoinTitle = goto;
+      log.info("Autologging into game: $autoJoinTitle");
+      autoLogin();
     }
   }
 
   void autoLogin() {
      autoLog = true;
+     LoginType logType = defLogType;
      String? prevLogType = prefs?.getString(fieldLoginType);
-     LoginType logType = LoginType.lichess; //TODO: generalize?
      for (LoginType lt in LoginType.values) {
        if (lt != LoginType.none && lt.name == prevLogType) logType = lt;
      }
@@ -530,15 +534,19 @@ abstract class ZugClient extends ChangeNotifier {
     ZugDialogs.popup("Disconnected - click to reconnect").then((ok) { connect(); });
   }
 
-  bool loggedIn(data) {
+  Future<bool> loggedIn(data) async {
     log.info("Logged in: ${data.toString()}");
     userName = UniqueName.fromData(data);
     isLoggedIn = true;
-    if (autoJoinTitle != null) {
-      joinArea(autoJoinTitle!); //send(ClientMsg.joinArea,data: { fieldTitle : autoJoinTitle});
+    if (autoJoinTitle != null && await confirmGoto(autoJoinTitle!)) {
+      joinArea(autoJoinTitle!);
       autoJoinTitle = null;
     }
     return true;
+  }
+
+  Future<bool> confirmGoto(String title) async {
+    return await ZugDialogs.confirm("Join $title ?");
   }
 
   bool loggedOut(data) {
