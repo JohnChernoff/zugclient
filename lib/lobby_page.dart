@@ -6,26 +6,48 @@ import 'package:zugclient/zug_chat.dart';
 import 'package:zugclient/zug_client.dart';
 import 'package:zugclient/zug_fields.dart';
 
+enum LobbyStyle {normal,terseLand,tersePort}
+
 class LobbyPage extends StatefulWidget {
   final ZugClient client;
   final String areaName;
-  final Color buttonsBkgColor; //, areaSelectColorTheme;
+  final Color? bkgCol;
+  final Color? buttonsBkgCol; //,areaSelectColorTheme;
   final ImageProvider? backgroundImage;
-  final String helpPage;
+  final String? helpPage;
   final ZugChat? chatArea;
+  final LobbyStyle style;
+  final double? width;
+  final double borderWidth;
+  final Color borderCol;
+  final int areaFlex;
 
   const LobbyPage(this.client, {
     this.backgroundImage,
     this.areaName = "Area",
-    this.buttonsBkgColor = Colors.white,
-    this.helpPage = "",
+    this.bkgCol,
+    this.buttonsBkgCol,
+    this.helpPage,
+    this.style = LobbyStyle.normal,
+    this.width,
+    this.borderWidth  = 1,
+    this.borderCol = Colors.white,
+    this.areaFlex  = 3,
     super.key, this.chatArea});
 
-  Widget selectedArea(BuildContext context) {
-    return ListView(
-      children: List.generate(client.currentArea.occupantMap.values.length, (i) {
-        return Text(client.currentArea.getOccupantName(client.currentArea.occupantMap.keys.elementAt(i)));
-      }),
+  Widget selectedArea(BuildContext context, {Color? bkgCol, Color? txtCol}) {
+    return Container(
+        decoration: BoxDecoration(
+          color: bkgCol ?? Colors.black,
+          border: Border.all(color: txtCol ?? borderCol, width: borderWidth),
+        ),
+        child: ListView(
+          scrollDirection: style == LobbyStyle.terseLand ? Axis.horizontal : Axis.vertical,
+          children: List.generate(client.currentArea.occupantMap.values.length, (i) {
+            return Text(client.currentArea.getOccupantName(client.currentArea.occupantMap.keys.elementAt(i)),
+            style: TextStyle(color: txtCol ?? Colors.white));
+          }),
+      )
     );
   }
 
@@ -44,14 +66,14 @@ class LobbyPage extends StatefulWidget {
   }
 
   Widget getHelpButton() {
-    if (helpPage.isNotEmpty) {
+    if (helpPage != null) {
       return ElevatedButton(
           style: getButtonStyle(Colors.cyan, Colors.lightBlueAccent),
           onPressed: ()  {
             if (kIsWeb) {
-              html.window.open(helpPage, 'new tab');
+              html.window.open(helpPage!, 'new tab');
             } else {
-              ZugUtils.launch(helpPage, isNewTab: true);
+              ZugUtils.launch(helpPage!, isNewTab: true);
             }
           },
           child: Text("Help",style: getButtonTextStyle()));
@@ -125,15 +147,7 @@ class _LobbyPageState extends State<LobbyPage> {
   }
 
   Widget getAreaArea(BuildContext context) {
-    ScreenDim dim = ZugUtils.getScreenDimensions(context);
-    final double width;
-    if (widget.chatArea == null) {
-      width = dim.width;
-    } else {
-      width = dim.width - (widget.chatArea?.width ?? ((widget.chatArea?.widthFactor ?? 0 ) * dim.width));
-    }
-
-    if (showHelp) return widget.getHelp(context, getCommandButtons(width));
+    if (showHelp) return widget.getHelp(context, getCommandButtons());
 
     List<DropdownMenuItem<String>> games = []; //List.empty(growable: true);
 
@@ -148,9 +162,10 @@ class _LobbyPageState extends State<LobbyPage> {
     games.sort((a,b) => widget.compareAreas(widget.client.areas[a.value],widget.client.areas[b.value]));
 
     return Container(
-        width: width,
+        width: widget.width,
         decoration: BoxDecoration(
-          color: Theme.of(context).primaryColor, //widget.backgroundColor,
+          color: widget.bkgCol ?? Theme.of(context).primaryColor,
+          border: Border.all(color: widget.borderCol, width: widget.borderWidth),
           image: widget.backgroundImage != null ? DecorationImage(
               image: widget.backgroundImage!,
               fit: BoxFit.cover
@@ -158,7 +173,7 @@ class _LobbyPageState extends State<LobbyPage> {
         ),
         child: Column(
           children: [ //Text(widget.client.userName),
-            getCommandButtons(width),
+            getCommandButtons(),
             Center(
               child: Container(
               color: Theme.of(context).primaryColor, //widget.areaSelectBkgColor,
@@ -167,7 +182,7 @@ class _LobbyPageState extends State<LobbyPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text("Select ${widget.areaName}: ", style: TextStyle(color: Theme.of(context).colorScheme.onPrimary)),
-                  const SizedBox(width: 8,),
+                  const SizedBox(width: 8),
                   DropdownButton(
                       dropdownColor: Theme.of(context).colorScheme.primary,
                       value: widget.client.currentArea.exists ? widget.client.currentArea.title : null,
@@ -188,20 +203,28 @@ class _LobbyPageState extends State<LobbyPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Flex(
+      direction: widget.style == LobbyStyle.tersePort ? Axis.vertical : Axis.horizontal,
       children: [
-        getAreaArea(context),
-        widget.chatArea ?? const SizedBox.shrink(),
+        Expanded(flex: widget.areaFlex, child: getAreaArea(context)),
+        Expanded(flex: 1, child: widget.chatArea ?? const SizedBox.shrink()),
       ],
     );
   }
 
-  Widget getCommandButtons(double width, {double padding = 4}) {
+  Widget getCommandButtons({double padding = 4}) {
     return Container(
-        width: width,
-        height: 50,
-        color: widget.buttonsBkgColor,
-        child: showHelp ? Row(
+        decoration: BoxDecoration(
+            color: widget.buttonsBkgCol ?? Colors.white,
+            border: Border.all(
+              color: widget.borderCol,
+              width: widget.borderWidth
+            )
+        ),
+        width: widget.style == LobbyStyle.tersePort ? 128 : null,
+        height: widget.style == LobbyStyle.tersePort ? null : 50,
+        child: showHelp ? Flex(
+          direction: widget.style == LobbyStyle.tersePort ? Axis.vertical : Axis.horizontal,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             ElevatedButton(
@@ -215,7 +238,9 @@ class _LobbyPageState extends State<LobbyPage> {
             : Center(child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           //mainAxisAlignment: MainAxisAlignment.center,
-          child: Row(children: [
+          child: Flex(
+            direction: widget.style == LobbyStyle.tersePort ? Axis.vertical : Axis.horizontal,
+            children: [
             Padding(padding: EdgeInsets.all(padding),child: widget.getSeekButton()),
             Padding(padding: EdgeInsets.all(padding),child: widget.getCreateButton()),
             Padding(padding: EdgeInsets.all(padding),child: widget.getStartButton()),

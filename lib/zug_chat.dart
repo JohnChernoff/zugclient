@@ -6,8 +6,6 @@ import 'package:zugclient/zug_fields.dart';
 class ZugChat extends StatefulWidget {
   static Map<String,Color> userColorMap = {};
   final ZugClient client;
-  final double? widthFactor;
-  final double? heightFactor;
   final double? width;
   final double? height;
   final Color foregroundColor; //no longer used?
@@ -24,10 +22,10 @@ class ZugChat extends StatefulWidget {
 
   ZugChat(this.client, {this.foregroundColor = Colors.white,
     this.backgroundColor = Colors.black,
-    this.borderColor = Colors.greenAccent,
-    this.borderWidth = 2,
+    this.borderColor = Colors.white,
+    this.borderWidth = 1,
     this.cmdTxtColor = Colors.greenAccent,
-    this.cmdBkgColor = Colors.brown,
+    this.cmdBkgColor = Colors.black,
     this.chatCommandOnTop = false,
     this.autoScroll = true,
     this.usingAreas = true,
@@ -37,8 +35,6 @@ class ZugChat extends StatefulWidget {
     this.roomName = "Room",
     this.serverName = "Server",
     this.defScope = MessageScope.room,
-    this.widthFactor,
-    this.heightFactor,
     this.width,
     this.height,
     super.key}) {
@@ -105,7 +101,6 @@ class ZugChatState extends State<ZugChat> {
 
   @override
   Widget build(BuildContext context) {
-    ScreenDim dim = ZugUtils.getScreenDimensions(context);
     if (widget.autoScroll) ZugUtils.scrollDown(scrollController,250,delay: 750);
 
     Area cg = widget.client.currentArea;
@@ -119,15 +114,14 @@ class ZugChatState extends State<ZugChat> {
     List<Widget> widgetMsgList = [];
     for (var msg in messageList) {
       if (!filterServerMessages || msg[fieldOccupant] != null) {
-        //widgetMsgList.add(Center(child: widget.buildMessage(msg)));
         widgetMsgList.add(widget.buildMessage(msg));
       }
     }
 
     return Container(
       decoration: ZugChat.getDecoration(borderColor: widget.borderColor, borderWidth: widget.borderWidth),
-      width: widget.width ?? (dim.width * (widget.widthFactor ?? 1)),
-      height: widget.height ?? (dim.height * (widget.heightFactor ?? 1)),
+      width: widget.width,
+      height: widget.height,
       //margin:  const EdgeInsets.only(left: 16.0, right: 0.0),
       child: Column(
         children: [

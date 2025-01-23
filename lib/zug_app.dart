@@ -62,7 +62,7 @@ abstract class ZugApp extends StatelessWidget {
 
   Widget createLobbyPage(client) {
     return LobbyPage(client,
-        chatArea: ZugChat(client, widthFactor: .33, defScope: MessageScope.server)); //,
+        chatArea: ZugChat(client, defScope: MessageScope.server)); //,
         //foregroundColor: colorScheme.onSurface, backgroundColor: colorScheme.surface)
   }
 

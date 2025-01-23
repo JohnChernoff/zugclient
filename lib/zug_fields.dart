@@ -9,6 +9,8 @@ enum ClientMsg { none, ip, pong, obs, unObs, login, getOptions, setOptions, list
 
 enum AreaChange {created,updated,deleted}
 
+const List<String> occupantHeaders = ["Name"];
+
 const fieldData = "data",
     fieldAddress = "address",
     fieldServ = "serv",
@@ -43,5 +45,7 @@ const fieldData = "data",
     fieldPhase = "phase",
     fieldPhaseTimeRemaining = "phase_time_remaining",
     fieldAreaChange = "area_change";
+
+
 
 
