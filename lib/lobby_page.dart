@@ -41,14 +41,31 @@ class LobbyPage extends StatefulWidget {
           color: bkgCol ?? Colors.black,
           border: Border.all(color: txtCol ?? borderCol, width: borderWidth),
         ),
-        child: ListView(
-          scrollDirection: style == LobbyStyle.terseLand ? Axis.horizontal : Axis.vertical,
-          children: List.generate(client.currentArea.occupantMap.values.length, (i) {
-            return Text(client.currentArea.getOccupantName(client.currentArea.occupantMap.keys.elementAt(i)),
-            style: TextStyle(color: txtCol ?? Colors.white));
-          }),
-      )
+        child: SingleChildScrollView(scrollDirection: Axis.vertical, child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: DataTable(
+          columns: getOccupantHeaders(),
+          rows: List.generate(client.currentArea.occupantMap.values.length, (i) {
+            UniqueName uName = client.currentArea.occupantMap.keys.elementAt(i);
+            return getOccupantData(uName, client.currentArea.occupantMap[uName]);
+          })),
+      )),
     );
+  }
+
+  List<DataColumn> getOccupantHeaders({Color color = Colors.white}) {
+    return [
+      DataColumn(label: Text("Name",style: TextStyle(color: color)))
+    ];
+  }
+
+  DataRow getOccupantData(UniqueName uName, Map<String,dynamic> json, {Color color = Colors.white}) {
+    return DataRow(cells: [
+      DataCell(Text(
+          client.currentArea.getOccupantName(uName),
+          style: TextStyle(color: color)
+      ))
+    ]);
   }
 
   Widget getAreaItem(String? title, BuildContext context) {
@@ -177,7 +194,7 @@ class _LobbyPageState extends State<LobbyPage> {
             Center(
               child: Container(
               color: Theme.of(context).primaryColor, //widget.areaSelectBkgColor,
-              child: Row(
+              child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(
                 mainAxisSize: MainAxisSize.max,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -193,7 +210,7 @@ class _LobbyPageState extends State<LobbyPage> {
                         });
                       }),
                 ],
-              ),
+              )),
             )),
             Expanded(child: widget.selectedArea(context)),
           ],
