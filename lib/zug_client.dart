@@ -75,11 +75,15 @@ abstract class Room with Timerable {
     return true;
   }
 
-  dynamic getOccupant(UniqueName name) {
+  dynamic getOccupant(UniqueName? name) {
     for (UniqueName uname in occupantMap.keys) {
       if (uname.eq(name)) return occupantMap[uname];
     }
     return null;
+  }
+
+  bool containsOccupant(UniqueName? name) {
+    return getOccupant(name) != null;
   }
 }
 
