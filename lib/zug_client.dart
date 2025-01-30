@@ -96,7 +96,7 @@ abstract class Area extends Room {
 
   bool updateArea(Map<String,dynamic> data) {
     listData = data; //TODO: eeeeh
-    return updateOccupants(data);
+    return true; //updateOccupants(data);
   }
 }
 
@@ -318,7 +318,7 @@ abstract class ZugClient extends ChangeNotifier {
     Area area = getOrCreateArea(data);
     handleUpdateOccupants(data,area : area); //TODO: why use named argument?
     handleUpdateOptions(data,area : area);
-    //if (data[fieldPhaseTimeRemaining] != null && data[fieldPhaseTimeRemaining] > 0) { area.setTimer(data[fieldPhaseTimeRemaining], 1000); }
+    area.updateArea(data);
     return true;
   }
 
@@ -399,7 +399,7 @@ abstract class ZugClient extends ChangeNotifier {
     for (var area in data[fieldAreas]) {
       Area a = getOrCreateArea(area);
       a.exists = true;
-      a.updateArea(area);
+      a.updateOccupants(area); //a.updateArea(area);
     }
     areas.removeWhere((key, value) => !value.exists);
     if (currentArea != noArea && !currentArea.exists) {
@@ -412,14 +412,14 @@ abstract class ZugClient extends ChangeNotifier {
     Area area = getOrCreateArea(data[fieldArea]);
     if (data[fieldAreaChange] == AreaChange.created.name) {
       area.exists = true;
-      area.updateArea(data[fieldArea]);
+      area.updateOccupants(data[fieldArea]); //area.updateArea(data[fieldArea]);
     }
     else if (data[fieldAreaChange] == AreaChange.deleted.name) { //print("Removing: ${area.title}");
       areas.remove(area.title);
       if (currentArea.title == area.title) switchArea(noAreaTitle);
     }
     else if (data[fieldAreaChange] == AreaChange.updated.name) {
-      area.updateArea(data[fieldArea]);
+      area.updateOccupants(data[fieldArea]); //area.updateArea(data[fieldArea]);
     }
     return true;
   }
@@ -434,6 +434,7 @@ abstract class ZugClient extends ChangeNotifier {
       if (code.isNotEmpty) {
         authenticating = true;
         html.window.history.pushState(null, 'home', Uri.base.path);
+        log.info("Redirecting login...");
         oauthClient.decode(code, handleAuthClient);
       }
       else {
@@ -469,6 +470,7 @@ abstract class ZugClient extends ChangeNotifier {
   }
 
   void handleAuthClient(oauth2.Client? client) {
+    log.info("Handling auth client...");
     authClient = client;
     authenticating = false;
     if (!isLoggedIn) { //TODO: handle other login types
