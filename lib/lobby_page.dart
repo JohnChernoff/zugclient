@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:zug_utils/zug_utils.dart';
 import 'package:zugclient/zug_chat.dart';
 import 'package:zugclient/zug_client.dart';
-import 'package:zugclient/zug_fields.dart';
 
 enum LobbyStyle {normal,terseLand,tersePort}
 
@@ -14,7 +13,6 @@ class LobbyPage extends StatefulWidget {
   final Color? bkgCol;
   final Color? buttonsBkgCol; //,areaSelectColorTheme;
   final ImageProvider? backgroundImage;
-  final String? helpPage;
   final ZugChat? chatArea;
   final LobbyStyle style;
   final double? width;
@@ -27,7 +25,6 @@ class LobbyPage extends StatefulWidget {
     this.areaName = "Area",
     this.bkgCol,
     this.buttonsBkgCol,
-    this.helpPage,
     this.style = LobbyStyle.normal,
     this.width,
     this.borderWidth  = 1,
@@ -82,24 +79,17 @@ class LobbyPage extends StatefulWidget {
     return buttons;
   }
 
-  Widget getHelpButton() {
-    if (helpPage != null) {
-      return ElevatedButton(
-          style: getButtonStyle(Colors.cyan, Colors.lightBlueAccent),
-          onPressed: ()  {
-            if (kIsWeb) {
-              html.window.open(helpPage!, 'new tab');
-            } else {
-              ZugUtils.launch(helpPage!, isNewTab: true);
-            }
-          },
-          child: Text("Help",style: getButtonTextStyle()));
-    }
-    return const SizedBox.shrink();
-  }
-
-  Widget getSocialMediaButtons() {
-    return const SizedBox.shrink();
+  Widget getHelpButton(String helpPage) {
+    return ElevatedButton(
+        style: getButtonStyle(Colors.cyan, Colors.lightBlueAccent),
+        onPressed: ()  {
+          if (kIsWeb) {
+            html.window.open(helpPage, 'new tab');
+          } else {
+            ZugUtils.launch(helpPage, isNewTab: true);
+          }
+        },
+        child: Text("Help",style: getButtonTextStyle()));
   }
 
   Widget getSeekButton() {
@@ -137,6 +127,10 @@ class LobbyPage extends StatefulWidget {
         child: Text("New",style: getButtonTextStyle()));
   }
 
+  List<Widget> getExtraCmdButtons() {
+    return [];
+  }
+
   ButtonStyle getButtonStyle(Color c1, Color c2) {
     return ButtonStyle(backgroundColor:
     WidgetStateProperty.resolveWith<Color?>((Set<WidgetState> states) {
@@ -160,11 +154,10 @@ class _LobbyPageState extends State<LobbyPage> {
   @override
   void initState() {
     super.initState();
-    widget.client.areaCmd(ClientMsg.setDeaf,data:{fieldDeafened:true}); //TODO: put in main.dart
   }
 
   Widget getAreaArea(BuildContext context) {
-    if (showHelp) return widget.getHelp(context, getCommandButtons());
+    if (showHelp) return widget.getHelp(context, getCommandArea());
 
     List<DropdownMenuItem<String>> games = []; //List.empty(growable: true);
 
@@ -190,7 +183,7 @@ class _LobbyPageState extends State<LobbyPage> {
         ),
         child: Column(
           children: [ //Text(widget.client.userName),
-            getCommandButtons(),
+            getCommandArea(),
             Center(
               child: Container(
               color: Theme.of(context).primaryColor, //widget.areaSelectBkgColor,
@@ -229,7 +222,7 @@ class _LobbyPageState extends State<LobbyPage> {
     );
   }
 
-  Widget getCommandButtons({double padding = 4}) {
+  Widget getCommandArea() {
     return Container(
         decoration: BoxDecoration(
             color: widget.buttonsBkgCol ?? Colors.white,
@@ -257,17 +250,31 @@ class _LobbyPageState extends State<LobbyPage> {
           //mainAxisAlignment: MainAxisAlignment.center,
           child: Flex(
             direction: widget.style == LobbyStyle.tersePort ? Axis.vertical : Axis.horizontal,
-            children: [
-            Padding(padding: EdgeInsets.all(padding),child: widget.getSeekButton()),
-            Padding(padding: EdgeInsets.all(padding),child: widget.getCreateButton()),
-            Padding(padding: EdgeInsets.all(padding),child: widget.getStartButton()),
-            Padding(padding: EdgeInsets.all(padding),child: widget.getJoinButton()),
-            Padding(padding: EdgeInsets.all(padding),child: widget.getPartButton()),
-            Padding(padding: EdgeInsets.all(padding),child: widget.getHelpButton()),
-            Padding(padding: EdgeInsets.all(padding),child: widget.getSocialMediaButtons()),
-          ],
+            children: getCmdButtons(),
         ))),
       );
+  }
+
+  List<Widget> getCmdButtons({
+      double padding = 4.0,
+      Widget? seekButt,
+      Widget? createButt,
+      Widget? startButt,
+      Widget? joinButt,
+      Widget? partButt,
+      Widget? helpButt,
+      List<Widget>? extraButts}) {
+    List<Widget> buttons = [
+      Padding(padding: EdgeInsets.all(padding),child: seekButt ?? widget.getSeekButton()),
+      Padding(padding: EdgeInsets.all(padding),child: createButt ?? widget.getCreateButton()),
+      Padding(padding: EdgeInsets.all(padding),child: startButt ?? widget.getStartButton()),
+      Padding(padding: EdgeInsets.all(padding),child: joinButt ?? widget.getJoinButton()),
+      Padding(padding: EdgeInsets.all(padding),child: partButt ?? widget.getPartButton()),
+      //if (widget.helpPage != null) Padding(padding: EdgeInsets.all(padding),child: helpButt ?? widget.getHelpButton()),
+    ];
+    List<Widget> extraList = extraButts ?? widget.getExtraCmdButtons();
+    buttons.addAll(List.generate(extraList.length, (index) => Padding(padding: EdgeInsets.all(padding),child: extraList.elementAt(index))));
+    return buttons;
   }
 
 }

@@ -61,8 +61,7 @@ abstract class ZugApp extends StatelessWidget {
   }
 
   Widget createLobbyPage(client) {
-    return LobbyPage(client,
-        chatArea: ZugChat(client, defScope: MessageScope.server)); //,
+    return LobbyPage(client,chatArea: ZugChat(client, defScope: MessageScope.server)); //,
         //foregroundColor: colorScheme.onSurface, backgroundColor: colorScheme.surface)
   }
 
@@ -119,36 +118,42 @@ class _ZugHomeState extends State<ZugHome> {
 
   @override
   Widget build(BuildContext context) {
-    var client = context.watch<ZugClient>();
-    SafeArea safeArea = getSafeArea(client);
-    var colorScheme = Theme
-        .of(context)
-        .colorScheme;
-
+    ZugClient client = context.watch<ZugClient>();
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
     Widget page = widget.app.createSplashPage(client);
+
     if (client.isLoggedIn) {
-      page = switch(client.switchPage) {
-        PageType.main => widget.app.createMainPage(client),
-        PageType.lobby => widget.app.createLobbyPage(client),
-        PageType.options => widget.app.createOptionsPage(client),
-        PageType.none => switch (selectedPage) {
-          PageType.main || PageType.none => widget.app.createMainPage(client),
+      if (widget.noNav) {
+        selectedPage = client.selectedPage = PageType.main;
+        page = widget.app.createMainPage(client);
+      }
+      else {
+        page = switch(client.switchPage) {
+          PageType.main => widget.app.createMainPage(client),
           PageType.lobby => widget.app.createLobbyPage(client),
           PageType.options => widget.app.createOptionsPage(client),
+          PageType.none => switch (selectedPage) {
+            PageType.main || PageType.none => widget.app.createMainPage(client),
+            PageType.lobby => widget.app.createLobbyPage(client),
+            PageType.options => widget.app.createOptionsPage(client),
+          }
+        };
+        if (client.switchPage != PageType.none) {
+          selectedPage = client.switchPage;
+          client.switchPage = PageType.none;
         }
-      };
-      if (client.switchPage != PageType.none) {
-        selectedPage = client.switchPage;
-        client.switchPage = PageType.none;
+        client.selectedPage = selectedPage;
       }
-      client.selectedPage = selectedPage;
+      if (selectedPage != PageType.main) {
+        client.areaCmd(ClientMsg.setDeaf,data:{fieldDeafened:true});
+      }
     }
 
     // The container for the current page, with its background color
     // and subtle switching animation.
     var mainArea = ColoredBox(
       color: colorScheme.surfaceContainerHighest,
-      child: AnimatedSwitcher(
+      child: widget.noNav ? page : AnimatedSwitcher(
         duration: const Duration(milliseconds: 200),
         child: page,
       ),
@@ -161,7 +166,7 @@ class _ZugHomeState extends State<ZugHome> {
           return Column(
             children: [
               Expanded(child: mainArea),
-              if (!widget.noNav) SafeArea(child: safeArea),
+              if (!widget.noNav) getSafeArea(client),
             ],
           );
         },),

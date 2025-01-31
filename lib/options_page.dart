@@ -27,7 +27,6 @@ class _OptionsPageState extends State<OptionsPage> {
   @override
   void initState() {
     super.initState();
-    widget.client.areaCmd(ClientMsg.setDeaf,data:{fieldDeafened:true}); //TODO: put in main.dart
   }
 
   @override
