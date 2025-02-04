@@ -104,7 +104,7 @@ class ZugChatState extends State<ZugChat> {
     List<Widget> widgetMsgList = [];
     if (messageList != null) {
       for (Message msg in messageList.messages) {
-        if (!filterServerMessages || msg.fromServ) {
+        if (!filterServerMessages || !msg.fromServ) {
           widgetMsgList.add(ZugChatLine(msg.fromServ
               ? msg.message
               : "${msg.uName}: ${msg.message}",
