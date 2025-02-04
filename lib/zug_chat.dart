@@ -4,12 +4,13 @@ import 'package:zugclient/zug_client.dart';
 import 'package:zugclient/zug_fields.dart';
 
 class ZugChat extends StatefulWidget {
-  static Map<String,Color> userColorMap = {};
+
   final ZugClient client;
   final double? width;
   final double? height;
   final Color foregroundColor; //no longer used?
   final Color backgroundColor;
+  final Color servColor;
   final Color cmdTxtColor;
   final Color cmdBkgColor;
   final Color borderColor;
@@ -20,12 +21,13 @@ class ZugChat extends StatefulWidget {
   final String serverName,areaName,roomName;
   final MessageScope defScope;
 
-  ZugChat(this.client, {this.foregroundColor = Colors.white,
+  const ZugChat(this.client, {this.foregroundColor = Colors.white,
     this.backgroundColor = Colors.black,
     this.borderColor = Colors.white,
     this.borderWidth = 1,
     this.cmdTxtColor = Colors.greenAccent,
     this.cmdBkgColor = Colors.black,
+    this.servColor = Colors.white,
     this.chatCommandOnTop = false,
     this.autoScroll = true,
     this.usingAreas = true,
@@ -37,21 +39,9 @@ class ZugChat extends StatefulWidget {
     this.defScope = MessageScope.room,
     this.width,
     this.height,
-    super.key}) {
-    userColorMap.putIfAbsent("", () => foregroundColor);
-  }
+    super.key});
 
-  Widget buildMessage(dynamic msgData) { //print("New message: " + msgData.toString());
-    dynamic user = msgData[fieldOccupant]?[fieldUser] ?? msgData[fieldUser];
-    String name = user == null ? "" : UniqueName.fromData(user).toString();
-    String nameStr = name.isEmpty ? name : "$name:";
-    Color color = msgData[fieldOccupant]?[fieldChatColor] != null ?
-    HexColor.fromHex(msgData[fieldOccupant]?[fieldChatColor]) : userColorMap.putIfAbsent(name, () => HexColor.rndColor(pastel: true));
-    bool hidden = msgData[fieldHidden] ?? false;
-    return ZugChatLine("$nameStr ${msgData[fieldMsg]}",color,hidden);
-  }
-
-  static BoxDecoration getDecoration({Color color = Colors.grey, Color borderColor = Colors.grey, double borderWidth = 2, Color shadowColor = Colors.black, bool shadow = false}) {
+static BoxDecoration getDecoration({Color color = Colors.grey, Color borderColor = Colors.grey, double borderWidth = 2, Color shadowColor = Colors.black, bool shadow = false}) {
     return BoxDecoration(
       color: color,
       border: Border.all(
@@ -105,16 +95,21 @@ class ZugChatState extends State<ZugChat> {
 
     Area cg = widget.client.currentArea;
 
-    List<dynamic> messageList = switch(msgScope) {
-      MessageScope.room => cg.currentRoom?.messages ?? [],
+    MessageList? messageList = switch(msgScope) {
+      MessageScope.room => cg.currentRoom?.messages,
       MessageScope.area => cg.messages,
       MessageScope.server => widget.client.messages,
     };
 
     List<Widget> widgetMsgList = [];
-    for (var msg in messageList) {
-      if (!filterServerMessages || msg[fieldOccupant] != null) {
-        widgetMsgList.add(widget.buildMessage(msg));
+    if (messageList != null) {
+      for (Message msg in messageList.messages) {
+        if (!filterServerMessages || msg.fromServ) {
+          widgetMsgList.add(ZugChatLine(msg.fromServ
+              ? msg.message
+              : "${msg.uName}: ${msg.message}",
+              msg.fromServ ? widget.servColor : msg.color, msg.hidden));
+        }
       }
     }
 
@@ -249,7 +244,7 @@ class ZugChatLineState extends State<ZugChatLine> {
           });
         }
       },
-      child: Text( hidden ? "(hidden)" : widget.text, style: TextStyle(color: widget.color)),
+      child: Text(hidden ? "(hidden)" : widget.text, style: TextStyle(color: widget.color)),
     );
   }
 }

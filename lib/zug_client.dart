@@ -2,6 +2,7 @@ library zugclient;
 
 import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zug_net/oauth_client.dart';
@@ -15,7 +16,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:oauth2/oauth2.dart' as oauth2;
 import 'dart:io' show Platform;
 import 'dart:convert';
-import 'package:flutter/cupertino.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 class UniqueName {
@@ -41,10 +41,45 @@ class UniqueName {
   }
 }
 
+class Message {
+  UniqueName? uName;
+  bool fromServ;
+  String message;
+  Color color;
+  bool hidden;
+  Message(this.uName,this.message,this.color,this.hidden) : fromServ = uName == null;
+}
+
+class MessageList {
+  static Color foregroundColor = Colors.white;
+  Map<UniqueName?,Color> userColorMap = {};
+  List<Message> messages = [];
+  int newMessages = 0;
+
+  MessageList() {
+    userColorMap.putIfAbsent(null, () => foregroundColor);
+  }
+
+  void addMessage(data) {
+    dynamic userData = data[fieldOccupant]?[fieldUser] ?? data[fieldUser];
+    UniqueName? uName = userData != null ? UniqueName.fromData(userData) : null;
+    Color color = data[fieldOccupant]?[fieldChatColor] != null
+        ? HexColor.fromHex(data[fieldOccupant]?[fieldChatColor])
+        : userColorMap.putIfAbsent(uName, () => HexColor.rndColor(pastel: true));
+    messages.add(Message(uName,data[fieldMsg],color,data[fieldHidden] ?? false));
+    newMessages++;
+  }
+
+  Message? getLastServMsg() {
+    Iterable<Message> adminMsgs = messages.where((msg) => msg.fromServ);
+    return adminMsgs.isNotEmpty ? adminMsgs.last : null;
+  }
+
+}
+
 abstract class Room with Timerable {
   late final String title;
-  List<dynamic> messages = [];
-  int newMessages = 0;
+  MessageList messages = MessageList();
   Map<UniqueName,dynamic> occupantMap = {};
 
   Room(dynamic data) {
@@ -126,8 +161,7 @@ abstract class ZugClient extends ChangeNotifier {
   ZugSock? sock;
   oauth2.Client? authClient; // = oauth2.Client(oauth2.Credentials(""));
   Map<String,Area> areas = {};
-  int newMessages = 0;
-  List<dynamic> messages = [];
+  MessageList messages = MessageList();
   late final Area noArea;
   late Area currentArea; //Area(noAreaTitle);
   final Map<Enum,Function> _functionMap = {};
@@ -346,8 +380,7 @@ abstract class ZugClient extends ChangeNotifier {
 
   bool handleAreaMsg(data, {Area? area}) { //print(data);
     area = area ?? getOrCreateArea(data);
-    area.messages.add(data);
-    area.newMessages++;
+    area.messages.addMessage(data);
     return true;
   }
 
@@ -359,8 +392,7 @@ abstract class ZugClient extends ChangeNotifier {
   }
 
   bool handleServMsg(data) {
-    messages.add(data);
-    newMessages++;
+    messages.addMessage(data);
     return true;
   }
 
