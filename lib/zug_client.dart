@@ -253,6 +253,12 @@ abstract class ZugClient extends ChangeNotifier {
     areaCmd(ClientMsg.startArea);
   }
 
+  void handleCmdMsg(List<String> msgs) {
+      if (msgs.isNotEmpty) {
+        if (msgs.first == "!srv") send(ClientMsg.updateServ);
+      }
+  }
+
   Area getOrCreateArea(dynamic data) {
     return areas.putIfAbsent(data?[fieldTitle] ?? noAreaTitle, () {
       return createArea(data);

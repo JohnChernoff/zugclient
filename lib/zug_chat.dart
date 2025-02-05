@@ -190,6 +190,7 @@ class ZugChatState extends State<ZugChat> {
                     color: widget.cmdTxtColor,
                     backgroundColor: widget.cmdBkgColor),
                 onSubmitted: (txt) {
+                  txt.startsWith("!") ? widget.client.handleCmdMsg(txt.split(" ")) :
                   widget.client.send(
                       switch (msgScope) {
                         MessageScope.room => ClientMsg.roomMsg,
