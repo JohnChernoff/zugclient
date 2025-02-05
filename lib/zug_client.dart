@@ -135,6 +135,12 @@ abstract class Area extends Room {
   }
 }
 
+class FunctionWaiter {
+  final Enum funEnum;
+  final Completer<bool> completer = Completer();
+  FunctionWaiter(this.funEnum);
+}
+
 enum AudioType {sound,music}
 
 enum LoginType {none,lichess}
@@ -165,6 +171,7 @@ abstract class ZugClient extends ChangeNotifier {
   late final Area noArea;
   late Area currentArea; //Area(noAreaTitle);
   final Map<Enum,Function> _functionMap = {};
+  FunctionWaiter? _funWaiter;
   PageType switchPage = PageType.none;
   PageType selectedPage = PageType.none;
   SharedPreferences? prefs;
@@ -226,6 +233,12 @@ abstract class ZugClient extends ChangeNotifier {
   }
 
   Map<Enum,Function> getFunctions() { return _functionMap; }
+
+  Future<bool> awaitMsg(Enum msgEnum) {
+    if (_funWaiter?.completer.isCompleted == false) _funWaiter?.completer.complete(false);
+    _funWaiter = FunctionWaiter(msgEnum);
+    return _funWaiter!.completer.future;
+  }
 
   void newArea({String? title}) {
     if (title != null) {
@@ -314,6 +327,9 @@ abstract class ZugClient extends ChangeNotifier {
         fun(json[fieldData]); notifyListeners();
       } else if (fun(json[fieldData])) {
         notifyListeners();
+      }
+      if (_funWaiter?.funEnum == funEnum) {
+        _funWaiter?.completer.complete(true);
       }
     } else {
       log.warning("Function not found: $type");
