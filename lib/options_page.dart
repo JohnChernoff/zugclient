@@ -9,10 +9,16 @@ class OptionsPage extends StatefulWidget {
   final Color optionsBackgroundColor = Colors.black;
   final Color optionsTextColor = Colors.green;
   final ZugClient client;
-  final Widget header;
+  final double headerHeight;
+  final Widget? customHeader;
+  final String headerTxt;
+  final bool isDialog;
 
   const OptionsPage(this.client, {
-    this.header = const SizedBox(height: 128, child: Center(child: Text("Options"))),
+    this.customHeader,
+    this.headerHeight = 128,
+    this.headerTxt = "Options",
+    this.isDialog = false,
     super.key
   });
 
@@ -49,16 +55,7 @@ class _OptionsPageState extends State<OptionsPage> {
 
     return Column(
       children: [
-        widget.header,
-        Container(
-            color: widget.optionsBackgroundColor,
-            //height: 72,
-            child: Center(child: Text("${widget.client.areaName} Options",style: TextStyle(
-                fontSize: 24,
-                color: widget.optionsTextColor,
-                //backgroundColor: widget.optionsBackgroundColor
-            ),))
-        ),
+        widget.customHeader ?? SizedBox(height: widget.headerHeight, child: Center(child: Text(widget.headerTxt))),
         Expanded(
             child: Container(
           color: widget.optionsBackgroundColor,
@@ -73,10 +70,13 @@ class _OptionsPageState extends State<OptionsPage> {
             child: Center(child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                ElevatedButton(onPressed: () => widget.client.areaCmd(ClientMsg.setOptions, data: { fieldOptions : newOptions } ),
-                    child: Text("Update ${widget.client.areaName} Options")),
-                ElevatedButton(onPressed: () =>  widget.client.areaCmd(ClientMsg.getOptions),  //setState(() => loadOptions()),
-                    child: Text("Reset ${widget.client.areaName} Options")),
+                ElevatedButton(onPressed: () {
+                  widget.client.areaCmd(ClientMsg.setOptions, data: { fieldOptions : newOptions });
+                  if (widget.isDialog) Navigator.pop(context);
+                },
+                 child: const Text("Update")),
+                ElevatedButton(onPressed: () =>  widget.client.fetchOptions(() => setState((){})),
+                 child: const Text("Reset")),
               ],
             )),
         ),

@@ -391,6 +391,14 @@ abstract class ZugClient extends ChangeNotifier {
     }
     return false;
   }
+  
+  void fetchOptions(Function onOption, {int timeLimit = 5000}) async {
+    awaitMsg(ServMsg.updateOptions)
+        .timeout(Duration(milliseconds: timeLimit))
+        .then((b) => onOption.call())
+        .catchError((e) => ZugDialogs.popup("Error Fetching Options: $e"));
+    areaCmd(ClientMsg.getOptions);
+  }
 
   void addAreaMsg(String msg, String title, {hidden = false}) {
     handleAreaMsg({
