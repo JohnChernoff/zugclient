@@ -6,8 +6,9 @@ import 'package:zugclient/zug_fields.dart';
 
 class OptionsPage extends StatefulWidget {
   static int doubleDecimals = 2;
-  final Color optionsBackgroundColor = Colors.black;
-  final Color optionsTextColor = Colors.green;
+  final Color optionsBackgroundColor;
+  final Color optionsTextColor;
+  final Color optionsDropdownCBkgCol;
   final ZugClient client;
   final double headerHeight;
   final Widget? customHeader;
@@ -19,6 +20,9 @@ class OptionsPage extends StatefulWidget {
     this.headerHeight = 128,
     this.headerTxt = "Options",
     this.isDialog = false,
+    this.optionsBackgroundColor = Colors.black,
+    this.optionsTextColor = Colors.cyan,
+    this.optionsDropdownCBkgCol = Colors.blueGrey, // Color.fromRGBO(222, 222, 0, .5),
     super.key
   });
 
@@ -29,10 +33,12 @@ class OptionsPage extends StatefulWidget {
 
 class _OptionsPageState extends State<OptionsPage> {
   Map<String,dynamic> newOptions = {};
+  TextStyle? optTxtStyle;
 
   @override
   void initState() {
     super.initState();
+    optTxtStyle = TextStyle(color: widget.optionsTextColor);
   }
 
   @override
@@ -88,13 +94,29 @@ class _OptionsPageState extends State<OptionsPage> {
     Widget entryWidget = const Text("?");
     dynamic val = entry[fieldOptVal];
     if (val is String) {
-      entryWidget = TextButton(onPressed: () {
-        ZugDialogs.getString('Enter new $field',val).then((txt) {
-          setState(() {
-            newOptions[field][fieldOptVal] = txt;
+      List<dynamic> enums = entry[fieldOptEnum] as List<dynamic>;
+      if (enums.isNotEmpty) {
+        entryWidget = DropdownButton<String>(
+            dropdownColor: widget.optionsDropdownCBkgCol, //.withOpacity(.5),
+            value: val,
+            items: List.generate(enums.length, (i) => DropdownMenuItem<String>(
+                value: enums.elementAt(i) as String,
+                child: Text(enums.elementAt(i),style: optTxtStyle))
+            ),
+            onChanged: (String? str) => setState(() {
+              newOptions[field][fieldOptVal] = str;
+            })
+        );
+      }
+      else {
+        entryWidget = TextButton(onPressed: () {
+          ZugDialogs.getString('Enter new $field',val).then((txt) {
+            setState(() {
+              newOptions[field][fieldOptVal] = txt;
+            });
           });
-        });
-      }, child: Text("$field: $val",style: TextStyle(color:  widget.optionsTextColor)));
+        }, child: Text("$field: $val",style: optTxtStyle));
+      }
     }
     else if (val is double) { //or int
       double range = entry[fieldOptMax] - entry[fieldOptMin];
@@ -102,8 +124,9 @@ class _OptionsPageState extends State<OptionsPage> {
       entryWidget = Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text("$field : $val",style: TextStyle(color:  widget.optionsTextColor)),
+          Text("$field : $val",style: optTxtStyle),
           Slider(
+            thumbColor: widget.optionsTextColor,
             value: val,
             min: entry[fieldOptMin] as double,
             max: entry[fieldOptMax] as double,
@@ -124,7 +147,7 @@ class _OptionsPageState extends State<OptionsPage> {
       entryWidget = Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(field,style: TextStyle(color:  widget.optionsTextColor)),
+          Text(field,style: optTxtStyle),
           Checkbox(value: val, onChanged: (newValue) => setState(() { newOptions[field][fieldOptVal] = newValue; }))
         ],
       );
