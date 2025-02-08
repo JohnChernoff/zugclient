@@ -58,30 +58,20 @@ class ZugVal {
 }
 
 class ZugOption {
-  final String name;
-  final String desc;
   final String label;
+  final String desc;
   final ZugVal zugVal;
   final num? min, max, inc;
   final List<dynamic>? enums;
 
-  ZugOption(this.name, v, {
+  ZugOption(v, {
+    required this.label,
     this.min,this.max,this.inc,
     this.enums,
     String? desc,
-    String? label,
-  }) : zugVal = ZugVal(v), desc = desc ?? name, label = label ?? name;
-
-
-  ZugOption.fromEnum(Enum e, v, {
-    this.min,this.max,this.inc,
-    this.enums,
-    String? desc,
-    String? label,
-  }) : name = e.name, zugVal = ZugVal(v), desc = desc ?? e.name, label = label ?? e.name;
+  }) : zugVal = ZugVal(v), desc = desc ?? label;
 
   Map<String,dynamic> toJson() => {
-      fieldOptName : name,
       fieldOptDesc : desc,
       fieldOptLabel : label,
       fieldOptVal : getVal(),
@@ -91,16 +81,15 @@ class ZugOption {
       fieldOptEnum : enums
     };
 
-
   dynamic getVal() => zugVal.getVal();
   bool getBool() => zugVal.getVal() as bool;
   int getInt() =>  zugVal.getVal() as int;
   double getDbl() =>  zugVal.getVal() as double;
   String getString() =>  zugVal.getVal() as String;
 
-  static ZugOption? fromJson(Map<String,dynamic> json) {
-    if (json.isEmpty) return null; //print("Decoding: $json");
-    return ZugOption(json[fieldOptName], json[fieldOptVal],
+  static ZugOption fromJson(Map<String,dynamic> json) {
+    if (json.isEmpty) return ZugOption("?", label: "Null Option"); //print("Decoding: $json");
+    return ZugOption(json[fieldOptVal],
       desc: json[fieldOptDesc],
       label: json[fieldOptLabel],
       min: json[fieldOptMin],
@@ -110,6 +99,6 @@ class ZugOption {
     );
   }
 
-  ZugOption fromValue(dynamic val) => ZugOption(name, val,min: min, max: max, inc: inc, enums: enums, desc: desc, label: label);
-
+  ZugOption fromValue(dynamic val) => ZugOption(val,min: min, max: max, inc: inc, enums: enums, desc: desc, label: label);
+  ZugOption copy() => ZugOption(zugVal.getVal(),min: min, max: max, inc: inc, enums: enums, desc: desc, label: label); //enums?
 }

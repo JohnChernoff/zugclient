@@ -57,7 +57,7 @@ abstract class ZugApp extends StatelessWidget {
   }
 
   Widget createOptionsPage(client) {
-    return OptionsPage(client);
+    return OptionsPage(client, scope: OptionScope.general);
   }
 
   Widget createLobbyPage(client) {

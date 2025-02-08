@@ -193,10 +193,10 @@ abstract class ZugClient extends ChangeNotifier {
     //_endClipListener = clipPlayer.onPlayerComplete.listen((v) => log.info("done"));
     log.info("Prefs: ${prefs.toString()}");
     loadOptions([
-      ZugOption.fromEnum(ZugOpt.sound,false),
-      ZugOption.fromEnum(ZugOpt.soundVol,50,min: 0, max: 100, inc: 1,label: "Sound Volume"),
-      ZugOption.fromEnum(ZugOpt.music,false),
-      ZugOption.fromEnum(ZugOpt.musicVol,50,min: 0, max: 100, inc: 1,label: "Music Volume"),
+      (ZugOpt.sound,ZugOption(false,label: "Sound")),
+      (ZugOpt.soundVol,ZugOption(50,min: 0, max: 100, inc: 1,label: "Sound Volume")),
+      (ZugOpt.music,ZugOption(false,label: "Music")),
+      (ZugOpt.musicVol,ZugOption(50,min: 0, max: 100, inc: 1,label: "Music Volume")),
     ]);
     noArea = createArea(null);
     currentArea = noArea;
@@ -393,16 +393,10 @@ abstract class ZugClient extends ChangeNotifier {
   bool handleUpdateOptions(data, {Area? area}) { //print("Options: $data");
     if (data[fieldOptions] != null) {
       area = area ?? getOrCreateArea(data);
-
       Map<String,dynamic> optionList = data[fieldOptions] as Map<String,dynamic>;
-      area.options.clear();
-
-      print(optionList.keys);
-
-      for (String field in optionList.keys) {
-        print ("key: $field");
-        print(optionList[field].toString());
-        area.options[field] = ZugOption.fromJson(optionList[field]) ?? ZugOption("?", null);
+      area.options.clear(); //print(optionList.keys);
+      for (String field in optionList.keys) { //print ("key: $field");print(optionList[field].toString());
+        area.options[field] = ZugOption.fromJson(optionList[field]);
       }
       return true;
     }
@@ -691,23 +685,28 @@ abstract class ZugClient extends ChangeNotifier {
     }
   }
 
-  void loadOptions(List<ZugOption> list) {
+  void loadOptions(List<(Enum,ZugOption)> list) {
     for (var option in list) {
-      _options[option.name] = ZugOption.fromJson(
-          jsonDecode(prefs?.getString(optPrefix + option.name) ?? "{}")) ?? option;
+      try {
+        String key = option.$1.name; ZugOption defOpt = option.$2;
+        String? optionPref = prefs?.getString(optPrefix + key);
+        if (optionPref == null) {
+          setOption(key, defOpt);
+        } else {
+          _options[key] = ZugOption.fromJson(jsonDecode(optionPref));
+        }
+      } catch(e) { log.info("Error parsing: $option" ); }
     }
   }
 
   ZugOption? getOption(Enum key) => _options[key];
 
-  Iterable<ZugOption> getOptions() => _options.values;
+  Map<String, ZugOption> getOptions() => _options;
 
   void setOption(String key, ZugOption option) {
-    _options[key] = option; prefs?.setString(optPrefix + key,option.toString());
+    _options[key] = option; prefs?.setString(optPrefix + key,jsonEncode(option.toJson()));
   }
-  void setOptionFromEnum(Enum key, ZugOption option) {
-    setOption(key.name, option);
-  }
+  void setOptionFromEnum(Enum key, ZugOption option) { setOption(key.name, option); }
 
   Completer<void>? playTrack(String track) {
     Completer<void> trackCompleter = Completer();

@@ -1,10 +1,11 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:zug_utils/zug_dialogs.dart';
+import 'package:zugclient/zug_app.dart';
 import 'package:zugclient/zug_client.dart';
 import 'package:zugclient/zug_fields.dart';
 import 'package:zugclient/zug_option.dart';
+
+enum OptionScope { general,area }
 
 class OptionsPage extends StatefulWidget {
   static int doubleDecimals = 2;
@@ -16,6 +17,7 @@ class OptionsPage extends StatefulWidget {
   final Widget? customHeader;
   final String headerTxt;
   final bool isDialog;
+  final OptionScope scope;
 
   const OptionsPage(this.client, {
     this.customHeader,
@@ -25,6 +27,7 @@ class OptionsPage extends StatefulWidget {
     this.optionsBackgroundColor = Colors.black,
     this.optionsTextColor = Colors.cyan,
     this.optionsDropdownCBkgCol = Colors.blueGrey, // Color.fromRGBO(222, 222, 0, .5),
+    required this.scope,
     super.key
   });
 
@@ -34,80 +37,104 @@ class OptionsPage extends StatefulWidget {
 }
 
 class _OptionsPageState extends State<OptionsPage> {
-  Map<String,ZugOption> areaOptions = {};
+  Map<String,ZugOption> optionMap = {};
+  Map<String,Widget> optionWidgets = {};
+  List<String> optionFields = [];
   TextStyle? optTxtStyle;
 
   @override
   void initState() {
     super.initState();
     optTxtStyle = TextStyle(color: widget.optionsTextColor);
+    loadOptions();
+  }
+
+  void loadOptions() {
+    optionMap.clear();
+    Map<String,ZugOption> optionMapSrc = widget.scope == OptionScope.general
+        ? widget.client.getOptions()
+        : widget.client.currentArea.options;
+    for (String key in optionMapSrc.keys) {
+      optionMap[key] = optionMapSrc[key]!.copy();
+    }
+    optionFields = optionMap.keys.toList();
+    optionFields.sort((a, b) {
+      int fieldCmp = optionMap[a]?.zugVal.getType()?.index.compareTo(optionMap[b]?.zugVal.getType()?.index as num) ?? 0;
+      return fieldCmp == 0 ? a.compareTo(b) : fieldCmp;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    areaOptions = widget.client.currentArea.options; //print("Options: $areaOptions");
-    Map<String,Widget> widgets = {};
-    List<String> optionFields = areaOptions.keys.toList();
-    optionFields.sort((a, b) {
-      int fieldCmp = areaOptions[a]?.zugVal.getType()?.index.compareTo(areaOptions[b]?.zugVal.getType()?.index as num) ?? 0;
-      return fieldCmp == 0 ? a.compareTo(b) : fieldCmp;
-    });
-
-    for (String field in optionFields) {
-      widgets[field] = parseOptionEntry(areaOptions[field]!,false);
+    for (String key in optionFields) {
+      optionWidgets[key] = parseOptionEntry(optionMap[key]!,key);
     }
-
     return Column(
       children: [
         widget.customHeader ?? SizedBox(height: widget.headerHeight, child: Center(child: Text(widget.headerTxt))),
-        Expanded(
-            child: Container(
+        Expanded(child: Container(
           color: widget.optionsBackgroundColor,
           child: ListView(
               scrollDirection: Axis.vertical,
-              children: List.generate(widgets.values.length,
-                  (index) => widgets.values.elementAt(index))),
+              children: List.generate(optionWidgets.values.length,
+                  (index) => optionWidgets.values.elementAt(index))),
         )),
         Container(
-            color: widget.optionsBackgroundColor,
-            height: 72,
-            child: Center(child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(onPressed: () {
-                  widget.client.areaCmd(ClientMsg.setOptions, data: { fieldOptions : areaOptionsToJson() }); //()
-                  if (widget.isDialog) Navigator.pop(context);
-                },
-                 child: const Text("Update")),
-                ElevatedButton(onPressed: () =>  widget.client.fetchOptions(() => setState((){})),
-                 child: const Text("Reset")),
-              ],
-            )),
+          color: widget.optionsBackgroundColor,
+          height: 72,
+          child: Center(
+              child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton(
+                  onPressed: () => saveOptions(),
+                  child: const Text("Update")),
+              ElevatedButton(
+                  onPressed: () => resetOptions(),
+                  child: const Text("Reset")),
+            ],
+          )),
         ),
       ],
     );
   }
 
-  Map<String,dynamic> areaOptionsToJson() {
-    Map<String,dynamic> optionMap = {};
-    for (String field in areaOptions.keys) {
-      optionMap[field] = areaOptions[field]?.toJson();
-    }
-    return optionMap;
+  void resetOptions() {
+    loadOptions();
+    setState((){});
   }
 
-  void setOption(ZugOption option, dynamic val, bool general) {
+  void saveOptions() {
+    if (widget.scope == OptionScope.general) {
+        for (String key in optionMap.keys) {
+          widget.client.setOption(key, optionMap[key]!);
+        }
+    }
+    else {
+      widget.client.areaCmd(ClientMsg.setOptions, data: { fieldOptions : areaOptionsToJson() }); //()
+    }
+    if (widget.isDialog) {
+      Navigator.pop(context);
+    } else {
+      widget.client.setSwitchPage(PageType.lobby);
+    }
+  }
+
+  Map<String,dynamic> areaOptionsToJson() {
+    Map<String,dynamic> areaOptionMap = {};
+    for (String key in optionMap.keys) {
+      areaOptionMap[key] = optionMap[key]?.toJson();
+    }
+    return areaOptionMap;
+  }
+
+  void setOption(ZugOption option, String key, dynamic val) {
     setState(() {
-      if (general) {
-        widget.client.setOption(option.name, option.fromValue(val));
-      }
-      else {
-        areaOptions[option.name] = option.fromValue(val);
-      }
+      optionMap[key] = option.fromValue(val);
     });
   }
 
-  Widget enumeratedOptionWidget(ZugOption option, bool general) {
+  Widget enumeratedOptionWidget(ZugOption option, String key) {
     return DropdownButton<dynamic>(
         dropdownColor: widget.optionsDropdownCBkgCol, //.withOpacity(.5),
         value: option.getVal(),
@@ -115,18 +142,18 @@ class _OptionsPageState extends State<OptionsPage> {
             value: option.enums!.elementAt(i),
             child: Text(option.enums!.elementAt(i),style: optTxtStyle))
         ),
-        onChanged: (dynamic val) => setOption(option, val, general));
+        onChanged: (dynamic val) => setOption(option, key, val));
   }
 
-  Widget parseOptionEntry(ZugOption option, bool general) { //print(entry.toString());
+  Widget parseOptionEntry(ZugOption option, String key) { //print(entry.toString());
     Widget entryWidget = const Text("?");
     if (option.enums != null && option.enums!.isNotEmpty) {
-      entryWidget = enumeratedOptionWidget(option, general);
+      entryWidget = enumeratedOptionWidget(option, key);
     }
     else if (option.zugVal.getType() == ValType.string) {
       entryWidget = TextButton(onPressed: () {
         ZugDialogs.getString('Enter new ${option.label}',
-            option.getString()).then((txt) => setOption(option, txt, general));
+            option.getString()).then((txt) => setOption(option, txt, key));
       }, child: Text("${option.label}: ${option.getVal()}",style: optTxtStyle));
     }
     else if (option.zugVal.isNumeric()) {
@@ -143,7 +170,7 @@ class _OptionsPageState extends State<OptionsPage> {
             max: option.max as double,
             divisions: div.toInt(),
             label: option.label,
-            onChanged: (double value) => setOption(option, value, general),
+            onChanged: (double value) => setOption(option, key, value),
           ),
         ],
       );
@@ -153,7 +180,7 @@ class _OptionsPageState extends State<OptionsPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(option.label,style: optTxtStyle),
-          Checkbox(value: option.getBool(), onChanged: (newValue) => setOption(option, newValue, general)),
+          Checkbox(value: option.getBool(), onChanged: (newValue) => setOption(option, key, newValue)),
         ],
       );
     }
