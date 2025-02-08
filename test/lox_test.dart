@@ -44,7 +44,7 @@ class LoxHome extends StatelessWidget {
   Widget build(BuildContext context) {
     var client = context.watch<LoxClient>();
     return Scaffold(
-      body: OptionsPage(client),
+      body: OptionsPage(client,scope: OptionScope.general),
     );
   }
 }

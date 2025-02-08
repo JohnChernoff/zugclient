@@ -170,7 +170,8 @@ class _OptionsPageState extends State<OptionsPage> {
             max: option.max as double,
             divisions: div.toInt(),
             label: option.label,
-            onChanged: (double value) => setOption(option, key, value),
+            onChanged: (double value) => setOption(option, key,
+                option.zugVal.getType() == ValType.int ? value.round() : value),
           ),
         ],
       );
