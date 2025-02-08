@@ -127,7 +127,7 @@ class LobbyPage extends StatefulWidget {
         child: Text("New",style: getButtonTextStyle()));
   }
 
-  List<Widget> getExtraCmdButtons() {
+  List<Widget> getExtraCmdButtons(BuildContext context) {
     return [];
   }
 
@@ -157,7 +157,7 @@ class _LobbyPageState extends State<LobbyPage> {
   }
 
   Widget getAreaArea(BuildContext context) {
-    if (showHelp) return widget.getHelp(context, getCommandArea());
+    if (showHelp) return widget.getHelp(context, getCommandArea(context));
 
     List<DropdownMenuItem<String>> games = []; //List.empty(growable: true);
 
@@ -183,7 +183,7 @@ class _LobbyPageState extends State<LobbyPage> {
         ),
         child: Column(
           children: [ //Text(widget.client.userName),
-            getCommandArea(),
+            getCommandArea(context),
             Center(
               child: Container(
               color: Theme.of(context).primaryColor, //widget.areaSelectBkgColor,
@@ -222,7 +222,7 @@ class _LobbyPageState extends State<LobbyPage> {
     );
   }
 
-  Widget getCommandArea() {
+  Widget getCommandArea(BuildContext context) {
     return Container(
         decoration: BoxDecoration(
             color: widget.buttonsBkgCol ?? Colors.white,
@@ -250,12 +250,12 @@ class _LobbyPageState extends State<LobbyPage> {
           //mainAxisAlignment: MainAxisAlignment.center,
           child: Flex(
             direction: widget.style == LobbyStyle.tersePort ? Axis.vertical : Axis.horizontal,
-            children: getCmdButtons(),
+            children: getCmdButtons(context),
         ))),
       );
   }
 
-  List<Widget> getCmdButtons({
+  List<Widget> getCmdButtons(BuildContext context, {
       double padding = 4.0,
       Widget? seekButt,
       Widget? createButt,
@@ -272,7 +272,7 @@ class _LobbyPageState extends State<LobbyPage> {
       Padding(padding: EdgeInsets.all(padding),child: partButt ?? widget.getPartButton()),
       //if (widget.helpPage != null) Padding(padding: EdgeInsets.all(padding),child: helpButt ?? widget.getHelpButton()),
     ];
-    List<Widget> extraList = extraButts ?? widget.getExtraCmdButtons();
+    List<Widget> extraList = extraButts ?? widget.getExtraCmdButtons(context);
     buttons.addAll(List.generate(extraList.length, (index) => Padding(padding: EdgeInsets.all(padding),child: extraList.elementAt(index))));
     return buttons;
   }
