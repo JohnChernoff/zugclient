@@ -1,8 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:zug_utils/zug_dialogs.dart';
-import 'package:zug_utils/zug_utils.dart';
 import 'package:zugclient/zug_client.dart';
 import 'package:zugclient/zug_fields.dart';
+import 'package:zugclient/zug_option.dart';
 
 class OptionsPage extends StatefulWidget {
   static int doubleDecimals = 2;
@@ -32,7 +34,7 @@ class OptionsPage extends StatefulWidget {
 }
 
 class _OptionsPageState extends State<OptionsPage> {
-  Map<String,dynamic> newOptions = {};
+  Map<String,ZugOption> areaOptions = {};
   TextStyle? optTxtStyle;
 
   @override
@@ -43,20 +45,16 @@ class _OptionsPageState extends State<OptionsPage> {
 
   @override
   Widget build(BuildContext context) {
-    newOptions = widget.client.currentArea.options; //print("Options: $newOptions");
+    areaOptions = widget.client.currentArea.options; //print("Options: $areaOptions");
     Map<String,Widget> widgets = {};
-    List<String> optionFields = newOptions.keys.toList();
+    List<String> optionFields = areaOptions.keys.toList();
     optionFields.sort((a, b) {
-      int fieldCmp = newOptions[a][fieldOptVal].runtimeType.hashCode.compareTo(newOptions[b][fieldOptVal].runtimeType.hashCode);
-      if (fieldCmp == 0) {
-        return a.compareTo(b);
-      } else {
-        return fieldCmp;
-      }
+      int fieldCmp = areaOptions[a]?.zugVal.getType()?.index.compareTo(areaOptions[b]?.zugVal.getType()?.index as num) ?? 0;
+      return fieldCmp == 0 ? a.compareTo(b) : fieldCmp;
     });
 
-    for (String field in optionFields) { //newOptions.keys
-      widgets[field] = parseOptionEntry(field, newOptions[field]);
+    for (String field in optionFields) {
+      widgets[field] = parseOptionEntry(areaOptions[field]!,false);
     }
 
     return Column(
@@ -77,7 +75,7 @@ class _OptionsPageState extends State<OptionsPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 ElevatedButton(onPressed: () {
-                  widget.client.areaCmd(ClientMsg.setOptions, data: { fieldOptions : newOptions });
+                  widget.client.areaCmd(ClientMsg.setOptions, data: { fieldOptions : areaOptionsToJson() }); //()
                   if (widget.isDialog) Navigator.pop(context);
                 },
                  child: const Text("Update")),
@@ -90,65 +88,72 @@ class _OptionsPageState extends State<OptionsPage> {
     );
   }
 
-  Widget parseOptionEntry(String field, Map<String,dynamic> entry) { //print(entry.toString());
-    Widget entryWidget = const Text("?");
-    dynamic val = entry[fieldOptVal];
-    if (val is String) {
-      List<dynamic> enums = entry[fieldOptEnum] as List<dynamic>;
-      if (enums.isNotEmpty) {
-        entryWidget = DropdownButton<String>(
-            dropdownColor: widget.optionsDropdownCBkgCol, //.withOpacity(.5),
-            value: val,
-            items: List.generate(enums.length, (i) => DropdownMenuItem<String>(
-                value: enums.elementAt(i) as String,
-                child: Text(enums.elementAt(i),style: optTxtStyle))
-            ),
-            onChanged: (String? str) => setState(() {
-              newOptions[field][fieldOptVal] = str;
-            })
-        );
+  Map<String,dynamic> areaOptionsToJson() {
+    Map<String,dynamic> optionMap = {};
+    for (String field in areaOptions.keys) {
+      optionMap[field] = areaOptions[field]?.toJson();
+    }
+    return optionMap;
+  }
+
+  void setOption(ZugOption option, dynamic val, bool general) {
+    setState(() {
+      if (general) {
+        widget.client.setOption(option.name, option.fromValue(val));
       }
       else {
-        entryWidget = TextButton(onPressed: () {
-          ZugDialogs.getString('Enter new $field',val).then((txt) {
-            setState(() {
-              newOptions[field][fieldOptVal] = txt;
-            });
-          });
-        }, child: Text("$field: $val",style: optTxtStyle));
+        areaOptions[option.name] = option.fromValue(val);
       }
+    });
+  }
+
+  Widget enumeratedOptionWidget(ZugOption option, bool general) {
+    return DropdownButton<dynamic>(
+        dropdownColor: widget.optionsDropdownCBkgCol, //.withOpacity(.5),
+        value: option.getVal(),
+        items: List.generate(option.enums!.length, (i) => DropdownMenuItem<dynamic>(
+            value: option.enums!.elementAt(i),
+            child: Text(option.enums!.elementAt(i),style: optTxtStyle))
+        ),
+        onChanged: (dynamic val) => setOption(option, val, general));
+  }
+
+  Widget parseOptionEntry(ZugOption option, bool general) { //print(entry.toString());
+    Widget entryWidget = const Text("?");
+    if (option.enums != null && option.enums!.isNotEmpty) {
+      entryWidget = enumeratedOptionWidget(option, general);
     }
-    else if (val is double) { //or int
-      double range = entry[fieldOptMax] - entry[fieldOptMin];
-      double div = (range/entry[fieldOptInc]);
+    else if (option.zugVal.getType() == ValType.string) {
+      entryWidget = TextButton(onPressed: () {
+        ZugDialogs.getString('Enter new ${option.label}',
+            option.getString()).then((txt) => setOption(option, txt, general));
+      }, child: Text("${option.label}: ${option.getVal()}",style: optTxtStyle));
+    }
+    else if (option.zugVal.isNumeric()) {
+      num range = (option.max ?? option.getInt()) - (option.min ?? 0);
+      double div = (range/(option.inc ?? 1));
       entryWidget = Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text("$field : $val",style: optTxtStyle),
+          Text("${option.label} : ${option.getVal()}",style: optTxtStyle),
           Slider(
             thumbColor: widget.optionsTextColor,
-            value: val,
-            min: entry[fieldOptMin] as double,
-            max: entry[fieldOptMax] as double,
+            value: option.getVal() as double,
+            min: option.min as double,
+            max: option.max as double,
             divisions: div.toInt(),
-            label: newOptions[field][fieldOptVal].toString(),
-            onChanged: (double value) { //print(value);
-              if (value >= entry[fieldOptMin] && value <= entry[fieldOptMax]) {
-                setState(() { //print("Setting double field: $field -> $value");
-                  newOptions[field][fieldOptVal] = ZugUtils.roundNumber(value,OptionsPage.doubleDecimals);
-                });
-              }
-            },
+            label: option.label,
+            onChanged: (double value) => setOption(option, value, general),
           ),
         ],
       );
     }
-    else if (val is bool) {
+    else if (option.zugVal.getType() == ValType.bool) {
       entryWidget = Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(field,style: optTxtStyle),
-          Checkbox(value: val, onChanged: (newValue) => setState(() { newOptions[field][fieldOptVal] = newValue; }))
+          Text(option.label,style: optTxtStyle),
+          Checkbox(value: option.getBool(), onChanged: (newValue) => setOption(option, newValue, general)),
         ],
       );
     }

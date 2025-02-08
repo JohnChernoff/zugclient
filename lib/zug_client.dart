@@ -10,6 +10,7 @@ import 'package:zug_net/zug_sock.dart';
 import 'package:zug_utils/zug_dialogs.dart';
 import 'package:zug_utils/zug_utils.dart';
 import 'package:zugclient/zug_app.dart';
+import 'package:zugclient/zug_option.dart';
 import 'zug_fields.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -124,7 +125,7 @@ abstract class Room with Timerable {
 
 abstract class Area extends Room {
   dynamic listData = {};
-  Map<String,dynamic> options = {};
+  Map<String,ZugOption> options = {};
   bool exists = true;
   Room? currentRoom;
   Area(dynamic data) : super(data);
@@ -141,11 +142,11 @@ class FunctionWaiter {
   FunctionWaiter(this.funEnum);
 }
 
-enum AudioType {sound,music}
-
+enum ZugOpt {sound,soundVol,music,musicVol}
 enum LoginType {none,lichess}
 
 abstract class ZugClient extends ChangeNotifier {
+  static const optPrefix = "ZugClientOption";
   static final log = Logger('ClientLogger');
   static const noAreaTitle = "";
   static const servString = "serv";
@@ -175,6 +176,7 @@ abstract class ZugClient extends ChangeNotifier {
   PageType switchPage = PageType.none;
   PageType selectedPage = PageType.none;
   SharedPreferences? prefs;
+  final Map<String,ZugOption> _options = {};
   LoginType? loginType;
   String? serverVersion;
   final clipPlayer = AudioPlayer();
@@ -185,12 +187,17 @@ abstract class ZugClient extends ChangeNotifier {
   bool autoLog = false;
   String? autoJoinTitle;
   StreamSubscription<void>? _endClipListener,_endTrackListener;
-
   Area createArea(dynamic data);
 
   ZugClient(this.domain,this.port,this.remoteEndpoint, this.prefs, {this.showServMess = false, this.localServer = false}) {
     //_endClipListener = clipPlayer.onPlayerComplete.listen((v) => log.info("done"));
     log.info("Prefs: ${prefs.toString()}");
+    loadOptions([
+      ZugOption.fromEnum(ZugOpt.sound,false),
+      ZugOption.fromEnum(ZugOpt.soundVol,50,min: 0, max: 100, inc: 1,label: "Sound Volume"),
+      ZugOption.fromEnum(ZugOpt.music,false),
+      ZugOption.fromEnum(ZugOpt.musicVol,50,min: 0, max: 100, inc: 1,label: "Music Volume"),
+    ]);
     noArea = createArea(null);
     currentArea = noArea;
     PackageInfo.fromPlatform().then((PackageInfo info) {
@@ -386,7 +393,17 @@ abstract class ZugClient extends ChangeNotifier {
   bool handleUpdateOptions(data, {Area? area}) { //print("Options: $data");
     if (data[fieldOptions] != null) {
       area = area ?? getOrCreateArea(data);
-      area.options = data[fieldOptions] ?? {};
+
+      Map<String,dynamic> optionList = data[fieldOptions] as Map<String,dynamic>;
+      area.options.clear();
+
+      print(optionList.keys);
+
+      for (String field in optionList.keys) {
+        print ("key: $field");
+        print(optionList[field].toString());
+        area.options[field] = ZugOption.fromJson(optionList[field]) ?? ZugOption("?", null);
+      }
       return true;
     }
     return false;
@@ -674,13 +691,27 @@ abstract class ZugClient extends ChangeNotifier {
     }
   }
 
-  bool soundCheck(AudioType type) {
-    return prefs?.getBool(type.name) ?? defaultSound;
+  void loadOptions(List<ZugOption> list) {
+    for (var option in list) {
+      _options[option.name] = ZugOption.fromJson(
+          jsonDecode(prefs?.getString(optPrefix + option.name) ?? "{}")) ?? option;
+    }
+  }
+
+  ZugOption? getOption(Enum key) => _options[key];
+
+  Iterable<ZugOption> getOptions() => _options.values;
+
+  void setOption(String key, ZugOption option) {
+    _options[key] = option; prefs?.setString(optPrefix + key,option.toString());
+  }
+  void setOptionFromEnum(Enum key, ZugOption option) {
+    setOption(key.name, option);
   }
 
   Completer<void>? playTrack(String track) {
     Completer<void> trackCompleter = Completer();
-    if (soundCheck(AudioType.music)) {
+    if (getOption(ZugOpt.music)?.getBool() == true) {
       _endTrackListener?.cancel();
       _endTrackListener = trackPlayer.onPlayerComplete.listen((event) { //print("Finished clip: $clip");
         if (!trackCompleter.isCompleted) trackCompleter.complete();
@@ -693,7 +724,7 @@ abstract class ZugClient extends ChangeNotifier {
 
   Completer<void>? playClip(String clip, {interruptTrack = true}) { //print("Playing clip: $clip");
     Completer<void> clipCompleter = Completer();
-    if (soundCheck(AudioType.sound)) {
+    if (getOption(ZugOpt.sound)?.getBool() == true) {
       if (interruptTrack && trackPlayer.state == PlayerState.playing) trackPlayer.pause();
       _endClipListener?.cancel();
       _endClipListener = clipPlayer.onPlayerComplete.listen((event) { //print("Finished clip: $clip");

@@ -2,8 +2,6 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:zugclient/zug_client.dart';
 
-//final zugclientDialogNavigatorKey = GlobalKey<NavigatorState>(); //currently unused
-
 class MusicStackDialog extends StatefulWidget {
 
   final List<Widget> stack;
@@ -23,7 +21,7 @@ class MusicStackDialogState extends State<MusicStackDialog> {
   @override
   void initState() {
     super.initState();
-    if (widget.client.soundCheck(AudioType.music)) {
+    if (widget.client.getOption(ZugOpt.music)?.getBool() == true) {
       playTrack();
     }
   }
