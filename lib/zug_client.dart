@@ -84,7 +84,7 @@ abstract class Room with Timerable {
   Map<UniqueName,dynamic> occupantMap = {};
 
   Room(dynamic data) {
-    title = data?[fieldTitle] ?? ZugClient.noAreaTitle;
+    title = data?[fieldAreaID] ?? ZugClient.noAreaTitle;
   }
 
   String getOccupantName(UniqueName name) {
@@ -249,11 +249,11 @@ abstract class ZugClient extends ChangeNotifier {
 
   void newArea({String? title}) {
     if (title != null) {
-      send(ClientMsg.newArea, data: {fieldTitle: title});
+      send(ClientMsg.newArea, data: {fieldAreaID: title});
     }
     else {
       ZugDialogs.getString('Choose Game Title',userName?.name ?? "?")
-          .then((t) => send(ClientMsg.newArea, data: {fieldTitle: t}));
+          .then((t) => send(ClientMsg.newArea, data: {fieldAreaID: t}));
     }
   }
 
@@ -280,17 +280,17 @@ abstract class ZugClient extends ChangeNotifier {
   }
 
   Area getOrCreateArea(dynamic data) {
-    return areas.putIfAbsent(data?[fieldTitle] ?? noAreaTitle, () {
+    return areas.putIfAbsent(data?[fieldAreaID] ?? noAreaTitle, () {
       return createArea(data);
     });
   }
 
   void areaCmd(Enum cmd, { String? title, Map<String,dynamic> data = const {}}) {
     if (data.isEmpty) {
-      send(cmd,data: { fieldTitle : title ??  currentArea.title});
+      send(cmd,data: { fieldAreaID : title ??  currentArea.title});
     } else {
       Map<String,dynamic> args = Map<String,dynamic>.from(data);
-      args[fieldTitle] = title ?? currentArea.title;
+      args[fieldAreaID] = title ?? currentArea.title;
       send(cmd,data:args);
     }
   }
@@ -303,11 +303,11 @@ abstract class ZugClient extends ChangeNotifier {
     final t = title ?? noAreaTitle;
     if (currentArea.title != t) {
       if (areas[t] != null) {
-        if (currentArea.exists) send(ClientMsg.unObs,data:{ fieldTitle : currentArea.title });
+        if (currentArea.exists) send(ClientMsg.unObs,data:{ fieldAreaID : currentArea.title });
         currentArea = areas[t]!; // ?? noGame;
         if (currentArea.exists ) {
-          send(ClientMsg.obs,data:{fieldTitle:currentArea.title});
-          send(ClientMsg.updateArea,data:{fieldTitle:title});
+          send(ClientMsg.obs,data:{fieldAreaID:currentArea.title});
+          send(ClientMsg.updateArea,data:{fieldAreaID:title});
         }
       }
       else {
@@ -358,11 +358,11 @@ abstract class ZugClient extends ChangeNotifier {
   }
 
   void handleObs(data) {
-    log.info("Observing: ${data[fieldTitle]}");
+    log.info("Observing: ${data[fieldAreaID]}");
   }
 
   void handleUnObs(data) {
-    log.info("No longer observing: ${data[fieldTitle]}");
+    log.info("No longer observing: ${data[fieldAreaID]}");
   }
 
   bool handleCreateArea(data) { //print("Created Area: $data"); //TODO: create defaultJoin property?
@@ -414,7 +414,7 @@ abstract class ZugClient extends ChangeNotifier {
   void addAreaMsg(String msg, String title, {hidden = false}) {
     handleAreaMsg({
       fieldMsg : msg,
-      fieldTitle : title,
+      fieldAreaID : title,
       fieldHidden : hidden
     });
   }
@@ -452,12 +452,12 @@ abstract class ZugClient extends ChangeNotifier {
     return true;
   }
 
-  void handleJoin(data) { //print("Joining");
-    switchArea(data[fieldTitle]);
+  void handleJoin(data) { print("Joining: $data");
+    switchArea(data[fieldAreaID]);
   }
 
   void handlePart(data) { //print("Parting: $data");
-    addServMsg("Leaving: ${data[fieldTitle]}");
+    addServMsg("Leaving: ${data[fieldAreaID]}");
   }
 
   void handleStart(data) {
