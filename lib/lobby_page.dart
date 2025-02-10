@@ -18,7 +18,6 @@ class LobbyPage extends StatefulWidget {
   final double? width;
   final double borderWidth;
   final Color borderCol;
-  final int areaFlex;
 
   const LobbyPage(this.client, {
     this.backgroundImage,
@@ -29,7 +28,6 @@ class LobbyPage extends StatefulWidget {
     this.width,
     this.borderWidth  = 1,
     this.borderCol = Colors.white,
-    this.areaFlex  = 3,
     super.key, this.chatArea});
 
   Widget selectedArea(BuildContext context, {Color? bkgCol, Color? txtCol}) {
@@ -149,15 +147,12 @@ class LobbyPage extends StatefulWidget {
 
 class _LobbyPageState extends State<LobbyPage> {
 
-  bool showHelp = false;
-
   @override
   void initState() {
     super.initState();
   }
 
   Widget getAreaArea(BuildContext context) {
-    if (showHelp) return widget.getHelp(context, getCommandArea(context));
 
     List<DropdownMenuItem<String>> games = []; //List.empty(growable: true);
 
@@ -183,7 +178,7 @@ class _LobbyPageState extends State<LobbyPage> {
         ),
         child: Column(
           children: [ //Text(widget.client.userName),
-            getCommandArea(context),
+            Expanded(flex: 2, child: getCommandArea(context)),
             Center(
               child: Container(
               color: Theme.of(context).primaryColor, //widget.areaSelectBkgColor,
@@ -205,7 +200,7 @@ class _LobbyPageState extends State<LobbyPage> {
                 ],
               )),
             )),
-            Expanded(child: widget.selectedArea(context)),
+            Expanded(flex: 1, child: widget.selectedArea(context)),
           ],
         )
     );
@@ -213,16 +208,18 @@ class _LobbyPageState extends State<LobbyPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Flex(
+    return LayoutBuilder(builder: (BuildContext ctx, BoxConstraints constraints) => Flex(
       direction: widget.style == LobbyStyle.tersePort ? Axis.vertical : Axis.horizontal,
       children: [
-        Expanded(flex: widget.areaFlex, child: getAreaArea(context)),
+        SizedBox(height: constraints.maxHeight/2, child: getAreaArea(context)),
+        //Expanded(flex: widget.areaFlex, child: getAreaArea(context)),
         Expanded(flex: 1, child: widget.chatArea ?? const SizedBox.shrink()),
       ],
-    );
+    ));
   }
 
   Widget getCommandArea(BuildContext context) {
+    Axis axis = widget.style == LobbyStyle.tersePort ? Axis.vertical : Axis.horizontal;
     return Container(
         decoration: BoxDecoration(
             color: widget.buttonsBkgCol ?? Colors.white,
@@ -233,23 +230,10 @@ class _LobbyPageState extends State<LobbyPage> {
         ),
         width: widget.style == LobbyStyle.tersePort ? 128 : null,
         height: widget.style == LobbyStyle.tersePort ? null : 50,
-        child: showHelp ? Flex(
-          direction: widget.style == LobbyStyle.tersePort ? Axis.vertical : Axis.horizontal,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ElevatedButton(
-                style: widget.getButtonStyle(Colors.cyan, Colors.lightBlueAccent),
-                onPressed: () =>  setState(() {
-                  showHelp = false;
-                }),
-                child: Text("Return",style: widget.getButtonTextStyle())),
-          ],
-        )
-            : Center(child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          //mainAxisAlignment: MainAxisAlignment.center,
+        child: Center(child: SingleChildScrollView(
+          scrollDirection: axis,
           child: Flex(
-            direction: widget.style == LobbyStyle.tersePort ? Axis.vertical : Axis.horizontal,
+            direction: axis,
             children: getCmdButtons(context),
         ))),
       );

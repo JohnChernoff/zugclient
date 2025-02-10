@@ -452,7 +452,7 @@ abstract class ZugClient extends ChangeNotifier {
     return true;
   }
 
-  void handleJoin(data) { print("Joining: $data");
+  void handleJoin(data) { //print("Joining: $data");
     switchArea(data[fieldAreaID]);
   }
 
