@@ -710,29 +710,25 @@ abstract class ZugClient extends ChangeNotifier {
 
   Completer<void>? playTrack(String track) {
     Completer<void> trackCompleter = Completer();
-    if (getOption(ZugOpt.music)?.getBool() == true) {
+    if (_endTrackListener != null) {
       _endTrackListener?.cancel();
       _endTrackListener = trackPlayer.onPlayerComplete.listen((event) { //print("Finished clip: $clip");
         if (!trackCompleter.isCompleted) trackCompleter.complete();
       });
-      trackPlayer.play(AssetSource('audio/tracks/$track.mp3'), volume: volume);
-      return trackCompleter;
     }
-    return null;
+    trackPlayer.play(AssetSource('audio/tracks/$track'), volume: volume); //,mimeType: "audio/x-mp3"
+    return trackCompleter;
   }
 
   Completer<void>? playClip(String clip, {interruptTrack = true}) { //print("Playing clip: $clip");
     Completer<void> clipCompleter = Completer();
-    if (getOption(ZugOpt.sound)?.getBool() == true) {
-      if (interruptTrack && trackPlayer.state == PlayerState.playing) trackPlayer.pause();
-      _endClipListener?.cancel();
-      _endClipListener = clipPlayer.onPlayerComplete.listen((event) { //print("Finished clip: $clip");
-        if (trackPlayer.state == PlayerState.paused) trackPlayer.resume();
-        if (!clipCompleter.isCompleted) clipCompleter.complete();
-      });
-      clipPlayer.play(AssetSource('audio/clips/$clip.mp3'), volume: volume);
-      return clipCompleter;
-    }
-    return null;
+    if (interruptTrack && trackPlayer.state == PlayerState.playing) trackPlayer.pause();
+    _endClipListener?.cancel();
+    _endClipListener = clipPlayer.onPlayerComplete.listen((event) { //print("Finished clip: $clip");
+      if (trackPlayer.state == PlayerState.paused) trackPlayer.resume();
+      if (!clipCompleter.isCompleted) clipCompleter.complete();
+    });
+    clipPlayer.play(AssetSource('audio/clips/$clip'), volume: volume);
+    return clipCompleter;
   }
 }
