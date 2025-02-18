@@ -143,7 +143,7 @@ class FunctionWaiter {
   FunctionWaiter(this.funEnum);
 }
 
-enum ZugOpt {sound,soundVol,music,musicVol}
+enum AudioOpt {sound,soundVol,music,musicVol}
 enum LoginType {none,lichess}
 
 abstract class ZugClient extends ChangeNotifier {
@@ -197,10 +197,10 @@ abstract class ZugClient extends ChangeNotifier {
     //_endClipListener = clipPlayer.onPlayerComplete.listen((v) => log.info("done"));
     log.info("Prefs: ${prefs.toString()}");
     loadOptions([
-      (ZugOpt.sound,ZugOption(false,label: "Sound")),
-      (ZugOpt.soundVol,ZugOption(50,min: 0, max: 100, inc: 1,label: "Sound Volume")),
-      (ZugOpt.music,ZugOption(false,label: "Music")),
-      (ZugOpt.musicVol,ZugOption(50,min: 0, max: 100, inc: 1,label: "Music Volume")),
+      (AudioOpt.sound,ZugOption(false,label: "Sound")),
+      (AudioOpt.soundVol,ZugOption(50,min: 0, max: 100, inc: 1,label: "Sound Volume")),
+      (AudioOpt.music,ZugOption(false,label: "Music")),
+      (AudioOpt.musicVol,ZugOption(50,min: 0, max: 100, inc: 1,label: "Music Volume")),
     ]);
     noArea = createArea(null);
     currentArea = noArea;
@@ -703,13 +703,29 @@ abstract class ZugClient extends ChangeNotifier {
     }
   }
 
-  ZugOption? getOption(Enum key) => _options[key];
+  ZugOption? getOption(Enum key) => _options[key.name];
 
   Map<String, ZugOption> getOptions() => _options;
 
   void setOption(String key, ZugOption option) {
     _options[key] = option; prefs?.setString(optPrefix + key,jsonEncode(option.toJson()));
+    for (AudioOpt opt in AudioOpt.values) {
+      if (key == opt.name) {
+        updateAudio();
+        return;
+      }
+    }
   }
+
+  void updateAudio() {
+    trackPlayer.setVolume(getMusicVolume()/100.0);
+    if (musicCheck()) {
+      trackPlayer.resume();
+    } else {
+      trackPlayer.pause();
+    }
+  }
+
   void setOptionFromEnum(Enum key, ZugOption option) { setOption(key.name, option); }
 
   int playRandomLobbyTrack(int tracks) {
@@ -727,7 +743,9 @@ abstract class ZugClient extends ChangeNotifier {
       log.info(trackPlayer.state);
       if (!trackCompleter.isCompleted) trackCompleter.complete();
     });
-    trackPlayer.play(AssetSource('audio/tracks/$track'), volume: volume);
+    if (musicCheck()) {
+      trackPlayer.play(AssetSource('audio/tracks/$track'), volume: getMusicVolume()/100.0);
+    }
     return trackCompleter;
   }
 
@@ -739,7 +757,15 @@ abstract class ZugClient extends ChangeNotifier {
       if (trackPlayer.state == PlayerState.paused) trackPlayer.resume();
       if (!clipCompleter.isCompleted) clipCompleter.complete();
     });
-    clipPlayer.play(AssetSource('audio/clips/$clip'), volume: volume);
+    if (soundCheck()) {
+      clipPlayer.play(AssetSource('audio/clips/$clip'), volume: getSoundVolume()/100);
+    }
     return clipCompleter;
   }
+
+  bool musicCheck() => getOption(AudioOpt.music)?.getBool() ?? false;
+  bool soundCheck() => getOption(AudioOpt.sound)?.getBool() ?? false;
+  num getMusicVolume() => getOption(AudioOpt.musicVol)?.getNum() ?? 50;
+  num getSoundVolume() => getOption(AudioOpt.soundVol)?.getNum() ?? 50;
+
 }

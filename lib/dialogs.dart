@@ -21,7 +21,7 @@ class MusicStackDialogState extends State<MusicStackDialog> {
   @override
   void initState() {
     super.initState();
-    if (widget.client.getOption(ZugOpt.music)?.getBool() == true) {
+    if (widget.client.getOption(AudioOpt.music)?.getBool() == true) {
       playTrack();
     }
   }
