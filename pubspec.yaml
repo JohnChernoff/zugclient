@@ -20,7 +20,7 @@ dependencies:
   universal_html: ^2.2.4
   logging: ^1.2.0
   ini: ^2.1.0
-  audioplayers: ^6.0.0
+  audioplayers: ^6.1.2
   zug_net:
     git: "https://github.com/JohnChernoff/ZugNetFlutter"
   zug_utils:

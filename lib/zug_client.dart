@@ -1,6 +1,7 @@
 library zugclient;
 
 import 'dart:async';
+import 'dart:math';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
@@ -181,12 +182,15 @@ abstract class ZugClient extends ChangeNotifier {
   String? serverVersion;
   final clipPlayer = AudioPlayer();
   final trackPlayer = AudioPlayer();
+  int currentLobbyTrack = 0;
+  StreamSubscription<void>? _endClipListener,_endTrackListener;
+  Random rng = Random();
   double volume = .5;
   static bool defaultSound = false;
   int? id;
   bool autoLog = false;
   String? autoJoinTitle;
-  StreamSubscription<void>? _endClipListener,_endTrackListener;
+
   Area createArea(dynamic data);
 
   ZugClient(this.domain,this.port,this.remoteEndpoint, this.prefs, {this.showServMess = false, this.localServer = false}) {
@@ -708,15 +712,22 @@ abstract class ZugClient extends ChangeNotifier {
   }
   void setOptionFromEnum(Enum key, ZugOption option) { setOption(key.name, option); }
 
-  Completer<void>? playTrack(String track) {
+  int playRandomLobbyTrack(int tracks) {
+    int n;
+    do { n = rng.nextInt(tracks) + 1; } while (tracks > 1 && n == currentLobbyTrack);
+    playTrack('lobby$n.mp3');
+    currentLobbyTrack = n;
+    return n;
+  }
+
+  Completer<void> playTrack(String track) {
     Completer<void> trackCompleter = Completer();
-    if (_endTrackListener != null) {
-      _endTrackListener?.cancel();
-      _endTrackListener = trackPlayer.onPlayerComplete.listen((event) { //print("Finished clip: $clip");
-        if (!trackCompleter.isCompleted) trackCompleter.complete();
-      });
-    }
-    trackPlayer.play(AssetSource('audio/tracks/$track'), volume: volume); //,mimeType: "audio/x-mp3"
+    _endTrackListener?.cancel();
+    _endTrackListener = trackPlayer.onPlayerComplete.listen((event) {
+      log.info(trackPlayer.state);
+      if (!trackCompleter.isCompleted) trackCompleter.complete();
+    });
+    trackPlayer.play(AssetSource('audio/tracks/$track'), volume: volume);
     return trackCompleter;
   }
 
