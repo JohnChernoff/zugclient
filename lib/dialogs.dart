@@ -1,6 +1,57 @@
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:zug_utils/zug_utils.dart';
 import 'package:zugclient/zug_client.dart';
+import "package:universal_html/html.dart" as html;
+
+class IntroDialog {
+  final String appName;
+  final String? tutorialUrl, discordUrl;
+  final BuildContext ctx;
+
+  IntroDialog(this.appName, this.ctx,{this.tutorialUrl, this.discordUrl});
+
+  Future<bool?> raise() {
+    return showDialog<bool?>(
+        context: ctx,
+        builder: (BuildContext context) {
+          return SimpleDialog(
+            title: Text("Welcome to $appName!"),
+            children: [
+              if (tutorialUrl != null) SimpleDialogOption(
+                  onPressed: () {
+                    if (kIsWeb) {
+                      html.window.open(tutorialUrl!, 'new tab');
+                    } else {
+                      ZugUtils.launch(tutorialUrl!, isNewTab: true);
+                    }
+                  },
+                  child: Text('Learn $appName')),
+              if (discordUrl != null) SimpleDialogOption(
+                  onPressed: () {
+                    if (kIsWeb) {
+                      html.window.open(discordUrl!, 'new tab');
+                    } else {
+                      ZugUtils.launch(discordUrl!, isNewTab: true);
+                    }
+                  },
+                  child: const Text('Visit Discord')),
+              SimpleDialogOption(
+                  onPressed: () {
+                    Navigator.pop(context,false);
+                  },
+                  child: const Text('Start without Music')),
+              SimpleDialogOption(
+                  onPressed: () {
+                    Navigator.pop(context,true);
+                  },
+                  child: const Text('Start with Music')),
+            ],
+          );
+        });
+  }
+}
 
 class MusicStackDialog extends StatefulWidget {
 

@@ -2,12 +2,14 @@ import 'dart:convert';
 
 import 'package:zugclient/zug_fields.dart';
 
-enum ValType {int,double,bool,string}
+enum ValType {int,double,bool,string,enumeration}
 
 class UnknownValueTypeException implements Exception {
   dynamic value;
   UnknownValueTypeException(this.value);
 }
+
+//TODO: fix Enums
 
 class ZugVal {
   late final ValType? _valType;
@@ -15,23 +17,28 @@ class ZugVal {
   late final double? _dblVal;
   late final bool? _boolVal;
   late final String? _strVal;
+  late final Enum? _enumVal;
 
   ZugVal(dynamic val) {
     if (val is bool) {
       _valType = ValType.bool; _boolVal = val;
-      _intVal = _dblVal = _strVal = null;
+      _intVal = _dblVal = _strVal = _enumVal = null;
     }
     else if (val is int) {
       _valType = ValType.int; _intVal = val;
-      _boolVal = _dblVal = _strVal = null;
+      _boolVal = _dblVal = _strVal = _enumVal = null;
     }
     else if (val is double) {
       _valType = ValType.double; _dblVal = val;
-      _intVal = _boolVal = _strVal = null;
+      _intVal = _boolVal = _strVal = _enumVal = null;
     }
     else if (val is String) {
       _valType = ValType.string; _strVal = val;
-      _intVal = _dblVal = _boolVal = null;
+      _intVal = _dblVal = _boolVal = _enumVal = null;
+    }
+    else if (val is Enum) {
+      _valType = ValType.string; _enumVal = val;
+      _intVal = _dblVal = _boolVal = _strVal = null;
     }
     else if (val == null) {
       _valType = _boolVal = _intVal = _dblVal = _strVal = null;
@@ -47,6 +54,7 @@ class ZugVal {
       ValType.double => _dblVal,
       ValType.bool => _boolVal,
       ValType.string => _strVal,
+      ValType.enumeration => _enumVal,
       null => null,
     };
   }
@@ -87,6 +95,7 @@ class ZugOption {
   double getDbl() =>  zugVal.getVal() as double;
   num getNum() => zugVal.getVal() as num;
   String getString() =>  zugVal.getVal() as String;
+  Enum getEnum() => zugVal.getVal() as Enum;
 
   static ZugOption fromJson(Map<String,dynamic> json) {
     if (json.isEmpty) return ZugOption("?", label: "Null Option"); //print("Decoding: $json");

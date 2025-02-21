@@ -178,7 +178,7 @@ class _LobbyPageState extends State<LobbyPage> {
         ),
         child: Column(
           children: [ //Text(widget.client.userName),
-            Expanded(flex: 2, child: getCommandArea(context)),
+            widget.style == LobbyStyle.tersePort ? Expanded(flex: 2, child: getCommandArea(context)) : getCommandArea(context),
             Center(
               child: Container(
               color: Theme.of(context).primaryColor, //widget.areaSelectBkgColor,
@@ -211,7 +211,11 @@ class _LobbyPageState extends State<LobbyPage> {
     return LayoutBuilder(builder: (BuildContext ctx, BoxConstraints constraints) => Flex(
       direction: widget.style == LobbyStyle.tersePort ? Axis.vertical : Axis.horizontal,
       children: [
-        SizedBox(height: constraints.maxHeight/2, child: getAreaArea(context)),
+        SizedBox(
+            width: widget.style == LobbyStyle.tersePort ? null : constraints.maxWidth * .75,
+            height: widget.style == LobbyStyle.tersePort ? constraints.maxHeight/2 : null,
+            child: getAreaArea(context)
+        ),
         //Expanded(flex: widget.areaFlex, child: getAreaArea(context)),
         Expanded(flex: 1, child: widget.chatArea ?? const SizedBox.shrink()),
       ],

@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:logging/logging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zug_net/oauth_client.dart';
@@ -143,6 +144,43 @@ class FunctionWaiter {
   FunctionWaiter(this.funEnum);
 }
 
+class ShuffleInfo {
+  Random rng = Random();
+  bool shuffling;
+  int? _tracks;
+  int currentTrack = 0;
+  final String prefix;
+  final String format;
+  ShuffleInfo({this.shuffling = false,this.prefix = "lobby",String? format}) :
+      format = format ?? ".mp3";
+
+  Future<int> countTracks() async {
+    _tracks ??= await _countTracks();
+    return _tracks ?? 0;
+  }
+
+  Future<int> _countTracks() async {
+    final manifestContent = await rootBundle.loadString('AssetManifest.json');
+    final Map<String, dynamic> manifestMap = json.decode(manifestContent);
+    return manifestMap.keys
+        .where((String key) => key.startsWith('assets/audio/tracks/$prefix') &&
+        key.endsWith(format)).length;
+  }
+
+  Future<int> getRandomTrack() async {
+    int tracks = await countTracks();
+    while(true) {
+      int n = rng.nextInt(tracks) + 1;
+      if (tracks < 2 || n != currentTrack) return n;
+    }
+  }
+
+  @override
+  String toString() {
+    return "Shuffling: $shuffling, pfx: $prefix, ext: $format";
+  }
+}
+
 enum AudioOpt {sound,soundVol,music,musicVol}
 enum LoginType {none,lichess}
 
@@ -182,7 +220,7 @@ abstract class ZugClient extends ChangeNotifier {
   String? serverVersion;
   final clipPlayer = AudioPlayer();
   final trackPlayer = AudioPlayer();
-  int currentLobbyTrack = 0;
+  ShuffleInfo _currentShuffle = ShuffleInfo();
   StreamSubscription<void>? _endClipListener,_endTrackListener;
   Random rng = Random();
   double volume = .5;
@@ -195,6 +233,7 @@ abstract class ZugClient extends ChangeNotifier {
 
   ZugClient(this.domain,this.port,this.remoteEndpoint, this.prefs, {this.showServMess = false, this.localServer = false}) {
     //_endClipListener = clipPlayer.onPlayerComplete.listen((v) => log.info("done"));
+    trackPlayer.stop();
     log.info("Prefs: ${prefs.toString()}");
     loadOptions([
       (AudioOpt.sound,ZugOption(false,label: "Sound")),
@@ -209,6 +248,7 @@ abstract class ZugClient extends ChangeNotifier {
       log.info(info.toString());
       notifyListeners(); //why?
     });
+    print("Hello from ZugClient!");
     addFunctions({
       ServMsg.none: handleNoFun,
       ServMsg.ping: handlePing,
@@ -301,6 +341,7 @@ abstract class ZugClient extends ChangeNotifier {
 
   void setSwitchPage(PageType p) {
     switchPage = p;
+    notifyListeners();
   }
 
   void switchArea(String? title) {
@@ -394,7 +435,7 @@ abstract class ZugClient extends ChangeNotifier {
     return area.updateOccupants(data);
   }
 
-  bool handleUpdateOptions(data, {Area? area}) { //print("Options: $data");
+  bool handleUpdateOptions(data, {Area? area}) { print("Options: $data");
     if (data[fieldOptions] != null) {
       area = area ?? getOrCreateArea(data);
       Map<String,dynamic> optionList = data[fieldOptions] as Map<String,dynamic>;
@@ -707,60 +748,105 @@ abstract class ZugClient extends ChangeNotifier {
 
   Map<String, ZugOption> getOptions() => _options;
 
+  void editOption(Enum key, dynamic val) {
+    ZugOption? option = getOption(key);
+    if (option != null) setOptionFromEnum(key, option.fromValue(val));
+  }
+
   void setOption(String key, ZugOption option) {
     _options[key] = option; prefs?.setString(optPrefix + key,jsonEncode(option.toJson()));
     for (AudioOpt opt in AudioOpt.values) {
       if (key == opt.name) {
-        updateAudio();
+        updateAudio(opt);
         return;
       }
     }
   }
 
-  void updateAudio() {
-    trackPlayer.setVolume(getMusicVolume()/100.0);
-    if (musicCheck()) {
-      trackPlayer.resume();
-    } else {
-      trackPlayer.pause();
-    }
-  }
-
   void setOptionFromEnum(Enum key, ZugOption option) { setOption(key.name, option); }
 
-  int playRandomLobbyTrack(int tracks) {
-    int n;
-    do { n = rng.nextInt(tracks) + 1; } while (tracks > 1 && n == currentLobbyTrack);
-    playTrack('lobby$n.mp3');
-    currentLobbyTrack = n;
-    return n;
-  }
-
-  Completer<void> playTrack(String track) {
-    Completer<void> trackCompleter = Completer();
-    _endTrackListener?.cancel();
-    _endTrackListener = trackPlayer.onPlayerComplete.listen((event) {
-      log.info(trackPlayer.state);
-      if (!trackCompleter.isCompleted) trackCompleter.complete();
-    });
-    if (musicCheck()) {
-      trackPlayer.play(AssetSource('audio/tracks/$track'), volume: getMusicVolume()/100.0);
+  void updateAudio(AudioOpt opt) {
+    if (opt == AudioOpt.musicVol) {
+      trackPlayer.setVolume(getMusicVolume()/100.0);
     }
-    return trackCompleter;
+    else if (opt == AudioOpt.music) {
+      if (musicCheck()) {
+        if (_currentShuffle.shuffling) {
+          startShuffle();
+        } else {
+          trackPlayer.resume();
+        }
+      } else {
+        trackPlayer.pause();
+      }
+    }
+
   }
 
-  Completer<void>? playClip(String clip, {interruptTrack = true}) { //print("Playing clip: $clip");
-    Completer<void> clipCompleter = Completer();
+  Future<void> startShuffle({int? initialTrack, String? prefix, String? format, bool override = true}) async {
+    if (!_currentShuffle.shuffling || override) {
+      _currentShuffle = ShuffleInfo(shuffling: true,
+          prefix: prefix ?? _currentShuffle.prefix,
+          format: format ?? _currentShuffle.format);
+      log.info("Shuffling: $_currentShuffle");
+      while (_currentShuffle.shuffling && await playRandomTrack(forceTrack: initialTrack)) {
+        initialTrack = null;
+      }
+      log.info("Finished shuffle");
+    }
+  }
+
+  void stopShuffle() {
+    _currentShuffle.shuffling = false; trackPlayer.stop();
+  }
+
+  Future<bool> playRandomTrack({ShuffleInfo? shuffInfo, int? forceTrack}) async {
+    ShuffleInfo info = shuffInfo ?? _currentShuffle;
+    info.currentTrack = forceTrack ?? await info.getRandomTrack();
+    return playTrack('${info.prefix}${info.currentTrack}${info.format}');
+  }
+
+  //returns true when track completes, false when stopped or no sound
+  Future<bool> playTrack(String track) { log.info("Playing: $track");
+    Completer<bool> trackCompleter = Completer();
+    if (musicCheck()) {
+      trackPlayer.stop().then((onValue) {
+        _endTrackListener?.cancel();
+        _endTrackListener = trackPlayer.onPlayerStateChanged.listen((onData) {
+          log.info("Player State Change: $onData");
+          if (!trackCompleter.isCompleted) {
+            if (onData == PlayerState.completed) {
+              trackCompleter.complete(true);
+            } else if (onData == PlayerState.stopped) {
+              trackCompleter.complete(false);
+            }
+          }
+        });
+        trackPlayer.play(AssetSource('audio/tracks/$track'), volume: getMusicVolume()/100.0);
+      });
+    }
+    else { //log.info("Skipping (no sound)");
+      trackCompleter.complete(false);
+    }
+    return trackCompleter.future;
+  }
+
+  Future<bool> playClip(String clip, {interruptTrack = true}) { //print("Playing clip: $clip");
+    Completer<bool> clipCompleter = Completer();
     if (interruptTrack && trackPlayer.state == PlayerState.playing) trackPlayer.pause();
     _endClipListener?.cancel();
     _endClipListener = clipPlayer.onPlayerComplete.listen((event) { //print("Finished clip: $clip");
       if (trackPlayer.state == PlayerState.paused) trackPlayer.resume();
-      if (!clipCompleter.isCompleted) clipCompleter.complete();
+      if (!clipCompleter.isCompleted) clipCompleter.complete(true);
     });
     if (soundCheck()) {
       clipPlayer.play(AssetSource('audio/clips/$clip'), volume: getSoundVolume()/100);
     }
-    return clipCompleter;
+    else {
+      clipCompleter.complete(false);
+      if (trackPlayer.state == PlayerState.paused) trackPlayer.resume();
+    }
+    return clipCompleter.future;
   }
 
   bool musicCheck() => getOption(AudioOpt.music)?.getBool() ?? false;

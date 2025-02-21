@@ -12,6 +12,7 @@ class OptionsPage extends StatefulWidget {
   final Color optionsBackgroundColor;
   final Color optionsTextColor;
   final Color optionsDropdownCBkgCol;
+  final double optionsPadding;
   final ZugClient client;
   final double headerHeight;
   final Widget? customHeader;
@@ -27,6 +28,7 @@ class OptionsPage extends StatefulWidget {
     this.optionsBackgroundColor = Colors.black,
     this.optionsTextColor = Colors.cyan,
     this.optionsDropdownCBkgCol = Colors.blueGrey, // Color.fromRGBO(222, 222, 0, .5),
+    this.optionsPadding = 4.0,
     required this.scope,
     super.key
   });
@@ -59,7 +61,7 @@ class _OptionsPageState extends State<OptionsPage> {
     }
     optionFields = optionMap.keys.toList();
     optionFields.sort((a, b) {
-      int fieldCmp = optionMap[a]?.zugVal.getType()?.index.compareTo(optionMap[b]?.zugVal.getType()?.index as num) ?? 0;
+      int fieldCmp = optionMap[a]?.zugVal.getType()?.index.compareTo(optionMap[b]?.zugVal.getType()?.index ?? 0 as num) ?? 0;
       return fieldCmp == 0 ? a.compareTo(b) : fieldCmp;
     });
   }
@@ -70,6 +72,7 @@ class _OptionsPageState extends State<OptionsPage> {
       optionWidgets[key] = parseOptionEntry(optionMap[key]!,key);
     }
     return Column(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         widget.customHeader ?? SizedBox(height: widget.headerHeight, child: Center(child: Text(widget.headerTxt))),
         Expanded(child: Container(
@@ -135,14 +138,31 @@ class _OptionsPageState extends State<OptionsPage> {
   }
 
   Widget enumeratedOptionWidget(ZugOption option, String key) {
-    return DropdownButton<dynamic>(
-        dropdownColor: widget.optionsDropdownCBkgCol, //.withOpacity(.5),
-        value: option.getVal(),
-        items: List.generate(option.enums!.length, (i) => DropdownMenuItem<dynamic>(
-            value: option.enums!.elementAt(i),
-            child: Text(option.enums!.elementAt(i),style: optTxtStyle))
-        ),
-        onChanged: (dynamic val) => setOption(option, key, val));
+    return Column(children: [ Container(
+        padding: EdgeInsets.all(widget.optionsPadding),
+        decoration: BoxDecoration(
+          border: Border.all(color: widget.optionsTextColor, width: 2),
+        ) ,
+        child: Column(
+      children: [
+        Text(option.label,style: optTxtStyle),
+        DropdownButton<dynamic>(
+            dropdownColor: widget.optionsDropdownCBkgCol, //.withOpacity(.5),
+            value: option.getVal(),
+            items: List.generate(
+                option.enums!.length,
+                (i) => DropdownMenuItem<dynamic>(
+                    value: option.enums!.elementAt(i),
+                    child: FittedBox(fit: BoxFit.scaleDown, child: Text(
+                        option.enums!.elementAt(i) is String
+                            ? option.enums!.elementAt(i) as String
+                            : (option.enums!.elementAt(i) as Enum).name,
+                        style: optTxtStyle)))),
+            onChanged: (dynamic val) => setOption(option, key, val)),
+      ],
+    )),
+      SizedBox(height: widget.optionsPadding * 2),
+    ]);
   }
 
   Widget parseOptionEntry(ZugOption option, String key) { //print(entry.toString());
@@ -185,7 +205,7 @@ class _OptionsPageState extends State<OptionsPage> {
         ],
       );
     }
-    return Center(child: entryWidget);
+    return Center(child: Padding(padding: EdgeInsets.all(widget.optionsPadding), child: entryWidget));
   }
 
 
