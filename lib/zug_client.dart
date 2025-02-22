@@ -236,7 +236,7 @@ abstract class ZugClient extends ChangeNotifier {
     trackPlayer.stop();
     log.info("Prefs: ${prefs.toString()}");
     loadOptions([
-      (AudioOpt.sound,ZugOption(false,label: "Sound")),
+      (AudioOpt.sound,ZugOption(true,label: "Sound")),
       (AudioOpt.soundVol,ZugOption(50,min: 0, max: 100, inc: 1,label: "Sound Volume")),
       (AudioOpt.music,ZugOption(false,label: "Music")),
       (AudioOpt.musicVol,ZugOption(50,min: 0, max: 100, inc: 1,label: "Music Volume")),
@@ -248,7 +248,6 @@ abstract class ZugClient extends ChangeNotifier {
       log.info(info.toString());
       notifyListeners(); //why?
     });
-    print("Hello from ZugClient!");
     addFunctions({
       ServMsg.none: handleNoFun,
       ServMsg.ping: handlePing,
@@ -435,7 +434,7 @@ abstract class ZugClient extends ChangeNotifier {
     return area.updateOccupants(data);
   }
 
-  bool handleUpdateOptions(data, {Area? area}) { print("Options: $data");
+  bool handleUpdateOptions(data, {Area? area}) { //print("Options: $data");
     if (data[fieldOptions] != null) {
       area = area ?? getOrCreateArea(data);
       Map<String,dynamic> optionList = data[fieldOptions] as Map<String,dynamic>;
@@ -843,18 +842,19 @@ abstract class ZugClient extends ChangeNotifier {
 
   Future<bool> playClip(String clip, {interruptTrack = true}) { //print("Playing clip: $clip");
     Completer<bool> clipCompleter = Completer();
-    if (interruptTrack && trackPlayer.state == PlayerState.playing) trackPlayer.pause();
-    _endClipListener?.cancel();
-    _endClipListener = clipPlayer.onPlayerComplete.listen((event) { //print("Finished clip: $clip");
-      if (trackPlayer.state == PlayerState.paused) trackPlayer.resume();
-      if (!clipCompleter.isCompleted) clipCompleter.complete(true);
-    });
-    if (soundCheck()) {
-      clipPlayer.play(AssetSource('audio/clips/$clip'), volume: getSoundVolume()/100);
+    if (soundCheck()) { //print("Playing clip: $clip");
+      if (interruptTrack && trackPlayer.state == PlayerState.playing) trackPlayer.pause();
+      clipPlayer.stop().then((onValue) {
+        _endClipListener?.cancel();
+        _endClipListener = clipPlayer.onPlayerComplete.listen((event) { //print("Finished clip: $clip");
+          if (trackPlayer.state == PlayerState.paused) trackPlayer.resume();
+          if (!clipCompleter.isCompleted) clipCompleter.complete(true);
+        });
+        clipPlayer.play(AssetSource('audio/clips/$clip'), volume: getSoundVolume()/100);
+      });
     }
-    else {
+    else { //if (trackPlayer.state == PlayerState.paused) trackPlayer.resume();
       clipCompleter.complete(false);
-      if (trackPlayer.state == PlayerState.paused) trackPlayer.resume();
     }
     return clipCompleter.future;
   }
@@ -865,3 +865,20 @@ abstract class ZugClient extends ChangeNotifier {
   num getSoundVolume() => getOption(AudioOpt.soundVol)?.getNum() ?? 50;
 
 }
+
+/**
+ * class WorkAroundPlayerController extends VideoPlayerController {
+    WorkAroundPlayerController.networkUrl(super.url) : super.networkUrl();
+    WorkAroundPlayerController.file(super.file) : super.file();
+    WorkAroundPlayerController.contentUri(super.contentUri) : super.contentUri();
+    WorkAroundPlayerController.asset(super.dataSource) : super.asset();
+
+    @override
+    Future<void> seekTo(Duration position) async {
+    if (kIsWeb && position == value.duration) {
+    return;
+    }
+    return super.seekTo(position);
+    }
+    }
+ */
