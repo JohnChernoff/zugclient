@@ -221,7 +221,6 @@ abstract class ZugClient extends ChangeNotifier {
   final clipPlayer = AudioPlayer();
   final trackPlayer = AudioPlayer();
   ShuffleInfo _currentShuffle = ShuffleInfo();
-  StreamSubscription<void>? _endClipListener,_endTrackListener;
   Random rng = Random();
   double volume = .5;
   static bool defaultSound = false;
@@ -812,51 +811,46 @@ abstract class ZugClient extends ChangeNotifier {
   Future<bool> playRandomTrack({ShuffleInfo? shuffInfo, int? forceTrack}) async {
     ShuffleInfo info = shuffInfo ?? _currentShuffle;
     info.currentTrack = forceTrack ?? await info.getRandomTrack();
-    return playTrack('${info.prefix}${info.currentTrack}${info.format}');
+    return playAudio(AssetSource('audio/tracks/${info.prefix}${info.currentTrack}${info.format}'));
   }
 
   //returns true when track completes, false when stopped or no sound
-  Future<bool> playTrack(String track) { log.info("Playing: $track");
-    Completer<bool> trackCompleter = Completer();
-    if (musicCheck()) {
-      trackPlayer.stop().then((onValue) {
-        _endTrackListener?.cancel();
-        _endTrackListener = trackPlayer.onPlayerStateChanged.listen((onData) {
-          log.info("Player State Change: $onData");
-          if (!trackCompleter.isCompleted) {
-            if (onData == PlayerState.completed) {
-              trackCompleter.complete(true);
-            } else if (onData == PlayerState.stopped) {
-              trackCompleter.complete(false);
-            }
+  Future<bool> playAudio(AssetSource src, {bool clip = false, bool? pauseCurrentTrack, bool? resumeCurrentTrack}) async {
+    bool pauseTrack = pauseCurrentTrack ?? clip; //weird behavior if clip = false and pauseCurrentTrack = true?
+    bool resumeTrack = resumeCurrentTrack ?? pauseTrack;
+    Completer<bool> completer = Completer();
+    Source? prevSrc;
+    PlayerState prevState = trackPlayer.state;
+    if (!clip && prevState == PlayerState.playing || prevState == PlayerState.paused) {
+      prevSrc = trackPlayer.source;
+    }
+    if (clip ? soundCheck() : musicCheck()) {
+      if (pauseTrack) {
+        await trackPlayer.pause();
+      } else {
+        await trackPlayer.stop();
+      }
+      AudioPlayer player = clip ? clipPlayer : trackPlayer;
+      StreamSubscription<void>? sub;
+      sub = player.onPlayerStateChanged.listen((state) async {
+        print("Audio State: $state, clip: $clip, src: ${player.source.toString()}, prev: ${prevSrc?.toString()}");
+        if (state == PlayerState.completed) {
+          if (resumeTrack) {
+            await prevSrc?.setOnPlayer(trackPlayer);
+            await trackPlayer.resume();
           }
-        });
-        trackPlayer.play(AssetSource('audio/tracks/$track'), volume: getMusicVolume()/100.0);
+          completer.complete(true); sub?.cancel();
+        }
+        else if (state == PlayerState.stopped || state == PlayerState.disposed) {
+          completer.complete(false); sub?.cancel();
+        }
       });
+      player.play(src);
     }
-    else { //log.info("Skipping (no sound)");
-      trackCompleter.complete(false);
+    else {
+      completer.complete(false);
     }
-    return trackCompleter.future;
-  }
-
-  Future<bool> playClip(String clip, {interruptTrack = true}) { //print("Playing clip: $clip");
-    Completer<bool> clipCompleter = Completer();
-    if (soundCheck()) { //print("Playing clip: $clip");
-      if (interruptTrack && trackPlayer.state == PlayerState.playing) trackPlayer.pause();
-      clipPlayer.stop().then((onValue) {
-        _endClipListener?.cancel();
-        _endClipListener = clipPlayer.onPlayerComplete.listen((event) { //print("Finished clip: $clip");
-          if (trackPlayer.state == PlayerState.paused) trackPlayer.resume();
-          if (!clipCompleter.isCompleted) clipCompleter.complete(true);
-        });
-        clipPlayer.play(AssetSource('audio/clips/$clip'), volume: getSoundVolume()/100);
-      });
-    }
-    else { //if (trackPlayer.state == PlayerState.paused) trackPlayer.resume();
-      clipCompleter.complete(false);
-    }
-    return clipCompleter.future;
+    return completer.future;
   }
 
   bool musicCheck() => getOption(AudioOpt.music)?.getBool() ?? false;
