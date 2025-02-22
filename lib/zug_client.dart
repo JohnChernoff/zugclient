@@ -456,6 +456,16 @@ abstract class ZugClient extends ChangeNotifier {
     areaCmd(ClientMsg.getOptions);
   }
 
+  Future<bool> awaitResponse(Enum query, Enum reply, {int timeLimit = 5000}) async {
+    Completer<bool> completer = Completer();
+    awaitMsg(reply)
+        .timeout(Duration(milliseconds: timeLimit))
+        .then((b) => completer.complete(true))
+        .catchError((e) => completer.complete(false));
+    areaCmd(query);
+    return completer.future;
+  }
+
   void addAreaMsg(String msg, String title, {hidden = false}) {
     handleAreaMsg({
       fieldMsg : msg,

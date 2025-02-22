@@ -56,23 +56,23 @@ abstract class ZugApp extends StatelessWidget {
     return ZugHome(app:app,noNav: noNav);
   }
 
-  Widget createOptionsPage(client) {
+  Widget createOptionsPage(ZugClient client) {
     return OptionsPage(client, scope: OptionScope.general);
   }
 
-  Widget createLobbyPage(client) {
+  Widget createLobbyPage(ZugClient client) {
     return LobbyPage(client,chatArea: ZugChat(client, defScope: MessageScope.server)); //,
         //foregroundColor: colorScheme.onSurface, backgroundColor: colorScheme.surface)
   }
 
-  Widget createSplashPage(client) {
+  Widget createSplashPage(ZugClient client) {
     return SplashPage(client,
         imgLandscape: Image(image: ZugUtils.getAssetImage(splashLandscapeImgPath),fit: BoxFit.fill),
         imgPortrait: Image(image: ZugUtils.getAssetImage(splashPortraitImgPath),fit: BoxFit.fill),
     );
   }
 
-  Widget createMainPage(client);
+  Widget createMainPage(ZugClient client);
 
   AppBar createAppBar(BuildContext context, ZugClient client, {Widget? txt, Color? color}) {
     Text defaultTxt = noNav
@@ -192,13 +192,11 @@ class _ZugHomeState extends State<ZugHome> {
         currentIndex: selectedIndex,
         onTap: (value) {
           if (!ZugDialogs.dialog) {
+            //if (selectedPage == PageType.options && client.currentArea.exists) { widget.app.client.areaCmd(ClientMsg.getOptions); }
             setState(() {
               selectedIndex = value;
               PageType newPage = PageType.values.elementAt(selectedIndex);
               selectedPage = newPage;
-              if (selectedPage == PageType.options && client.currentArea.exists) {
-                widget.app.client.areaCmd(ClientMsg.getOptions);
-              }
             });
           }
         },

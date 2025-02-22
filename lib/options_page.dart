@@ -39,6 +39,7 @@ class OptionsPage extends StatefulWidget {
 }
 
 class _OptionsPageState extends State<OptionsPage> {
+  bool loading = true;
   Map<String,ZugOption> optionMap = {};
   Map<String,Widget> optionWidgets = {};
   List<String> optionFields = [];
@@ -51,7 +52,10 @@ class _OptionsPageState extends State<OptionsPage> {
     loadOptions();
   }
 
-  void loadOptions() {
+  Future<void> loadOptions() async {
+    if (widget.scope == OptionScope.area) {
+      await widget.client.awaitResponse(ClientMsg.getOptions, ServMsg.updateOptions);
+    }
     optionMap.clear();
     Map<String,ZugOption> optionMapSrc = widget.scope == OptionScope.general
         ? widget.client.getOptions()
@@ -64,10 +68,13 @@ class _OptionsPageState extends State<OptionsPage> {
       int fieldCmp = optionMap[a]?.zugVal.getType()?.index.compareTo(optionMap[b]?.zugVal.getType()?.index ?? 0 as num) ?? 0;
       return fieldCmp == 0 ? a.compareTo(b) : fieldCmp;
     });
+    setState(() {
+      loading = false;
+    });
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) { //if (loading) return const Text("Loading...");
     for (String key in optionFields) {
       optionWidgets[key] = parseOptionEntry(optionMap[key]!,key);
     }
