@@ -133,7 +133,7 @@ abstract class Area extends Room {
   Area(dynamic data) : super(data);
 
   bool updateArea(Map<String,dynamic> data) {
-    listData = data; //TODO: eeeeh
+    listData = data; //TODO: clarify how this works
     return true; //updateOccupants(data);
   }
 }
@@ -696,7 +696,7 @@ abstract class ZugClient extends ChangeNotifier {
     else if (isConnected && sock != null) {
       sock!.send(jsonEncode( { fieldType: type.name, fieldData: data } ) );
     }
-    else { //playClip("doink");
+    else {
       tryReconnect();
     }
   }
@@ -828,12 +828,12 @@ abstract class ZugClient extends ChangeNotifier {
       if (pauseTrack) {
         await trackPlayer.pause();
       } else {
-        await trackPlayer.stop();
+        if (!clip) await trackPlayer.stop();
       }
       AudioPlayer player = clip ? clipPlayer : trackPlayer;
       StreamSubscription<void>? sub;
       sub = player.onPlayerStateChanged.listen((state) async {
-        print("Audio State: $state, clip: $clip, src: ${player.source.toString()}, prev: ${prevSrc?.toString()}");
+        log.fine("Audio State: $state, clip: $clip, src: ${player.source.toString()}, prev: ${prevSrc?.toString()}");
         if (state == PlayerState.completed) {
           if (resumeTrack) {
             await prevSrc?.setOnPlayer(trackPlayer);
