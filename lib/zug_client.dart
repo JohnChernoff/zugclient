@@ -81,12 +81,12 @@ class MessageList {
 }
 
 abstract class Room with Timerable {
-  late final String title;
+  late final String id;
   MessageList messages = MessageList();
   Map<UniqueName,dynamic> occupantMap = {};
 
   Room(dynamic data) {
-    title = data?[fieldAreaID] ?? ZugClient.noAreaTitle;
+    id = data?[fieldAreaID] ?? ZugClient.noAreaTitle;
   }
 
   String getOccupantName(UniqueName name) {
@@ -329,10 +329,10 @@ abstract class ZugClient extends ChangeNotifier {
 
   void areaCmd(Enum cmd, { String? title, Map<String,dynamic> data = const {}}) {
     if (data.isEmpty) {
-      send(cmd,data: { fieldAreaID : title ??  currentArea.title});
+      send(cmd,data: { fieldAreaID : title ??  currentArea.id});
     } else {
       Map<String,dynamic> args = Map<String,dynamic>.from(data);
-      args[fieldAreaID] = title ?? currentArea.title;
+      args[fieldAreaID] = title ?? currentArea.id;
       send(cmd,data:args);
     }
   }
@@ -344,12 +344,12 @@ abstract class ZugClient extends ChangeNotifier {
 
   void switchArea(String? title) {
     final t = title ?? noAreaTitle;
-    if (currentArea.title != t) {
+    if (currentArea.id != t) {
       if (areas[t] != null) {
-        if (currentArea.exists) send(ClientMsg.unObs,data:{ fieldAreaID : currentArea.title });
+        if (currentArea.exists) send(ClientMsg.unObs,data:{ fieldAreaID : currentArea.id });
         currentArea = areas[t]!; // ?? noGame;
         if (currentArea.exists ) {
-          send(ClientMsg.obs,data:{fieldAreaID:currentArea.title});
+          send(ClientMsg.obs,data:{fieldAreaID:currentArea.id});
           send(ClientMsg.updateArea,data:{fieldAreaID:title});
         }
       }
@@ -357,7 +357,7 @@ abstract class ZugClient extends ChangeNotifier {
         currentArea = noArea;
         update(); //TODO: can this be done for all games?
       }
-      log.info("Switched to game: ${currentArea.title}");
+      log.info("Switched to game: ${currentArea.id}");
     }
   }
 
@@ -464,10 +464,10 @@ abstract class ZugClient extends ChangeNotifier {
     return completer.future;
   }
 
-  void addAreaMsg(String msg, String title, {hidden = false}) {
+  void addAreaMsg(String msg, String id, {hidden = false}) {
     handleAreaMsg({
       fieldMsg : msg,
-      fieldAreaID : title,
+      fieldAreaID : id,
       fieldHidden : hidden
     });
   }
@@ -541,8 +541,8 @@ abstract class ZugClient extends ChangeNotifier {
       area.updateOccupants(data[fieldArea]); //area.updateArea(data[fieldArea]);
     }
     else if (data[fieldAreaChange] == AreaChange.deleted.name) { //print("Removing: ${area.title}");
-      areas.remove(area.title);
-      if (currentArea.title == area.title) switchArea(noAreaTitle);
+      areas.remove(area.id);
+      if (currentArea.id == area.id) switchArea(noAreaTitle);
     }
     else if (data[fieldAreaChange] == AreaChange.updated.name) {
       area.updateOccupants(data[fieldArea]); //area.updateArea(data[fieldArea]);
@@ -605,7 +605,7 @@ abstract class ZugClient extends ChangeNotifier {
   }
 
   bool handleLogin(data) { //TODO: create login dialog?
-    id = data[fieldID]; log.info("Connection ID: $id");
+    id = data[fieldConnID]; log.info("Connection ID: $id");
     if (!autoLog && loginType != null) {
       login(loginType);
     }

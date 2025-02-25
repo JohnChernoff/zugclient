@@ -77,7 +77,7 @@ abstract class ZugApp extends StatelessWidget {
   AppBar createAppBar(BuildContext context, ZugClient client, {Widget? txt, Color? color}) {
     Text defaultTxt = noNav
         ? Text("Hello, ${client.userName?.name ?? "Unknown User"}!")
-        : Text("${client.userName}: ${client.currentArea.exists ? client.currentArea.title : "-"}");
+        : Text("${client.userName}: ${client.currentArea.exists ? client.currentArea.id : "-"}");
     return AppBar(
       backgroundColor: color ?? Theme.of(context).colorScheme.inversePrimary,
       title: txt ?? defaultTxt,

@@ -69,7 +69,7 @@ class LobbyPage extends StatefulWidget {
 
   int compareAreas(Area? a, Area? b) {
     if (a == null || b == null) return 0;
-    return a.title.compareTo(b.title);
+    return a.id.compareTo(b.id);
   }
 
 
@@ -100,7 +100,7 @@ class LobbyPage extends StatefulWidget {
   Widget getJoinButton() {
     return ElevatedButton(
         style: getButtonStyle(Colors.blueAccent, Colors.greenAccent),
-        onPressed: () => client.joinArea(client.currentArea.title),
+        onPressed: () => client.joinArea(client.currentArea.id),
         child: Text("Join",style: getButtonTextStyle()));
   }
 
@@ -190,7 +190,7 @@ class _LobbyPageState extends State<LobbyPage> {
                   const SizedBox(width: 8),
                   DropdownButton(
                       dropdownColor: Theme.of(context).colorScheme.primary,
-                      value: widget.client.currentArea.exists ? widget.client.currentArea.title : null,
+                      value: widget.client.currentArea.exists ? widget.client.currentArea.id : null,
                       items: games,
                       onChanged: (String? title) {
                         setState(() {

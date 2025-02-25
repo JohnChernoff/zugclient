@@ -90,7 +90,7 @@ class ZugOption {
     };
 
   dynamic getVal() => zugVal.getVal();
-  bool getBool() => zugVal.getVal() as bool;
+  bool getBool() => (zugVal.getVal() ?? false) as bool;
   int getInt() =>  zugVal.getVal() as int;
   double getDbl() =>  zugVal.getVal() as double;
   num getNum() => zugVal.getVal() as num;

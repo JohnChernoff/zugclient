@@ -197,7 +197,7 @@ class ZugChatState extends State<ZugChat> {
                         MessageScope.area => ClientMsg.areaMsg,
                         MessageScope.server => ClientMsg.servMsg,
                       },
-                      data: {fieldAreaID: cg.title, fieldMsg: txt});
+                      data: {fieldAreaID: cg.id, fieldMsg: txt});
                   setState(() {
                     textInputController.text = "";
                   });
