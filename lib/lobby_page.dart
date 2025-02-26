@@ -153,18 +153,17 @@ class _LobbyPageState extends State<LobbyPage> {
   }
 
   Widget getAreaArea(BuildContext context) {
-
-    List<DropdownMenuItem<String>> games = []; //List.empty(growable: true);
-
-    games.add(DropdownMenuItem<String>(value:ZugClient.noAreaTitle, child: widget.getAreaItem(ZugClient.noAreaTitle,context)));
-    games.addAll(widget.client.areas.keys.map<DropdownMenuItem<String>>((String title) {  //print("Adding: $title");
+    Set<DropdownMenuItem<String>> gameset = {}; //List.empty(growable: true);
+    gameset.add(DropdownMenuItem<String>(value:ZugClient.noAreaTitle, child: widget.getAreaItem(ZugClient.noAreaTitle,context)));
+    gameset.addAll(widget.client.areas.keys.where((key) => widget.client.areas[key]?.exists ?? false).map<DropdownMenuItem<String>>((String title) {  //print("Adding: $title");
       return DropdownMenuItem<String>(
         value: title,
         child: widget.getAreaItem(title,context),
       );
     }).toList());
-
+    List<DropdownMenuItem<String>> games = gameset.toList();
     games.sort((a,b) => widget.compareAreas(widget.client.areas[a.value],widget.client.areas[b.value]));
+    String selectedTitle = widget.client.currentArea.exists ? widget.client.currentArea.id : widget.client.noArea.id;  //print("CurrVal: $currVal");
 
     return Container(
         width: widget.width,
@@ -190,7 +189,7 @@ class _LobbyPageState extends State<LobbyPage> {
                   const SizedBox(width: 8),
                   DropdownButton(
                       dropdownColor: Theme.of(context).colorScheme.primary,
-                      value: widget.client.currentArea.exists ? widget.client.currentArea.id : null,
+                      value: selectedTitle,
                       items: games,
                       onChanged: (String? title) {
                         setState(() {

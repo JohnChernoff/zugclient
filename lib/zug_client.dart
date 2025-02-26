@@ -409,8 +409,6 @@ abstract class ZugClient extends ChangeNotifier {
   }
 
   bool handleCreateArea(data) { //print("Created Area: $data"); //TODO: create defaultJoin property?
-    //joinArea(data[fieldTitle]); //send(ClientMsg.joinArea,data : {fieldTitle: }); Area area = getOrCreateArea(data);
-    log.info("Created: $data");
     return true;
   }
 
