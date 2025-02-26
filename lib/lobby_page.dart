@@ -154,7 +154,7 @@ class _LobbyPageState extends State<LobbyPage> {
 
   Widget getAreaArea(BuildContext context) {
     Set<DropdownMenuItem<String>> gameset = {}; //List.empty(growable: true);
-    gameset.add(DropdownMenuItem<String>(value:ZugClient.noAreaTitle, child: widget.getAreaItem(ZugClient.noAreaTitle,context)));
+    //gameset.add(DropdownMenuItem<String>(value:ZugClient.noAreaTitle, child: widget.getAreaItem(ZugClient.noAreaTitle,context)));
     gameset.addAll(widget.client.areas.keys.where((key) => widget.client.areas[key]?.exists ?? false).map<DropdownMenuItem<String>>((String title) {  //print("Adding: $title");
       return DropdownMenuItem<String>(
         value: title,
@@ -163,7 +163,7 @@ class _LobbyPageState extends State<LobbyPage> {
     }).toList());
     List<DropdownMenuItem<String>> games = gameset.toList();
     games.sort((a,b) => widget.compareAreas(widget.client.areas[a.value],widget.client.areas[b.value]));
-    String selectedTitle = widget.client.currentArea.exists ? widget.client.currentArea.id : widget.client.noArea.id;  //print("CurrVal: $currVal");
+    String selectedTitle = widget.client.currentArea.exists ? widget.client.currentArea.id : widget.client.noArea.id;  //print("Selected: $selectedTitle");
 
     return Container(
         width: widget.width,

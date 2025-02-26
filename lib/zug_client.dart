@@ -187,7 +187,7 @@ enum LoginType {none,lichess}
 abstract class ZugClient extends ChangeNotifier {
   static const optPrefix = "ZugClientOption";
   static final log = Logger('ClientLogger');
-  static const noAreaTitle = "";
+  static const noAreaTitle = "-";
   static const servString = "serv";
   static const LoginType defLogType = LoginType.lichess;
 
@@ -240,7 +240,7 @@ abstract class ZugClient extends ChangeNotifier {
       (AudioOpt.music,ZugOption(false,label: "Music")),
       (AudioOpt.musicVol,ZugOption(50,min: 0, max: 100, inc: 1,label: "Music Volume")),
     ]);
-    noArea = createArea(null);
+    noArea = getOrCreateArea(null);
     currentArea = noArea;
     PackageInfo.fromPlatform().then((PackageInfo info) {
       packageInfo = info;
@@ -322,7 +322,7 @@ abstract class ZugClient extends ChangeNotifier {
   }
 
   Area getOrCreateArea(dynamic data) {
-    return areas.putIfAbsent(data?[fieldAreaID] ?? noAreaTitle, () {
+    return areas.putIfAbsent(data?[fieldAreaID] ?? noAreaTitle, () { //print(areas.keys); print("Adding area: $data");
       return createArea(data);
     });
   }
@@ -518,7 +518,7 @@ abstract class ZugClient extends ChangeNotifier {
 
   bool handleAreaList(data) { //print("Area List: $data");
     for (Area area in areas.values) {
-      area.exists = false;
+      if (area != noArea) area.exists = false;
     }
     for (var area in data[fieldAreas]) {
       Area a = getOrCreateArea(area);
