@@ -12,6 +12,7 @@ import 'package:zug_net/zug_sock.dart';
 import 'package:zug_utils/zug_dialogs.dart';
 import 'package:zug_utils/zug_utils.dart';
 import 'package:zugclient/zug_app.dart';
+import 'package:zugclient/zug_chat.dart';
 import 'package:zugclient/zug_option.dart';
 import 'zug_fields.dart';
 import 'package:universal_html/html.dart' as html;
@@ -232,6 +233,7 @@ abstract class ZugClient extends ChangeNotifier {
   int? id;
   bool autoLog = false;
   String? autoJoinTitle;
+  ChatScopeController chatScopeController = ChatScopeController();
 
   Area createArea(dynamic data);
 
@@ -363,7 +365,7 @@ abstract class ZugClient extends ChangeNotifier {
         currentArea = noArea;
         update(); //TODO: can this be done for all games?
       }
-      log.info("Switched to game: ${currentArea.id}");
+      log.info("Switched to game: ${currentArea.id}"); //update();
     }
   }
 
@@ -510,6 +512,7 @@ abstract class ZugClient extends ChangeNotifier {
 
   void handleJoin(data) { //print("Joining: $data");
     switchArea(data[fieldAreaID]);
+    chatScopeController.setScope(MessageScope.area);
   }
 
   void handlePart(data) { //print("Parting: $data");

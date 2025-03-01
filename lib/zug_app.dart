@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import 'package:zug_utils/zug_dialogs.dart';
 import 'package:zug_utils/zug_utils.dart';
 import 'package:zugclient/splash_page.dart';
-import 'package:zugclient/zug_chat.dart';
 import 'package:zugclient/zug_client.dart';
 import 'package:zugclient/zug_fields.dart';
 import 'lobby_page.dart';
@@ -61,7 +60,7 @@ abstract class ZugApp extends StatelessWidget {
   }
 
   Widget createLobbyPage(ZugClient client) {
-    return LobbyPage(client,chatArea: ZugChat(client, defScope: MessageScope.server)); //,
+    return LobbyPage(client); //,
         //foregroundColor: colorScheme.onSurface, backgroundColor: colorScheme.surface)
   }
 

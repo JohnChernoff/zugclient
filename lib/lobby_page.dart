@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:provider/provider.dart';
 import "package:universal_html/html.dart" as html;
 import 'package:flutter/material.dart';
 import 'package:zug_utils/zug_utils.dart';
@@ -11,13 +12,13 @@ class LobbyPage extends StatefulWidget {
   final ZugClient client;
   final String areaName;
   final Color? bkgCol;
-  final Color? buttonsBkgCol; //,areaSelectColorTheme;
+  final Color? buttonsBkgCol;
   final ImageProvider? backgroundImage;
-  final ZugChat? chatArea;
   final LobbyStyle style;
   final double? width;
   final double borderWidth;
   final Color borderCol;
+  final ZugChat? zugChat;
 
   const LobbyPage(this.client, {
     this.backgroundImage,
@@ -28,7 +29,8 @@ class LobbyPage extends StatefulWidget {
     this.width,
     this.borderWidth  = 1,
     this.borderCol = Colors.white,
-    super.key, this.chatArea});
+    this.zugChat,
+    super.key});
 
   Widget selectedArea(BuildContext context, {Color? bkgCol, Color? txtCol}) {
     return Container(
@@ -97,10 +99,12 @@ class LobbyPage extends StatefulWidget {
         child: Text("Seek",style: getButtonTextStyle()));
   }
 
-  Widget getJoinButton() {
+  Widget getJoinButton() { //}ChatScopeController chatScopeController) {
     return ElevatedButton(
         style: getButtonStyle(Colors.blueAccent, Colors.greenAccent),
-        onPressed: () => client.joinArea(client.currentArea.id),
+        onPressed: () {
+          client.joinArea(client.currentArea.id); //chatScopeController.setScope(MessageScope.area);
+        },
         child: Text("Join",style: getButtonTextStyle()));
   }
 
@@ -152,7 +156,7 @@ class _LobbyPageState extends State<LobbyPage> {
     super.initState();
   }
 
-  Widget getAreaArea(BuildContext context) {
+  Widget getMainArea(BuildContext context) {
     Set<DropdownMenuItem<String>> gameset = {}; //List.empty(growable: true);
     //gameset.add(DropdownMenuItem<String>(value:ZugClient.noAreaTitle, child: widget.getAreaItem(ZugClient.noAreaTitle,context)));
     gameset.addAll(widget.client.areas.keys.where((key) => widget.client.areas[key]?.exists ?? false).map<DropdownMenuItem<String>>((String title) {  //print("Adding: $title");
@@ -207,18 +211,19 @@ class _LobbyPageState extends State<LobbyPage> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (BuildContext ctx, BoxConstraints constraints) => Flex(
+    return ChangeNotifierProvider(create: (context) => widget.client.chatScopeController, child:
+      LayoutBuilder(builder: (BuildContext ctx, BoxConstraints constraints) => Flex(
       direction: widget.style == LobbyStyle.tersePort ? Axis.vertical : Axis.horizontal,
       children: [
         SizedBox(
             width: widget.style == LobbyStyle.tersePort ? null : constraints.maxWidth * .75,
             height: widget.style == LobbyStyle.tersePort ? constraints.maxHeight/2 : null,
-            child: getAreaArea(context)
+            child: getMainArea(context)
         ),
         //Expanded(flex: widget.areaFlex, child: getAreaArea(context)),
-        Expanded(flex: 1, child: widget.chatArea ?? const SizedBox.shrink()),
+        Expanded(flex: 1, child: widget.zugChat ?? const SizedBox.shrink()),
       ],
-    ));
+    )));
   }
 
   Widget getCommandArea(BuildContext context) {
