@@ -26,7 +26,11 @@ class UniqueName {
   const UniqueName(this.name,this.source);
   factory UniqueName.fromData(Map<String,dynamic>? data, {defaultName = const UniqueName("?","?"),}) {
     if (data == null) return defaultName;
-    return UniqueName(data[fieldUniqueName]?[fieldName] ?? "?",data[fieldUniqueName]?[fieldAuthSource] ?? "?");
+
+    return UniqueName(
+        data[fieldUniqueName]?[fieldName] ?? data[fieldName] ?? "?",
+        data[fieldUniqueName]?[fieldAuthSource] ?? data[fieldAuthSource] ?? "?"
+    );
   }
 
   bool eq(UniqueName? uName) {
@@ -182,6 +186,7 @@ class ShuffleInfo {
 }
 
 enum AudioOpt {sound,soundVol,music,musicVol}
+enum ZugClientOpt {debug}
 enum LoginType {none,lichess}
 
 abstract class ZugClient extends ChangeNotifier {
@@ -240,6 +245,7 @@ abstract class ZugClient extends ChangeNotifier {
       (AudioOpt.music,ZugOption(false,label: "Music")),
       (AudioOpt.musicVol,ZugOption(50,min: 0, max: 100, inc: 1,label: "Music Volume")),
     ]);
+    if (localServer) loadOptions([(ZugClientOpt.debug,ZugOption(true,label: "Debug"))]);
     noArea = getOrCreateArea(null);
     currentArea = noArea;
     PackageInfo.fromPlatform().then((PackageInfo info) {
@@ -362,7 +368,7 @@ abstract class ZugClient extends ChangeNotifier {
   }
 
   Enum handleMsg(dynamic msg) {
-    if (showServMess) {
+    if (showServMess || (getOption(ZugClientOpt.debug)?.getBool() ?? false)) {
       log.info("Incoming msg: $msg"); //print(msg); print(""); print("***"); print("");
     }
     else {
@@ -427,8 +433,7 @@ abstract class ZugClient extends ChangeNotifier {
   }
 
   bool handleUpdateOccupants(data, {Area? area}) {
-    area = area ?? getOrCreateArea(data);
-    return area.updateOccupants(data);
+    return updateOccupants(area ?? getOrCreateArea(data),data);
   }
 
   bool handleUpdateOptions(data, {Area? area}) { //print("Options: $data");
@@ -509,6 +514,7 @@ abstract class ZugClient extends ChangeNotifier {
 
   void handlePart(data) { //print("Parting: $data");
     addServMsg("Leaving: ${data[fieldAreaID]}");
+    switchArea(noAreaTitle);
   }
 
   void handleStart(data) {
@@ -520,10 +526,10 @@ abstract class ZugClient extends ChangeNotifier {
     for (Area area in areas.values) {
       if (area != noArea) area.exists = false;
     }
-    for (var area in data[fieldAreas]) {
-      Area a = getOrCreateArea(area);
+    for (var areaData in data[fieldAreas]) {
+      Area a = getOrCreateArea(areaData);
       a.exists = true;
-      a.updateOccupants(area); //a.updateArea(area);
+      updateOccupants(a,areaData); //a.updateArea(areaData);
     }
     areas.removeWhere((key, value) => !value.exists);
     if (currentArea != noArea && !currentArea.exists) {
@@ -536,16 +542,21 @@ abstract class ZugClient extends ChangeNotifier {
     Area area = getOrCreateArea(data[fieldArea]);
     if (data[fieldAreaChange] == AreaChange.created.name) {
       area.exists = true;
-      area.updateOccupants(data[fieldArea]); //area.updateArea(data[fieldArea]);
+      updateOccupants(area,data[fieldArea]);
     }
     else if (data[fieldAreaChange] == AreaChange.deleted.name) { //print("Removing: ${area.title}");
       areas.remove(area.id);
       if (currentArea.id == area.id) switchArea(noAreaTitle);
     }
     else if (data[fieldAreaChange] == AreaChange.updated.name) {
-      area.updateOccupants(data[fieldArea]); //area.updateArea(data[fieldArea]);
+      updateOccupants(area,data[fieldArea]);
     }
     return true;
+  }
+
+  bool updateOccupants(Room room, data) {
+    bool b = room.updateOccupants(data); //if (!b || !room.occupantMap.keys.any((uname) => uname.eq(userName))) switchArea(noAreaTitle); //ergh, probably bad idea
+    return b;
   }
 
   void checkRedirect(String host) {
@@ -687,7 +698,7 @@ abstract class ZugClient extends ChangeNotifier {
   }
 
   void send(Enum type, { var data = "" }) {
-    if (showServMess) log.info("Sending: $type, $data");
+    if (showServMess || (getOption(ZugClientOpt.debug)?.getBool() ?? false)) log.info("Sending: $type, $data");
     if (noServer) {
       log.fine("Sending: ${type.toString()} -> ${data.toString()}");
     }
@@ -835,7 +846,7 @@ abstract class ZugClient extends ChangeNotifier {
         if (state == PlayerState.completed) {
           if (resumeTrack) {
             await prevSrc?.setOnPlayer(trackPlayer);
-            await trackPlayer.resume();
+            if (musicCheck()) await trackPlayer.resume();
           }
           completer.complete(true); sub?.cancel();
         }
