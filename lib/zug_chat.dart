@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:zug_utils/zug_utils.dart';
 import 'package:zugclient/zug_client.dart';
@@ -109,6 +110,7 @@ class ZugChatState extends State<ZugChat> {
           widgetMsgList.add(ZugChatLine(msg.fromServ
               ? msg.message
               : "${msg.uName}: ${msg.message}",
+              msg.dateTime,
               msg.fromServ ? widget.servColor : msg.color, msg.hidden));
         }
       }
@@ -196,7 +198,7 @@ class ZugChatState extends State<ZugChat> {
                         MessageScope.area => ClientMsg.areaMsg,
                         MessageScope.server => ClientMsg.servMsg,
                       },
-                      data: {fieldAreaID: currArea.id, fieldMsg: txt});
+                      data: {fieldAreaID: currArea.id, fieldZugTxt: getZugTxt(txt)});
                   setState(() {
                     textInputController.text = "";
                   });
@@ -212,19 +214,36 @@ class ZugChatState extends State<ZugChat> {
     );
   }
 
+  List<Object> getZugTxt(String txt) {
+    List<Object> eList = [];
+    bool emojiStart = txt.startsWith(emojiTag);
+    List<String> elements = txt.split(emojiTag);
+    for (int i = 0; i < elements.length; i++) {
+      if (i % 2 == (emojiStart ? 1 : 0)) {
+        eList.add(elements.elementAt(i));
+      } else {
+        eList.add(int.tryParse(elements.elementAt(i)) ?? 0);
+      }
+    }
+    return eList;
+  }
+
 }
 
+//TODO: support Emojis
 class ZugChatLine extends StatefulWidget {
   final String text;
+  final DateTime date;
   final Color color;
   final bool hidden;
-  const ZugChatLine(this.text, this.color, this.hidden, {super.key});
+  const ZugChatLine(this.text, this.date, this.color, this.hidden, {super.key});
 
   @override
   State<StatefulWidget> createState() => ZugChatLineState();
 
 }
 
+//TODO: use RichText for dates,etc.
 class ZugChatLineState extends State<ZugChatLine> {
   bool hidden = false;
 
@@ -236,6 +255,9 @@ class ZugChatLineState extends State<ZugChatLine> {
 
   @override
   Widget build(BuildContext context) {
+    final DateFormat formatter = DateFormat('MM-dd H:m');
+    StringBuffer txtBuff = StringBuffer("${formatter.format(widget.date)} | ");
+    txtBuff.write(hidden ? "(hidden)" : widget.text);
     return GestureDetector(
       onTap: () {
         if (widget.hidden) {
@@ -244,7 +266,7 @@ class ZugChatLineState extends State<ZugChatLine> {
           });
         }
       },
-      child: Text(hidden ? "(hidden)" : widget.text, style: TextStyle(color: widget.color)),
+      child: Text(txtBuff.toString(), style: TextStyle(color: widget.color)),
     );
   }
 }

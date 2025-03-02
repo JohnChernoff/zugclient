@@ -49,18 +49,21 @@ class UniqueName {
   }
 }
 
+const emojiTag = "@@@";
 class Message {
   UniqueName? uName;
+  DateTime dateTime;
   bool fromServ;
   String message;
   Color color;
   bool hidden;
-  Message(this.uName,this.message,this.color,this.hidden) : fromServ = uName == null;
+
+  Message(this.uName,this.message,this.dateTime,this.color,this.hidden) : fromServ = uName == null;
 }
 
 class MessageList {
   static Color foregroundColor = Colors.white;
-  Map<UniqueName?,Color> userColorMap = {};
+  Map<String?,Color> userColorMap = {};
   List<Message> messages = [];
   int newMessages = 0;
 
@@ -68,14 +71,42 @@ class MessageList {
     userColorMap.putIfAbsent(null, () => foregroundColor);
   }
 
+  void addZugMsg(data) {
+    StringBuffer txtBuff = StringBuffer();
+    for (dynamic el in (data[fieldZugTxt] as List<dynamic>)) {
+      txtBuff.write(el[fieldTxtAscii] ?? "$emojiTag${el[fieldTxtEmoji]}$emojiTag");
+    }
+    UniqueName uName = UniqueName.fromData(data[fieldMsgUser]);
+
+    messages.add(Message(
+        uName,
+        txtBuff.toString(),
+        DateTime.fromMillisecondsSinceEpoch(data[fieldMsgDate] * 1000),
+        getMsgColor(uName,data),
+        data[fieldHidden] ?? false));
+
+  }
+
   void addMessage(data) {
-    dynamic userData = data[fieldOccupant]?[fieldUser] ?? data[fieldUser];
-    UniqueName? uName = userData != null ? UniqueName.fromData(userData) : null;
-    Color color = data[fieldOccupant]?[fieldChatColor] != null
-        ? HexColor.fromHex(data[fieldOccupant]?[fieldChatColor])
-        : userColorMap.putIfAbsent(uName, () => HexColor.rndColor(pastel: true));
-    messages.add(Message(uName,data[fieldMsg],color,data[fieldHidden] ?? false));
+    if (data[fieldZugMsg] != null) {
+      addZugMsg(data[fieldZugMsg]);
+    } else {
+      dynamic userData = data[fieldOccupant]?[fieldUser] ?? data[fieldUser];
+      UniqueName? uName = userData != null ? UniqueName.fromData(userData) : null;
+      messages.add(Message(
+          uName,
+          data[fieldMsg],
+          DateTime.now(),
+          getMsgColor(uName,data),
+          data[fieldHidden] ?? false));
+    }
     newMessages++;
+  }
+
+  Color getMsgColor(UniqueName? uName, data) { //print("Fetching ColorMap: $userColorMap for $uName");
+    return data[fieldOccupant]?[fieldChatColor] != null
+        ? HexColor.fromHex(data[fieldOccupant]?[fieldChatColor])
+        : userColorMap.putIfAbsent(uName.toString(), () => HexColor.rndColor(pastel: true)); //TODO: exclude server color
   }
 
   Message? getLastServMsg() {

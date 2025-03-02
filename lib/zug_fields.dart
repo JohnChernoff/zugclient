@@ -49,6 +49,13 @@ const fieldData = "data",
     fieldLoginType = "login_type",
     fieldPhase = "phase",
     fieldPhaseTimeRemaining = "phase_time_remaining",
+    fieldZugMsg = "zug_msg",
+    fieldMsgDate = "zug_msg_date",
+    fieldMsgUser = "zug_msg_user",
+    fieldZugTxt = "zug_text",
+    fieldTxtEmoji = "txt_emoji",
+    fieldTxtAscii = "txt_ascii",
+    fieldMsgHistory = "msg_history",
     fieldAreaChange = "area_change";
 
 
