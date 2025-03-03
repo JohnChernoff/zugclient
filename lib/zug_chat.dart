@@ -8,7 +8,8 @@ import 'package:zugclient/zug_fields.dart';
 class ChatScopeController extends ChangeNotifier {
   MessageScope scope = MessageScope.server;
   void setScope(MessageScope s) {
-    scope = s; notifyListeners();
+    scope = s;
+    notifyListeners();
   }
 }
 
@@ -255,7 +256,7 @@ class ZugChatLineState extends State<ZugChatLine> {
 
   @override
   Widget build(BuildContext context) {
-    final DateFormat formatter = DateFormat('MM-dd H:m');
+    final DateFormat formatter = DateFormat('MM-dd H:mm');
     StringBuffer txtBuff = StringBuffer("${formatter.format(widget.date)} | ");
     txtBuff.write(hidden ? "(hidden)" : widget.text);
     return GestureDetector(

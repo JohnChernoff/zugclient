@@ -311,6 +311,7 @@ abstract class ZugClient extends ChangeNotifier {
       ServMsg.updateOccupants: handleUpdateOccupants,
       ServMsg.updateOptions: handleUpdateOptions,
       ServMsg.updateAreaList: handleUpdateAreaList,
+      ServMsg.reqResponse : handleResponse,
       ServMsg.version: handleVersion,
     });
     connect();
@@ -591,6 +592,10 @@ abstract class ZugClient extends ChangeNotifier {
   bool updateOccupants(Room room, data) {
     bool b = room.updateOccupants(data); //if (!b || !room.occupantMap.keys.any((uname) => uname.eq(userName))) switchArea(noAreaTitle); //ergh, probably bad idea
     return b;
+  }
+
+  void handleResponse(data) {
+    ZugDialogs.confirm("?").then((confirm) => areaCmd(ClientMsg.response, data: {fieldResponse : confirm, fieldResponseType : data[fieldResponseType]}));
   }
 
   void checkRedirect(String host) {
