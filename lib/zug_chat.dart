@@ -7,10 +7,22 @@ import 'package:zugclient/zug_fields.dart';
 
 class ChatScopeController extends ChangeNotifier {
   MessageScope scope = MessageScope.server;
+  bool disposed = true;
   void setScope(MessageScope s) {
     scope = s;
-    notifyListeners();
+    if (!disposed) {
+      notifyListeners();
+    } else {
+      ZugClient.log.warning("ChatScopeController Couldn't notify listeners (disposed)");
+    }
   }
+
+  @override
+  void dispose() {
+    super.dispose();
+    disposed = true;
+  }
+
 }
 
 class ZugChat extends StatefulWidget {
@@ -93,16 +105,15 @@ class ZugChatState extends State<ZugChat> {
   @override
   Widget build(BuildContext context) {
 
-    ChatScopeController chatScopeController = Provider.of(context);
-    if (widget.autoScroll) ZugUtils.scrollDown(scrollController,250,delay: 750);
-
     Area currArea = widget.client.currentArea;
-
+    ChatScopeController chatScopeController = Provider.of(context);
     MessageList? messageList = switch(chatScopeController.scope) {
       MessageScope.room => currArea.currentRoom?.messages,
       MessageScope.area => currArea.messages,
       MessageScope.server => widget.client.messages,
     };
+
+    if (widget.autoScroll) ZugUtils.scrollDown(scrollController,250,delay: 750);
 
     List<Widget> widgetMsgList = [];
     if (messageList != null) {
