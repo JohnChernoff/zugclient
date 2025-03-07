@@ -265,6 +265,7 @@ abstract class ZugClient extends ChangeNotifier {
   bool autoLog = false;
   String? autoJoinTitle;
   ChatScopeController chatScopeController = ChatScopeController();
+  Map<String,ValueNotifier<bool?>> dialogTracker = {};
 
   Area createArea(dynamic data);
 
@@ -311,7 +312,9 @@ abstract class ZugClient extends ChangeNotifier {
       ServMsg.updateOccupants: handleUpdateOccupants,
       ServMsg.updateOptions: handleUpdateOptions,
       ServMsg.updateAreaList: handleUpdateAreaList,
-      ServMsg.reqResponse : handleResponse,
+      ServMsg.reqResponse : handleResponseRequest,
+      ServMsg.cancelledResponse : handleCompletedRequest,
+      ServMsg.completedResponse : handleCancelledRequest,
       ServMsg.version: handleVersion,
     });
     connect();
@@ -594,8 +597,19 @@ abstract class ZugClient extends ChangeNotifier {
     return b;
   }
 
-  void handleResponse(data) {
-    ZugDialogs.confirm("?").then((confirm) => areaCmd(ClientMsg.response, data: {fieldResponse : confirm, fieldResponseType : data[fieldResponseType]}));
+  void handleResponseRequest(data) {
+    ValueNotifier<bool?> canceller = ValueNotifier<bool?>(null);
+    dialogTracker.putIfAbsent(data[fieldResponseType], () => canceller);
+  }
+
+  void handleCancelledRequest(data) {
+    dialogTracker[data[fieldResponseType]]?.value = false;
+    dialogTracker.remove(data[fieldResponseType]);
+  }
+
+  void handleCompletedRequest(data) {
+    dialogTracker[data[fieldResponseType]]?.value = true;
+    dialogTracker.remove(data[fieldResponseType]);
   }
 
   void checkRedirect(String host) {

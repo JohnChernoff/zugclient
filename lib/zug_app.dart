@@ -190,14 +190,13 @@ class _ZugHomeState extends State<ZugHome> {
         ],
         currentIndex: selectedIndex,
         onTap: (value) {
-          if (!ZugDialogs.dialog) {
-            //if (selectedPage == PageType.options && client.currentArea.exists) { widget.app.client.areaCmd(ClientMsg.getOptions); }
-            setState(() {
-              selectedIndex = value;
-              PageType newPage = PageType.values.elementAt(selectedIndex);
-              selectedPage = newPage;
-            });
-          }
+          //if (ZugDialogs.currentContexts.isEmpty)
+          //if (selectedPage == PageType.options && client.currentArea.exists) { widget.app.client.areaCmd(ClientMsg.getOptions);
+          setState(() {
+            selectedIndex = value;
+            PageType newPage = PageType.values.elementAt(selectedIndex);
+            selectedPage = newPage;
+          });
         },
       ),
     );

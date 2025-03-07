@@ -24,6 +24,7 @@ dependencies:
   zug_net:
     git: "https://github.com/JohnChernoff/ZugNetFlutter"
   zug_utils:
+    #path: "C:/Users/jac107/IdeaProjects/flutter/zug_utils"
     git: "https://github.com/JohnChernoff/zug_utils"
   flutter:
     sdk: flutter

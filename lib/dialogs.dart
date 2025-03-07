@@ -13,6 +13,8 @@ class IntroDialog {
   IntroDialog(this.appName, this.ctx,{this.tutorialUrl, this.discordUrl});
 
   Future<bool?> raise() {
+    
+
     return showDialog<bool?>(
         context: ctx,
         builder: (BuildContext context) {
