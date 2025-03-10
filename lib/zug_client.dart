@@ -316,6 +316,7 @@ abstract class ZugClient extends ChangeNotifier {
       ServMsg.cancelledResponse : handleCompletedRequest,
       ServMsg.completedResponse : handleCancelledRequest,
       ServMsg.version: handleVersion,
+      ServMsg.updateServ : handleUpdateServ
     });
     connect();
   }
@@ -461,12 +462,16 @@ abstract class ZugClient extends ChangeNotifier {
     return true;
   }
 
-  bool handleUpdateArea(data) { log.fine("Update Area: $data");
+  void handleUpdateServ(data) {
+    handleUpdateMessages(data,serv: true);
+  }
+
+  void handleUpdateArea(data) { log.fine("Update Area: $data");
     Area area = getOrCreateArea(data);
     handleUpdateOccupants(data,area : area); //TODO: why use named argument?
     handleUpdateOptions(data,area : area);
+    handleUpdateMessages(data, area: area);
     area.updateArea(data);
-    return true;
   }
 
   bool handleUpdateOccupants(data, {Area? area}) {
@@ -484,6 +489,24 @@ abstract class ZugClient extends ChangeNotifier {
       return true;
     }
     return false;
+  }
+
+  void handleUpdateMessages(data, {Area? area, bool serv = false}) {
+    if (data[fieldMsgHistory] != null) {
+      if (serv) {
+        messages.messages.clear(); print("Message History: ${data[fieldMsgHistory]}");
+        for (dynamic msg in data[fieldMsgHistory]) {
+          messages.addZugMsg(msg[fieldZugMsg]);
+        }
+      }
+      else {
+        area = area ?? getOrCreateArea(data);
+        area.messages.messages.clear(); print("Message History: ${data[fieldMsgHistory]}");
+        for (dynamic msg in data[fieldMsgHistory]) {
+          area.messages.addZugMsg(msg[fieldZugMsg]);
+        }
+      }
+    }
   }
   
   void fetchOptions(Function onOption, {int timeLimit = 5000}) async {
@@ -547,6 +570,7 @@ abstract class ZugClient extends ChangeNotifier {
 
   void handleJoin(data) { //print("Joining: $data");
     switchArea(data[fieldAreaID]);
+    handleUpdateArea(data);
     chatScopeController.setScope(MessageScope.area);
   }
 

@@ -106,11 +106,13 @@ class ZugChatState extends State<ZugChat> {
   Widget build(BuildContext context) {
 
     Area currArea = widget.client.currentArea;
-    ChatScopeController chatScopeController = Provider.of(context);
-    MessageList? messageList = switch(chatScopeController.scope) {
+    ChatScopeController? chatScopeController;
+    if (mounted) chatScopeController = Provider.of(context);
+    MessageList? messageList = switch(chatScopeController?.scope) {
       MessageScope.room => currArea.currentRoom?.messages,
       MessageScope.area => currArea.messages,
       MessageScope.server => widget.client.messages,
+      null => null,
     };
 
     if (widget.autoScroll) ZugUtils.scrollDown(scrollController,250,delay: 750);
@@ -160,13 +162,13 @@ class ZugChatState extends State<ZugChat> {
     );
   }
 
-  Widget getChatControl(Area currArea, ChatScopeController chatScopeController) {
+  Widget getChatControl(Area currArea, ChatScopeController? chatScopeController) {
     return Row(
       children: [
         DropdownButton(
-            value: chatScopeController.scope,
+            value: chatScopeController?.scope,
             onChanged: (MessageScope? newScope) { //print("Changing: $newScope");
-              chatScopeController.setScope(newScope ?? MessageScope.area); //setState(() {});
+              chatScopeController?.setScope(newScope ?? MessageScope.area); //setState(() {});
             },
             items: [
               DropdownMenuItem(
@@ -205,10 +207,11 @@ class ZugChatState extends State<ZugChat> {
                 onSubmitted: (txt) {
                   txt.startsWith("!") ? widget.client.handleCmdMsg(txt.split(" ")) :
                   widget.client.send(
-                      switch (chatScopeController.scope) {
+                      switch (chatScopeController?.scope) {
                         MessageScope.room => ClientMsg.roomMsg,
                         MessageScope.area => ClientMsg.areaMsg,
                         MessageScope.server => ClientMsg.servMsg,
+                        null => ClientMsg.servMsg,
                       },
                       data: {fieldAreaID: currArea.id, fieldZugTxt: getZugTxt(txt)});
                   setState(() {
@@ -218,7 +221,7 @@ class ZugChatState extends State<ZugChat> {
                 },
               )),
         ),
-        chatScopeController.scope == MessageScope.area ? IconButton(
+        chatScopeController?.scope == MessageScope.area ? IconButton(
             onPressed: () => widget.client.areaCmd(ClientMsg.updateArea),
             icon: const Icon(Icons.update) //,size: iconHeight-16)
         ) : const SizedBox.shrink(),
