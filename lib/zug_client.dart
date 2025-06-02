@@ -12,7 +12,6 @@ import 'package:zug_net/zug_sock.dart';
 import 'package:zug_utils/zug_dialogs.dart';
 import 'package:zug_utils/zug_utils.dart';
 import 'package:zugclient/zug_app.dart';
-import 'package:zugclient/zug_chat.dart';
 import 'package:zugclient/zug_option.dart';
 import 'zug_fields.dart';
 import 'package:universal_html/html.dart' as html;
@@ -265,7 +264,7 @@ abstract class ZugClient extends ChangeNotifier {
   bool autoLog = false;
   bool localDebug = true;
   String? autoJoinTitle;
-  ChatScopeController chatScopeController = ChatScopeController();
+  final ValueNotifier<MessageScope> chatScope = ValueNotifier(MessageScope.server);
   Map<String,ValueNotifier<bool?>> dialogTracker = {};
 
   Area createArea(dynamic data);
@@ -572,7 +571,7 @@ abstract class ZugClient extends ChangeNotifier {
   void handleJoin(data) { //print("Joining: $data");
     switchArea(data[fieldAreaID]);
     handleUpdateArea(data);
-    chatScopeController.setScope(MessageScope.area);
+    chatScope.value = MessageScope.area;
   }
 
   void handlePart(data) { //print("Parting: $data");

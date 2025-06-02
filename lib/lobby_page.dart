@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:provider/provider.dart';
 import "package:universal_html/html.dart" as html;
 import 'package:flutter/material.dart';
 import 'package:zug_utils/zug_utils.dart';
@@ -219,8 +218,7 @@ class _LobbyPageState extends State<LobbyPage> {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(create: (context) => widget.client.chatScopeController, child:
-      LayoutBuilder(builder: (BuildContext ctx, BoxConstraints constraints) => Flex(
+    return LayoutBuilder(builder: (BuildContext ctx, BoxConstraints constraints) => Flex(
       direction: widget.style == LobbyStyle.tersePort ? Axis.vertical : Axis.horizontal,
       children: [
         SizedBox(
@@ -231,7 +229,7 @@ class _LobbyPageState extends State<LobbyPage> {
         //Expanded(flex: widget.areaFlex, child: getAreaArea(context)),
         Expanded(flex: 1, child: widget.zugChat ?? const SizedBox.shrink()),
       ],
-    )));
+    ));
   }
 
   Widget getCommandArea(BuildContext context) {

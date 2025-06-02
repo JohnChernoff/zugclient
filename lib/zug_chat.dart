@@ -1,29 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 import 'package:zug_utils/zug_utils.dart';
 import 'package:zugclient/zug_client.dart';
 import 'package:zugclient/zug_fields.dart';
-
-class ChatScopeController extends ChangeNotifier {
-  MessageScope scope = MessageScope.server;
-  bool disposed = true;
-  void setScope(MessageScope s) {
-    scope = s;
-    if (!disposed) {
-      notifyListeners();
-    } else {
-      ZugClient.log.warning("ChatScopeController Couldn't notify listeners (disposed)");
-    }
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    disposed = true;
-  }
-
-}
 
 class ZugChat extends StatefulWidget {
 
@@ -88,7 +67,7 @@ static BoxDecoration getDecoration({Color color = Colors.grey, Color borderColor
 class ZugChatState extends State<ZugChat> {
   final ScrollController scrollController = ScrollController();
   final TextEditingController textInputController = TextEditingController();
-
+  //final ValueNotifier<MessageScope> chatScope = ValueNotifier(MessageScope.server);
   final FocusNode textInputFocus = FocusNode();
   final Map<MessageScope,bool> scopeMap = {};
   bool filterServerMessages = false;
@@ -103,18 +82,26 @@ class ZugChatState extends State<ZugChat> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  void dispose() {
+    super.dispose();
+  }
 
+  @override
+  Widget build(BuildContext context) {//print("Building Zug Chat");
+    return ValueListenableBuilder<MessageScope>(
+        valueListenable: widget.client.chatScope,
+        builder: (context, scope, _) {
+          MessageList? messageList = switch (scope) {
+            MessageScope.room => widget.client.currentArea.currentRoom?.messages,
+            MessageScope.area => widget.client.currentArea.messages,
+            MessageScope.server => widget.client.messages,
+          };
+          return buildChatUI(context,messageList);
+        });
+  }
+
+  Widget buildChatUI(BuildContext context, MessageList? messageList) {
     Area currArea = widget.client.currentArea;
-    ChatScopeController? chatScopeController;
-    if (mounted) chatScopeController = Provider.of(context);
-    MessageList? messageList = switch(chatScopeController?.scope) {
-      MessageScope.room => currArea.currentRoom?.messages,
-      MessageScope.area => currArea.messages,
-      MessageScope.server => widget.client.messages,
-      null => null,
-    };
-
     if (widget.autoScroll) ZugUtils.scrollDown(scrollController,250,delay: 750);
 
     List<Widget> widgetMsgList = [];
@@ -145,7 +132,7 @@ class ZugChatState extends State<ZugChat> {
               })),
             ],
           ),
-          widget.chatCommandOnTop ? getChatControl(currArea,chatScopeController) : const SizedBox.shrink(),
+          widget.chatCommandOnTop ? getChatControl(currArea) : const SizedBox.shrink(),
           Expanded(
             child: Container(
                 color: widget.backgroundColor,
@@ -156,43 +143,49 @@ class ZugChatState extends State<ZugChat> {
                     ),
           )),
           Container(color: widget.borderColor,height: widget.borderWidth),
-          widget.chatCommandOnTop ? const SizedBox.shrink() : getChatControl(currArea,chatScopeController)
+          widget.chatCommandOnTop ? const SizedBox.shrink() : getChatControl(currArea)
         ],
       ),
     );
   }
 
-  Widget getChatControl(Area currArea, ChatScopeController? chatScopeController) {
+  Widget getChatControl(Area currArea) {
     return Row(
       children: [
-        DropdownButton(
-            value: chatScopeController?.scope,
-            onChanged: (MessageScope? newScope) { //print("Changing: $newScope");
-              chatScopeController?.setScope(newScope ?? MessageScope.area); //setState(() {});
-            },
-            items: [
-              DropdownMenuItem(
-                value: MessageScope.room,
-                enabled: widget.usingRooms,
-                child: widget.usingRooms
-                    ? Text("${widget.roomName} Message: ")
-                    : const SizedBox.shrink(),
-              ),
-              DropdownMenuItem(
+        ValueListenableBuilder<MessageScope>(
+          valueListenable:  widget.client.chatScope,
+          builder: (context, scope, _) {
+            return DropdownButton<MessageScope>(
+              value: scope,
+              onChanged: (MessageScope? newScope) {
+                widget.client.chatScope.value = newScope ?? MessageScope.area;
+              },
+              items: [
+                DropdownMenuItem(
+                  value: MessageScope.room,
+                  enabled: widget.usingRooms,
+                  child: widget.usingRooms
+                      ? Text("${widget.roomName} Message: ")
+                      : const SizedBox.shrink(),
+                ),
+                DropdownMenuItem(
                   value: MessageScope.area,
                   enabled: widget.usingAreas,
                   child: widget.usingAreas
                       ? Text("${widget.areaName} Message: ")
                       : const SizedBox.shrink(),
-              ),
-              DropdownMenuItem(
+                ),
+                DropdownMenuItem(
                   value: MessageScope.server,
                   enabled: widget.usingServer,
                   child: widget.usingServer
                       ? Text("${widget.serverName} Message: ")
                       : const SizedBox.shrink(),
-              ),
-            ]),
+                ),
+              ],
+            );
+          },
+        ),
         const SizedBox(width: 4),
         Expanded(
           child: Container(
@@ -207,11 +200,10 @@ class ZugChatState extends State<ZugChat> {
                 onSubmitted: (txt) {
                   txt.startsWith("!") ? widget.client.handleCmdMsg(txt.split(" ")) :
                   widget.client.send(
-                      switch (chatScopeController?.scope) {
+                      switch ( widget.client.chatScope.value) {
                         MessageScope.room => ClientMsg.roomMsg,
                         MessageScope.area => ClientMsg.areaMsg,
                         MessageScope.server => ClientMsg.servMsg,
-                        null => ClientMsg.servMsg,
                       },
                       data: {fieldAreaID: currArea.id, fieldZugTxt: getZugTxt(txt)});
                   setState(() {
@@ -221,7 +213,7 @@ class ZugChatState extends State<ZugChat> {
                 },
               )),
         ),
-        chatScopeController?.scope == MessageScope.area ? IconButton(
+        widget.client.chatScope.value == MessageScope.area ? IconButton(
             onPressed: () => widget.client.areaCmd(ClientMsg.updateArea),
             icon: const Icon(Icons.update) //,size: iconHeight-16)
         ) : const SizedBox.shrink(),
