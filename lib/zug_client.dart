@@ -263,6 +263,7 @@ abstract class ZugClient extends ChangeNotifier {
   static bool defaultSound = false;
   int? id;
   bool autoLog = false;
+  bool localDebug = true;
   String? autoJoinTitle;
   ChatScopeController chatScopeController = ChatScopeController();
   Map<String,ValueNotifier<bool?>> dialogTracker = {};
@@ -279,7 +280,7 @@ abstract class ZugClient extends ChangeNotifier {
       (AudioOpt.music,ZugOption(false,label: "Music")),
       (AudioOpt.musicVol,ZugOption(50,min: 0, max: 100, inc: 1,label: "Music Volume")),
     ]);
-    if (localServer) loadOptions([(ZugClientOpt.debug,ZugOption(true,label: "Debug"))]);
+    //if (localServer) loadOptions([(ZugClientOpt.debug,ZugOption(localDebug,label: "Debug"))]);
     noArea = getOrCreateArea(null);
     currentArea = noArea;
     PackageInfo.fromPlatform().then((PackageInfo info) {
