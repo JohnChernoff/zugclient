@@ -8,8 +8,6 @@ import 'package:zugclient/zug_client.dart';
 
 enum LobbyStyle {normal,terseLand,tersePort}
 
-enum LobbyButton {seek,create,start,join,part,help}
-
 class LobbyPage extends StatefulWidget {
   final ZugClient client;
   final String areaName;
@@ -21,6 +19,7 @@ class LobbyPage extends StatefulWidget {
   final double borderWidth;
   final Color borderCol;
   final ZugChat? zugChat;
+  final bool seekButt, createButt, startButt, joinButt, partButt;
 
   const LobbyPage(this.client, {
     this.backgroundImage,
@@ -32,6 +31,11 @@ class LobbyPage extends StatefulWidget {
     this.borderWidth  = 1,
     this.borderCol = Colors.white,
     this.zugChat,
+    this.seekButt = true,
+    this.createButt = true,
+    this.startButt = true,
+    this.joinButt = true,
+    this.partButt = true,
     super.key});
 
   Widget selectedArea(BuildContext context, {Color? bkgCol, Color? txtCol}) {
@@ -152,14 +156,10 @@ class LobbyPage extends StatefulWidget {
 }
 
 class _LobbyPageState extends State<LobbyPage> {
-  final Map<LobbyButton,bool> buttMap = {};
 
   @override
   void initState() {
     super.initState();
-    for (LobbyButton butt in LobbyButton.values) {
-      buttMap[butt] = true;
-    }
   }
 
   Widget getMainArea(BuildContext context) {
@@ -253,10 +253,6 @@ class _LobbyPageState extends State<LobbyPage> {
       );
   }
 
-  bool _usingButt(LobbyButton butt) {
-    return buttMap[LobbyButton.seek] ?? false;
-  }
-
   List<Widget> getCmdButtons(BuildContext context, {
       double padding = 4.0,
       Widget? seekButt,
@@ -267,11 +263,11 @@ class _LobbyPageState extends State<LobbyPage> {
       Widget? helpButt,
       List<Widget>? extraButts}) {
     List<Widget> buttons = [
-      _usingButt(LobbyButton.seek) ? Padding(padding: EdgeInsets.all(padding),child: seekButt ?? widget.getSeekButton()) : const SizedBox.shrink(),
-      _usingButt(LobbyButton.create) ? Padding(padding: EdgeInsets.all(padding),child: createButt ?? widget.getCreateButton()) : const SizedBox.shrink(),
-      _usingButt(LobbyButton.start) ? Padding(padding: EdgeInsets.all(padding),child: startButt ?? widget.getStartButton()) : const SizedBox.shrink(),
-      _usingButt(LobbyButton.join) ? Padding(padding: EdgeInsets.all(padding),child: joinButt ?? widget.getJoinButton()) : const SizedBox.shrink(),
-      _usingButt(LobbyButton.part) ? Padding(padding: EdgeInsets.all(padding),child: partButt ?? widget.getPartButton()) : const SizedBox.shrink(),
+      widget.seekButt ? Padding(padding: EdgeInsets.all(padding),child: seekButt ?? widget.getSeekButton()) : const SizedBox.shrink(),
+      widget.createButt ? Padding(padding: EdgeInsets.all(padding),child: createButt ?? widget.getCreateButton()) : const SizedBox.shrink(),
+      widget.startButt ? Padding(padding: EdgeInsets.all(padding),child: startButt ?? widget.getStartButton()) : const SizedBox.shrink(),
+      widget.joinButt ? Padding(padding: EdgeInsets.all(padding),child: joinButt ?? widget.getJoinButton()) : const SizedBox.shrink(),
+      widget.partButt ? Padding(padding: EdgeInsets.all(padding),child: partButt ?? widget.getPartButton()) : const SizedBox.shrink(),
       //if (widget.helpPage != null) Padding(padding: EdgeInsets.all(padding),child: helpButt ?? widget.getHelpButton()),
     ];
     List<Widget> extraList = extraButts ?? widget.getExtraCmdButtons(context);
