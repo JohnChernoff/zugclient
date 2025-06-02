@@ -20,6 +20,7 @@ class LobbyPage extends StatefulWidget {
   final Color borderCol;
   final ZugChat? zugChat;
   final bool seekButt, createButt, startButt, joinButt, partButt;
+  final int portFlex;
 
   const LobbyPage(this.client, {
     this.backgroundImage,
@@ -36,6 +37,7 @@ class LobbyPage extends StatefulWidget {
     this.startButt = true,
     this.joinButt = true,
     this.partButt = true,
+    this.portFlex = 2,
     super.key});
 
   Widget selectedArea(BuildContext context, {Color? bkgCol, Color? txtCol}) {
@@ -187,7 +189,7 @@ class _LobbyPageState extends State<LobbyPage> {
         ),
         child: Column(
           children: [ //Text(widget.client.userName),
-            widget.style == LobbyStyle.tersePort ? Expanded(flex: 2, child: getCommandArea(context)) : getCommandArea(context),
+            widget.style == LobbyStyle.tersePort ? Expanded(flex: widget.portFlex, child: getCommandArea(context)) : getCommandArea(context),
             Center(
               child: Container(
               color: Theme.of(context).primaryColor, //widget.areaSelectBkgColor,
