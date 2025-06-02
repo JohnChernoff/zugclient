@@ -8,6 +8,8 @@ import 'package:zugclient/zug_client.dart';
 
 enum LobbyStyle {normal,terseLand,tersePort}
 
+enum LobbyButton {seek,create,start,join,part,help}
+
 class LobbyPage extends StatefulWidget {
   final ZugClient client;
   final String areaName;
@@ -150,10 +152,14 @@ class LobbyPage extends StatefulWidget {
 }
 
 class _LobbyPageState extends State<LobbyPage> {
+  final Map<LobbyButton,bool> buttMap = {};
 
   @override
   void initState() {
     super.initState();
+    for (LobbyButton butt in LobbyButton.values) {
+      buttMap[butt] = true;
+    }
   }
 
   Widget getMainArea(BuildContext context) {
@@ -247,6 +253,10 @@ class _LobbyPageState extends State<LobbyPage> {
       );
   }
 
+  bool _usingButt(LobbyButton butt) {
+    return buttMap[LobbyButton.seek] ?? false;
+  }
+
   List<Widget> getCmdButtons(BuildContext context, {
       double padding = 4.0,
       Widget? seekButt,
@@ -257,11 +267,11 @@ class _LobbyPageState extends State<LobbyPage> {
       Widget? helpButt,
       List<Widget>? extraButts}) {
     List<Widget> buttons = [
-      Padding(padding: EdgeInsets.all(padding),child: seekButt ?? widget.getSeekButton()),
-      Padding(padding: EdgeInsets.all(padding),child: createButt ?? widget.getCreateButton()),
-      Padding(padding: EdgeInsets.all(padding),child: startButt ?? widget.getStartButton()),
-      Padding(padding: EdgeInsets.all(padding),child: joinButt ?? widget.getJoinButton()),
-      Padding(padding: EdgeInsets.all(padding),child: partButt ?? widget.getPartButton()),
+      _usingButt(LobbyButton.seek) ? Padding(padding: EdgeInsets.all(padding),child: seekButt ?? widget.getSeekButton()) : const SizedBox.shrink(),
+      _usingButt(LobbyButton.create) ? Padding(padding: EdgeInsets.all(padding),child: createButt ?? widget.getCreateButton()) : const SizedBox.shrink(),
+      _usingButt(LobbyButton.start) ? Padding(padding: EdgeInsets.all(padding),child: startButt ?? widget.getStartButton()) : const SizedBox.shrink(),
+      _usingButt(LobbyButton.join) ? Padding(padding: EdgeInsets.all(padding),child: joinButt ?? widget.getJoinButton()) : const SizedBox.shrink(),
+      _usingButt(LobbyButton.part) ? Padding(padding: EdgeInsets.all(padding),child: partButt ?? widget.getPartButton()) : const SizedBox.shrink(),
       //if (widget.helpPage != null) Padding(padding: EdgeInsets.all(padding),child: helpButt ?? widget.getHelpButton()),
     ];
     List<Widget> extraList = extraButts ?? widget.getExtraCmdButtons(context);
