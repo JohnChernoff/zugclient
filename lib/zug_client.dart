@@ -263,6 +263,7 @@ abstract class ZugClient extends ChangeNotifier {
   int? id;
   bool autoLog = false;
   bool localDebug = true;
+  bool errPopup = false;
   String? autoJoinTitle;
   final ValueNotifier<MessageScope> chatScope = ValueNotifier(MessageScope.server);
   Map<String,ValueNotifier<bool?>> dialogTracker = {};
@@ -558,9 +559,26 @@ abstract class ZugClient extends ChangeNotifier {
     return true;
   }
 
-  bool handleErrorMsg(data) {
-    ZugDialogs.popup("Error: ${data[fieldMsg]}");
+  bool handleRoomMsg(data) {
+    currentArea.currentRoom?.messages.addMessage(data);
     return true;
+  }
+
+  bool handleGenericMsg(data) {
+    switch(chatScope.value) {
+      case MessageScope.room: handleRoomMsg(data); break;
+      case MessageScope.area: handleAreaMsg(data); break;
+      case MessageScope.server: handleServMsg(data); break;
+    }
+    return true;
+  }
+
+  bool handleErrorMsg(data) {
+    if (errPopup) {
+      ZugDialogs.popup("Error: ${data[fieldMsg]}");
+      return true;
+    }
+    return handleGenericMsg(data);
   }
 
   bool handleAlertMsg(data) {

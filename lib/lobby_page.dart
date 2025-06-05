@@ -86,9 +86,9 @@ class LobbyPage extends StatefulWidget {
     return buttons;
   }
 
-  Widget getHelpButton(String helpPage) {
+  Widget getHelpButton(String helpPage, {Color normCol = Colors.cyan,  pressedCol = Colors.lightBlueAccent}) {
     return ElevatedButton(
-        style: getButtonStyle(Colors.cyan, Colors.lightBlueAccent),
+        style: getButtonStyle(normCol,pressedCol),
         onPressed: ()  {
           if (kIsWeb) {
             html.window.open(helpPage, 'new tab');
@@ -99,39 +99,39 @@ class LobbyPage extends StatefulWidget {
         child: Text("Help",style: getButtonTextStyle()));
   }
 
-  Widget getSeekButton() {
+  Widget getSeekButton({Color normCol = Colors.orangeAccent,  pressedCol = Colors.greenAccent}) {
     return ElevatedButton(
-        style: getButtonStyle(Colors.orangeAccent, Colors.greenAccent),
+        style: getButtonStyle(normCol,pressedCol),
         onPressed: () => client.seekArea(),
         child: Text("Seek",style: getButtonTextStyle()));
   }
 
-  Widget getJoinButton() { //}ChatScopeController chatScopeController) {
+  Widget getJoinButton({Color normCol = Colors.blueAccent,  pressedCol = Colors.greenAccent}) { //}ChatScopeController chatScopeController) {
     return ElevatedButton(
-        style: getButtonStyle(Colors.blueAccent, Colors.greenAccent),
+        style: getButtonStyle(normCol,pressedCol),
         onPressed: () {
           client.joinArea(client.currentArea.id); //chatScopeController.setScope(MessageScope.area);
         },
         child: Text("Join",style: getButtonTextStyle()));
   }
 
-  Widget getPartButton() {
+  Widget getPartButton({Color normCol = Colors.grey,  pressedCol = Colors.orangeAccent}) {
     return ElevatedButton(
-        style: getButtonStyle(Colors.grey, Colors.orangeAccent),
+        style: getButtonStyle(normCol,pressedCol),
         onPressed: () => client.partArea(),
         child: Text("Leave",style: getButtonTextStyle()));
   }
 
-  Widget getStartButton() {
+  Widget getStartButton({Color normCol = Colors.redAccent,  pressedCol = Colors.purpleAccent}) {
     return ElevatedButton(
-        style: getButtonStyle(Colors.redAccent, Colors.purpleAccent),
+        style: getButtonStyle(normCol,pressedCol),
         onPressed: () => client.startArea(),
         child: Text("Start",style: getButtonTextStyle()));
   }
 
-  Widget getCreateButton() {
+  Widget getCreateButton({Color normCol = Colors.greenAccent,  pressedCol = Colors.redAccent}) {
     return ElevatedButton(
-        style: getButtonStyle(Colors.greenAccent, Colors.redAccent),
+        style: getButtonStyle(normCol,pressedCol),
         onPressed: () => client.newArea(),
         child: Text("New",style: getButtonTextStyle()));
   }
@@ -140,11 +140,11 @@ class LobbyPage extends StatefulWidget {
     return [];
   }
 
-  ButtonStyle getButtonStyle(Color c1, Color c2) {
+  ButtonStyle getButtonStyle(Color normCol, Color pressedCol) {
     return ButtonStyle(backgroundColor:
     WidgetStateProperty.resolveWith<Color?>((Set<WidgetState> states) {
-      if (states.contains(WidgetState.pressed)) return c2;
-      return c1;
+      if (states.contains(WidgetState.pressed)) return pressedCol;
+      return normCol;
     }));
   }
 
