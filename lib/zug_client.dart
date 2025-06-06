@@ -3,6 +3,8 @@ library zugclient;
 import 'dart:async';
 import 'dart:math';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:logging/logging.dart';
@@ -13,6 +15,7 @@ import 'package:zug_utils/zug_dialogs.dart';
 import 'package:zug_utils/zug_utils.dart';
 import 'package:zugclient/zug_app.dart';
 import 'package:zugclient/zug_option.dart';
+import 'firebase_options.dart';
 import 'zug_fields.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -218,7 +221,7 @@ class ShuffleInfo {
 
 enum AudioOpt {sound,soundVol,music,musicVol}
 enum ZugClientOpt {debug}
-enum LoginType {none,lichess}
+enum LoginType {none,lichess,google}
 
 abstract class ZugClient extends ChangeNotifier {
   static const optPrefix = "ZugClientOption";
@@ -319,6 +322,7 @@ abstract class ZugClient extends ChangeNotifier {
       ServMsg.version: handleVersion,
       ServMsg.updateServ : handleUpdateServ
     });
+    initFirebase();
     connect();
   }
 
@@ -332,6 +336,19 @@ abstract class ZugClient extends ChangeNotifier {
     if (_funWaiter?.completer.isCompleted == false) _funWaiter?.completer.complete(false);
     _funWaiter = FunctionWaiter(msgEnum);
     return _funWaiter!.completer.future;
+  }
+
+  Future<void> initFirebase() async {
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform,);
+    FirebaseAuth.instance
+        .authStateChanges()
+        .listen((User? user) {
+      if (user == null) {
+        log.info('User is currently signed out!');
+      } else {
+        log.info('${user.displayName} is signed in!');
+      }
+    });
   }
 
   void newArea({String? title}) {
@@ -704,7 +721,7 @@ abstract class ZugClient extends ChangeNotifier {
     authClient = client;
     authenticating = false;
     if (!isLoggedIn) { //TODO: handle other login types
-      login(LoginType.lichess);
+      login(LoginType.lichess, token: authClient?.credentials.accessToken);
     }
   }
 
@@ -716,21 +733,29 @@ abstract class ZugClient extends ChangeNotifier {
     return false;
   }
 
-  void login(LoginType? lt) {
+  void login(LoginType? lt, {String? token}) {
     //autoLog = false;
     if (isConnected) {
       prefs?.setString(fieldLoginType, lt.toString());
       loginType = lt ?? LoginType.none;
       if (loginType == LoginType.lichess) {
-        if (isAuthenticated()) {
-          log.info("Logging in with token");
-          send(ClientMsg.login, data: { fieldLoginType: LoginType.lichess.name, fieldToken : authClient?.credentials.accessToken });
+        if (token != null) {
+          log.info("Logging in with lichess token");
+          send(ClientMsg.login, data: { fieldLoginType: LoginType.lichess.name, fieldToken : token });
         }
         else {
           authenticate(OauthClient("lichess.org", clientName));
         }
-      }
-      else if (loginType == LoginType.none) {
+      } else if (loginType == LoginType.google) {
+        if (token != null) {
+          send(ClientMsg.login, data: { fieldLoginType: LoginType.google.name, fieldToken : token });
+        } else {
+          signInWithGoogle().then((cred) async {
+            String? idToken = await cred.user?.getIdToken();
+            login(LoginType.google,token: idToken);
+          });
+        }
+      } else if (loginType == LoginType.none) {
         log.info("Logging in as guest");
         send(ClientMsg.login, data: { fieldLoginType: LoginType.none.name });
       }
@@ -739,6 +764,22 @@ abstract class ZugClient extends ChangeNotifier {
     else {
       ZugDialogs.popup("Not connected to server");
     }
+  }
+
+  Future<UserCredential> signInWithGoogle() async {
+    // Create a new provider
+    GoogleAuthProvider googleProvider = GoogleAuthProvider();
+
+    googleProvider.addScope('https://www.googleapis.com/auth/contacts.readonly');
+    googleProvider.setCustomParameters({
+      'login_hint': 'user@example.com'
+    });
+
+    // Once signed in, return the UserCredential
+    return await FirebaseAuth.instance.signInWithPopup(googleProvider);
+
+    // Or use signInWithRedirect
+    // return await FirebaseAuth.instance.signInWithRedirect(googleProvider);
   }
 
   void update() {

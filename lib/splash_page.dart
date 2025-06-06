@@ -34,6 +34,13 @@ class SplashPage extends StatelessWidget {
             const SizedBox(width: 36),
             ElevatedButton(
               onPressed: () {
+                client.login(LoginType.google);
+              },
+              child: Padding(padding: const EdgeInsets.all(8), child: Text("Login with Google",style: txtStyle)),
+            ),
+            const SizedBox(width: 36),
+            ElevatedButton(
+              onPressed: () {
                 client.login(LoginType.lichess);
               },
               child: Padding(padding: const EdgeInsets.all(8), child: Text("Login with Lichess",style: txtStyle)),

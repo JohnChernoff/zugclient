@@ -10,7 +10,6 @@ environment:
 dependencies:
   cupertino_icons: ^1.0.2
   web_socket_channel: ^2.4.0
-  http: ^1.1.0
   oauth2: ^2.0.2
   provider: ^6.1.1
   url_launcher: ^6.2.1
@@ -21,6 +20,10 @@ dependencies:
   logging: ^1.2.0
   ini: ^2.1.0
   audioplayers: ^6.1.2
+  firebase_auth: ^5.5.4
+  firebase_core: ^3.13.1
+  firebase_ui_auth: ^1.16.1
+  http: ^1.4.0
   zug_net:
     git: "https://github.com/JohnChernoff/ZugNetFlutter"
   zug_utils:
@@ -28,7 +31,7 @@ dependencies:
     git: "https://github.com/JohnChernoff/zug_utils"
   flutter:
     sdk: flutter
-  intl: ^0.20.2
+  intl: ^0.19.0
 
 dev_dependencies:
   flutter_test:
