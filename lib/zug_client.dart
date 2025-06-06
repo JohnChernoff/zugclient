@@ -317,6 +317,7 @@ abstract class ZugClient extends ChangeNotifier {
       ServMsg.updateOccupants: handleUpdateOccupants,
       ServMsg.updateOptions: handleUpdateOptions,
       ServMsg.updateAreaList: handleUpdateAreaList,
+      ServMsg.phase : handleNewPhase,
       ServMsg.reqResponse : handleResponseRequest,
       ServMsg.cancelledResponse : handleCompletedRequest,
       ServMsg.completedResponse : handleCancelledRequest,
@@ -478,6 +479,11 @@ abstract class ZugClient extends ChangeNotifier {
   bool handleUpdateOccupant(data) { log.fine("Occupant update: $data");
     Area area = getOrCreateArea(data);
     area.occupantMap.putIfAbsent(UniqueName.fromData(data["user"]), () => data);
+    return true;
+  }
+
+  bool handleNewPhase(data) {
+    log.fine("New phase: $data");
     return true;
   }
 

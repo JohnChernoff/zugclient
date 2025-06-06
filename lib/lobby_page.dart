@@ -210,6 +210,7 @@ class _LobbyPageState extends State<LobbyPage> {
                 ],
               )),
             )),
+            //TODO: optional headers?
             Expanded(flex: 1, child: widget.selectedArea(context)),
           ],
         )
