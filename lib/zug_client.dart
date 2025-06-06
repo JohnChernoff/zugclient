@@ -267,13 +267,14 @@ abstract class ZugClient extends ChangeNotifier {
   bool autoLog = false;
   bool localDebug = true;
   bool errPopup = false;
+  bool javalinServer;
   String? autoJoinTitle;
   final ValueNotifier<MessageScope> chatScope = ValueNotifier(MessageScope.server);
   Map<String,ValueNotifier<bool?>> dialogTracker = {};
 
   Area createArea(dynamic data);
 
-  ZugClient(this.domain,this.port,this.remoteEndpoint, this.prefs, {this.showServMess = false, this.localServer = false}) {
+  ZugClient(this.domain,this.port,this.remoteEndpoint, this.prefs, {this.showServMess = false, this.localServer = false, this.javalinServer = false}) {
     //_endClipListener = clipPlayer.onPlayerComplete.listen((v) => log.info("done"));
     trackPlayer.stop();
     log.info("Prefs: ${prefs.toString()}");
@@ -859,7 +860,11 @@ abstract class ZugClient extends ChangeNotifier {
   String getWebSockAddress() {
     StringBuffer sBuff = StringBuffer(localServer ? "ws://" : "wss://");
     sBuff.write(getDomain());
-    sBuff.write(localServer ? ":$port" : "/$remoteEndpoint");
+    if (javalinServer) {
+      sBuff.write(localServer ? ":$port/ws" : "/$remoteEndpoint");
+    } else {
+      sBuff.write(localServer ? ":$port" : "/$remoteEndpoint");
+    }
     return sBuff.toString();
   }
 
