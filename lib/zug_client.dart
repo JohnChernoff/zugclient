@@ -164,14 +164,18 @@ abstract class Room with Timerable {
 }
 
 abstract class Area extends Room {
-  dynamic listData = {};
+  dynamic upData = {};
+  int phaseTime = 0;
+  String phase = "";
   Map<String,ZugOption> options = {};
   bool exists = true;
   Room? currentRoom;
   Area(dynamic data) : super(data);
 
   bool updateArea(Map<String,dynamic> data) {
-    listData = data; //TODO: clarify how this works
+    upData = data; //TODO: clarify how this works
+    phaseTime = data["phase_time_remaining"];
+    phase = data["phase"];
     return true; //updateOccupants(data);
   }
 }
