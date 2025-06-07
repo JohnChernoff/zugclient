@@ -15,8 +15,6 @@ class IntroDialog {
   IntroDialog(this.appName, this.ctx,{this.tutorialUrl, this.discordUrl});
 
   Future<bool?> raise() {
-    
-
     return showDialog<bool?>(
         context: ctx,
         builder: (BuildContext context) {
@@ -142,8 +140,8 @@ class OptionDialog {
 class HelpDialog {
   ZugClient client;
   String helpTxt;
-
-  HelpDialog(this.client, this.helpTxt);
+  bool helpModeOption;
+  HelpDialog(this.client, this.helpTxt, {this.helpModeOption  = false});
 
   Future<void> raise() async {
     if (zugAppNavigatorKey.currentContext == null) return;
@@ -154,7 +152,7 @@ class HelpDialog {
               backgroundColor: Colors.cyan,
               children: [
                 Text(helpTxt),
-                HelpModeDialogOption(client),
+                if (helpModeOption) HelpModeDialogOption(client),
                 SimpleDialogOption(
                   onPressed: () => Navigator.pop(context),
                   child: const Text("Return",style: TextStyle(backgroundColor: Colors.white)),
