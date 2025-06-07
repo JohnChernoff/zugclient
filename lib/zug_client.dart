@@ -165,7 +165,7 @@ abstract class Room with Timerable {
 
 abstract class Area extends Room {
   dynamic upData = {};
-  int phaseTime = 0;
+  int? phaseTime;
   String phase = "";
   Map<String,ZugOption> options = {};
   bool exists = true;
@@ -174,9 +174,13 @@ abstract class Area extends Room {
 
   bool updateArea(Map<String,dynamic> data) {
     upData = data; //TODO: clarify how this works
-    phaseTime = data["phase_time_remaining"];
-    phase = data["phase"];
+    updatePhase(data);
     return true; //updateOccupants(data);
+  }
+
+  void updatePhase(Map<String,dynamic> data) {
+    phaseTime = data[fieldPhaseTimeRemaining] > 0 ? data[fieldPhaseTimeRemaining] : null;
+    phase = data[fieldPhase];
   }
 }
 
@@ -488,9 +492,7 @@ abstract class ZugClient extends ChangeNotifier {
   }
 
   bool handleNewPhase(data) { log.fine("New phase: $data");
-    Area area = getOrCreateArea(data);
-    area.phase = data[fieldPhase];
-    area.phaseTime = data[fieldPhaseTimeRemaining];
+    getOrCreateArea(data).updatePhase(data);
     return true;
   }
 
