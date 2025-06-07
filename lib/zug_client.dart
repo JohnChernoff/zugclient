@@ -268,6 +268,7 @@ abstract class ZugClient extends ChangeNotifier {
   bool localDebug = true;
   bool errPopup = false;
   bool javalinServer;
+  bool helpMode = false;
   String? autoJoinTitle;
   final ValueNotifier<MessageScope> chatScope = ValueNotifier(MessageScope.server);
   Map<String,ValueNotifier<bool?>> dialogTracker = {};
@@ -1013,6 +1014,11 @@ abstract class ZugClient extends ChangeNotifier {
   bool soundCheck() => getOption(AudioOpt.sound)?.getBool() ?? false;
   num getMusicVolume() => getOption(AudioOpt.musicVol)?.getNum() ?? 50;
   num getSoundVolume() => getOption(AudioOpt.soundVol)?.getNum() ?? 50;
+
+  void setHelpMode(bool b) {
+    helpMode = b;
+    notifyListeners();
+  }
 
 }
 
