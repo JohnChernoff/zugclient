@@ -483,14 +483,14 @@ abstract class ZugClient extends ChangeNotifier {
 
   bool handleUpdateOccupant(data) { log.fine("Occupant update: $data");
     Area area = getOrCreateArea(data);
-    area.occupantMap.putIfAbsent(UniqueName.fromData(data["user"]), () => data);
+    area.occupantMap.putIfAbsent(UniqueName.fromData(data[fieldUser]), () => data);
     return true;
   }
 
   bool handleNewPhase(data) { log.fine("New phase: $data");
     Area area = getOrCreateArea(data);
-    area.phase = data["phase"];
-    area.phaseTime = data["phase_time_remaining"];
+    area.phase = data[fieldPhase];
+    area.phaseTime = data[fieldPhaseTimeRemaining];
     return true;
   }
 
