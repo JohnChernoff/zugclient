@@ -487,8 +487,10 @@ abstract class ZugClient extends ChangeNotifier {
     return true;
   }
 
-  bool handleNewPhase(data) {
-    log.fine("New phase: $data");
+  bool handleNewPhase(data) { log.fine("New phase: $data");
+    Area area = getOrCreateArea(data);
+    area.phase = data["phase"];
+    area.phaseTime = data["phase_time_remaining"];
     return true;
   }
 
