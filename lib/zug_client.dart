@@ -174,13 +174,13 @@ abstract class Area extends Room {
 
   bool updateArea(Map<String,dynamic> data) {
     upData = data; //TODO: clarify how this works
-    updatePhase(data);
     return true; //updateOccupants(data);
   }
 
   void updatePhase(Map<String,dynamic> data) {
     phaseTime = data[fieldPhaseTimeRemaining] > 0 ? data[fieldPhaseTimeRemaining] : null;
     phase = data[fieldPhase];
+    ZugClient.log.fine("Updating phase: $phase,$phaseTime");
   }
 }
 
@@ -491,7 +491,7 @@ abstract class ZugClient extends ChangeNotifier {
     return true;
   }
 
-  bool handleNewPhase(data) { log.fine("New phase: $data");
+  bool handleNewPhase(data) {
     getOrCreateArea(data).updatePhase(data);
     return true;
   }
@@ -505,6 +505,7 @@ abstract class ZugClient extends ChangeNotifier {
     handleUpdateOccupants(data,area : area); //TODO: why use named argument?
     handleUpdateOptions(data,area : area);
     handleUpdateMessages(data, area: area);
+    if (area.phaseTime == null) area.updatePhase(data);
     area.updateArea(data);
   }
 
