@@ -141,7 +141,8 @@ class HelpDialog {
   ZugClient client;
   String helpTxt;
   bool helpModeOption;
-  HelpDialog(this.client, this.helpTxt, {this.helpModeOption  = false});
+  Color bkgCol, txtCol, buttCol;
+  HelpDialog(this.client, this.helpTxt, {this.helpModeOption  = false, this.bkgCol = Colors.cyan, this.txtCol = Colors.black, this.buttCol = Colors.white});
 
   Future<void> raise() async {
     if (zugAppNavigatorKey.currentContext == null) return;
@@ -149,13 +150,13 @@ class HelpDialog {
         context: zugAppNavigatorKey.currentContext!,
         builder: (BuildContext context) {
           return SimpleDialog(
-              backgroundColor: Colors.cyan,
+              backgroundColor: bkgCol,
               children: [
-                Text(helpTxt),
+                Text(helpTxt, style: TextStyle(color: txtCol)),
                 if (helpModeOption) HelpModeDialogOption(client),
                 SimpleDialogOption(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text("Return",style: TextStyle(backgroundColor: Colors.white)),
+                  child: Text("Return",style: TextStyle(color: txtCol, backgroundColor: buttCol)),
                 ),
               ]);
         });

@@ -191,7 +191,7 @@ class _LobbyPageState extends State<LobbyPage> {
             widget.style == LobbyStyle.tersePort ? Expanded(flex: widget.portFlex, child: getCommandArea(context)) : getCommandArea(context),
             Center(
               child: Container(
-              color: Theme.of(context).primaryColor, //widget.areaSelectBkgColor,
+              color: widget.bkgCol,
               child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(
                 mainAxisSize: MainAxisSize.max,
                 mainAxisAlignment: MainAxisAlignment.center,
