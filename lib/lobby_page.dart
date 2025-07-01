@@ -188,7 +188,7 @@ class _LobbyPageState extends State<LobbyPage> {
           ) : null,
         ),
         child: Column(
-          children: [ //Text(widget.client.userName),
+          children: [ //Text(widget.model.userName),
             widget.style == LobbyStyle.tersePort ? Expanded(flex: widget.portFlex, child: getCommandArea(context)) : getCommandArea(context),
             Center(
               child: Container(
@@ -205,7 +205,7 @@ class _LobbyPageState extends State<LobbyPage> {
                       items: games,
                       onChanged: (String? title) {
                         setState(() {
-                          widget.model.switchArea(title); //client.update();
+                          widget.model.switchArea(title); //model.update();
                         });
                       }),
                 ],

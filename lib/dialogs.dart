@@ -59,9 +59,9 @@ class MusicStackDialog extends StatefulWidget {
 
   final List<Widget> stack;
   final String track;
-  final ZugModel client;
+  final ZugModel model;
 
-  const MusicStackDialog(this.client,this.track,this.stack, {super.key});
+  const MusicStackDialog(this.model,this.track,this.stack, {super.key});
 
   @override
   State<StatefulWidget> createState() => MusicStackDialogState();
@@ -74,7 +74,7 @@ class MusicStackDialogState extends State<MusicStackDialog> {
   @override
   void initState() {
     super.initState();
-    if (widget.client.getOption(AudioOpt.music)?.getBool() == true) {
+    if (widget.model.getOption(AudioOpt.music)?.getBool() == true) {
       playTrack();
     }
   }
@@ -97,7 +97,7 @@ class MusicStackDialogState extends State<MusicStackDialog> {
         elevation: 10,
         child: GestureDetector(
           onTap: () {
-            widget.client.clipPlayer.stop();
+            widget.model.clipPlayer.stop();
             Navigator.pop(context);
             },
           child: Stack(children: widget.stack),
@@ -108,16 +108,16 @@ class MusicStackDialogState extends State<MusicStackDialog> {
 
   void playTrack() {
     playing = true;
-    widget.client.clipPlayer.play(AssetSource('audio/tracks/${widget.track}.mp3'));
+    widget.model.clipPlayer.play(AssetSource('audio/tracks/${widget.track}.mp3'));
   }
 
 }
 
 class OptionDialog {
-  ZugModel client;
+  ZugModel model;
   BuildContext ctx;
   OptionScope scope;
-  OptionDialog(this.client, this.ctx, this.scope);
+  OptionDialog(this.model, this.ctx, this.scope);
 
   Future<void> raise() async {
     return showDialog<void>(
@@ -127,7 +127,7 @@ class OptionDialog {
               insetPadding: EdgeInsets.symmetric(vertical: constraints.maxHeight * .25, horizontal: constraints.maxWidth * .25),
               backgroundColor: Colors.cyan,
               child: Column(children: [
-                Expanded(child: OptionsPage(client,scope: scope,isDialog: true,headerHeight: 48)),
+                Expanded(child: OptionsPage(model,scope: scope,isDialog: true,headerHeight: 48)),
                 SimpleDialogOption(
                   onPressed: () => Navigator.pop(context),
                   child: const Text("Cancel",style: TextStyle(backgroundColor: Colors.white)),
@@ -164,8 +164,8 @@ class HelpDialog {
 }
 
 class HelpModeDialogOption extends StatefulWidget {
-  final ZugModel client;
-  const HelpModeDialogOption(this.client,{super.key});
+  final ZugModel model;
+  const HelpModeDialogOption(this.model,{super.key});
   @override
   State<StatefulWidget> createState() => HelpModeDialogOptionState();
 }
@@ -175,9 +175,9 @@ class HelpModeDialogOptionState extends State<HelpModeDialogOption> {
   Widget build(BuildContext context) {
     return SimpleDialogOption(
       onPressed: () {
-        setState(() => widget.client.setHelpMode(!widget.client.helpMode));
+        setState(() => widget.model.setHelpMode(!widget.model.helpMode));
       },
-      child: Text("${widget.client.helpMode ? 'Deactivate' : 'Activate'} Help Mode",style: const TextStyle(backgroundColor: Colors.lime)),
+      child: Text("${widget.model.helpMode ? 'Deactivate' : 'Activate'} Help Mode",style: const TextStyle(backgroundColor: Colors.lime)),
     );
   }
 }

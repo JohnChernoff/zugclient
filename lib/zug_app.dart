@@ -55,28 +55,28 @@ abstract class ZugApp extends StatelessWidget {
     return ZugHome(app:app,noNav: noNav);
   }
 
-  Widget createOptionsPage(ZugModel client) {
-    return OptionsPage(client, scope: OptionScope.general);
+  Widget createOptionsPage(ZugModel model) {
+    return OptionsPage(model, scope: OptionScope.general);
   }
 
-  Widget createLobbyPage(ZugModel client) {
-    return LobbyPage(client); //,
+  Widget createLobbyPage(ZugModel model) {
+    return LobbyPage(model); //,
         //foregroundColor: colorScheme.onSurface, backgroundColor: colorScheme.surface)
   }
 
-  Widget createSplashPage(ZugModel client) {
-    return SplashPage(client,
+  Widget createSplashPage(ZugModel model) {
+    return SplashPage(model,
         imgLandscape: Image(image: ZugUtils.getAssetImage(splashLandscapeImgPath),fit: BoxFit.fill),
         imgPortrait: Image(image: ZugUtils.getAssetImage(splashPortraitImgPath),fit: BoxFit.fill),
     );
   }
 
-  Widget createMainPage(ZugModel client);
+  Widget createMainPage(ZugModel model);
 
-  AppBar createAppBar(BuildContext context, ZugModel client, {Widget? txt, Color? color}) {
+  AppBar createAppBar(BuildContext context, ZugModel model, {Widget? txt, Color? color}) {
     Text defaultTxt = noNav
-        ? Text("Hello, ${client.userName?.name ?? "Unknown User"}!")
-        : Text("${client.userName}: ${client.currentArea.exists ? client.currentArea.id : "-"}");
+        ? Text("Hello, ${model.userName?.name ?? "Unknown User"}!")
+        : Text("${model.userName}: ${model.currentArea.exists ? model.currentArea.id : "-"}");
     return AppBar(
       backgroundColor: color ?? Theme.of(context).colorScheme.inversePrimary,
       title: txt ?? defaultTxt,
@@ -117,34 +117,34 @@ class _ZugHomeState extends State<ZugHome> {
 
   @override
   Widget build(BuildContext context) {
-    ZugModel client = context.watch<ZugModel>();
+    ZugModel model = context.watch<ZugModel>();
     ColorScheme colorScheme = Theme.of(context).colorScheme;
-    Widget page = widget.app.createSplashPage(client);
+    Widget page = widget.app.createSplashPage(model);
 
-    if (client.isLoggedIn) {
+    if (model.isLoggedIn) {
       if (widget.noNav) {
-        selectedPage = client.selectedPage = PageType.main;
-        page = widget.app.createMainPage(client);
+        selectedPage = model.selectedPage = PageType.main;
+        page = widget.app.createMainPage(model);
       }
       else {
-        page = switch(client.switchPage) {
-          PageType.main => widget.app.createMainPage(client),
-          PageType.lobby => widget.app.createLobbyPage(client),
-          PageType.options => widget.app.createOptionsPage(client),
+        page = switch(model.switchPage) {
+          PageType.main => widget.app.createMainPage(model),
+          PageType.lobby => widget.app.createLobbyPage(model),
+          PageType.options => widget.app.createOptionsPage(model),
           PageType.none => switch (selectedPage) {
-            PageType.main || PageType.none => widget.app.createMainPage(client),
-            PageType.lobby => widget.app.createLobbyPage(client),
-            PageType.options => widget.app.createOptionsPage(client),
+            PageType.main || PageType.none => widget.app.createMainPage(model),
+            PageType.lobby => widget.app.createLobbyPage(model),
+            PageType.options => widget.app.createOptionsPage(model),
           }
         };
-        if (client.switchPage != PageType.none) {
-          selectedPage = client.switchPage;
-          client.switchPage = PageType.none;
+        if (model.switchPage != PageType.none) {
+          selectedPage = model.switchPage;
+          model.switchPage = PageType.none;
         }
-        client.selectedPage = selectedPage;
+        model.selectedPage = selectedPage;
       }
       if (selectedPage != PageType.main) {
-        client.areaCmd(ClientMsg.setDeaf,data:{fieldDeafened:true});
+        model.areaCmd(ClientMsg.setDeaf,data:{fieldDeafened:true});
       }
     }
 
@@ -159,20 +159,20 @@ class _ZugHomeState extends State<ZugHome> {
     );
 
     return Scaffold(
-      appBar: widget.app.createAppBar(context,client),
+      appBar: widget.app.createAppBar(context,model),
       body: LayoutBuilder(
         builder: (context, constraints) {
           return Column(
             children: [
               Expanded(child: mainArea),
-              if (!widget.noNav) getSafeArea(client),
+              if (!widget.noNav) getSafeArea(model),
             ],
           );
         },),
     );
   }
 
-  SafeArea getSafeArea(ZugModel client) {
+  SafeArea getSafeArea(ZugModel model) {
     return SafeArea(
       child: BottomNavigationBar(
         fixedColor: Colors.black,
@@ -191,7 +191,7 @@ class _ZugHomeState extends State<ZugHome> {
         currentIndex: selectedIndex,
         onTap: (value) {
           //if (ZugDialogs.currentContexts.isEmpty)
-          //if (selectedPage == PageType.options && client.currentArea.exists) { widget.app.client.areaCmd(ClientMsg.getOptions);
+          //if (selectedPage == PageType.options && model.currentArea.exists) { widget.app.model.areaCmd(ClientMsg.getOptions);
           setState(() {
             selectedIndex = value;
             PageType newPage = PageType.values.elementAt(selectedIndex);
