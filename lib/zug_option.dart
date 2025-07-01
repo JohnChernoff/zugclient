@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:zugclient/zug_fields.dart';
 
 enum ValType {int,double,bool,string,enumeration}
@@ -63,6 +61,10 @@ class ZugVal {
 
   bool isNumeric() => (_valType == ValType.int) || (_valType == ValType.double);
 
+  @override
+  String toString() {
+    return "${getVal()}";
+  }
 }
 
 class ZugOption {
@@ -111,4 +113,9 @@ class ZugOption {
 
   ZugOption fromValue(dynamic val) => ZugOption(val,min: min, max: max, inc: inc, enums: enums, desc: desc, label: label);
   ZugOption copy() => ZugOption(zugVal.getVal(),min: min, max: max, inc: inc, enums: enums, desc: desc, label: label); //enums?
+
+  @override
+  String toString() {
+    return "${getVal()}";
+  }
 }
