@@ -3,8 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:zug_utils/zug_utils.dart';
 import 'package:zugclient/zug_app.dart';
-import 'package:zugclient/zug_client.dart';
 import "package:universal_html/html.dart" as html;
+import 'package:zugclient/zug_model.dart';
 import 'options_page.dart';
 
 class IntroDialog {
@@ -59,7 +59,7 @@ class MusicStackDialog extends StatefulWidget {
 
   final List<Widget> stack;
   final String track;
-  final ZugClient client;
+  final ZugModel client;
 
   const MusicStackDialog(this.client,this.track,this.stack, {super.key});
 
@@ -114,7 +114,7 @@ class MusicStackDialogState extends State<MusicStackDialog> {
 }
 
 class OptionDialog {
-  ZugClient client;
+  ZugModel client;
   BuildContext ctx;
   OptionScope scope;
   OptionDialog(this.client, this.ctx, this.scope);
@@ -138,11 +138,11 @@ class OptionDialog {
 }
 
 class HelpDialog {
-  ZugClient client;
+  ZugModel model;
   String helpTxt;
   bool helpModeOption;
   Color bkgCol, txtCol, buttCol;
-  HelpDialog(this.client, this.helpTxt, {this.helpModeOption  = false, this.bkgCol = Colors.cyan, this.txtCol = Colors.black, this.buttCol = Colors.white});
+  HelpDialog(this.model, this.helpTxt, {this.helpModeOption  = false, this.bkgCol = Colors.cyan, this.txtCol = Colors.black, this.buttCol = Colors.white});
 
   Future<void> raise() async {
     if (zugAppNavigatorKey.currentContext == null) return;
@@ -153,7 +153,7 @@ class HelpDialog {
               backgroundColor: bkgCol,
               children: [
                 Text(helpTxt, style: TextStyle(color: txtCol)),
-                if (helpModeOption) HelpModeDialogOption(client),
+                if (helpModeOption) HelpModeDialogOption(model),
                 SimpleDialogOption(
                   onPressed: () => Navigator.pop(context),
                   child: Text("Return",style: TextStyle(color: txtCol, backgroundColor: buttCol)),
@@ -164,7 +164,7 @@ class HelpDialog {
 }
 
 class HelpModeDialogOption extends StatefulWidget {
-  final ZugClient client;
+  final ZugModel client;
   const HelpModeDialogOption(this.client,{super.key});
   @override
   State<StatefulWidget> createState() => HelpModeDialogOptionState();

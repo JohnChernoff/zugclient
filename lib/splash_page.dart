@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:zug_net/oauth_client.dart';
 import 'package:zug_utils/zug_utils.dart';
-import 'package:zugclient/zug_client.dart';
+import 'package:zugclient/zug_model.dart';
 
 class SplashPage extends StatelessWidget {
-  final ZugClient client;
+  final ZugModel model;
   final Image? imgLandscape, imgPortrait;
   final bool dark;
 
-  const SplashPage(this.client,{this.imgLandscape,this.imgPortrait,this.dark = true,super.key});
+  const SplashPage(this.model,{this.imgLandscape,this.imgPortrait,this.dark = true,super.key});
 
   @override
   Widget build(BuildContext context) { //TODO: generalize
@@ -26,7 +26,7 @@ class SplashPage extends StatelessWidget {
           children: [
             ElevatedButton(
               onPressed: () {
-                client.login(LoginType.none);
+                model.login(LoginType.none);
               },
               child: Padding(padding: const EdgeInsets.all(8), child: Text("Login as Guest",style: txtStyle)),
              // style: ButtonStyle(backgroundColor: dark ? Colors.black : Colors.white, foregroundColor: dark ? Colors.white : Colors.black)
@@ -34,21 +34,21 @@ class SplashPage extends StatelessWidget {
             const SizedBox(width: 36),
             ElevatedButton(
               onPressed: () {
-                client.login(LoginType.google);
+                model.login(LoginType.google);
               },
               child: Padding(padding: const EdgeInsets.all(8), child: Text("Login with Google",style: txtStyle)),
             ),
             const SizedBox(width: 36),
             ElevatedButton(
               onPressed: () {
-                client.login(LoginType.lichess);
+                model.login(LoginType.lichess);
               },
               child: Padding(padding: const EdgeInsets.all(8), child: Text("Login with Lichess",style: txtStyle)),
             ),
           ],
         ),
         Expanded(
-          child: !kIsWeb && client.authenticating
+          child: !kIsWeb && model.authenticating
               ? WebViewWidget(controller: OauthClient.webViewController)
               : SizedBox(child: img), //?? const SizedBox()
         ),

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:zug_utils/zug_dialogs.dart';
 import 'package:zugclient/zug_app.dart';
-import 'package:zugclient/zug_client.dart';
 import 'package:zugclient/zug_fields.dart';
+import 'package:zugclient/zug_model.dart';
 import 'package:zugclient/zug_option.dart';
 
 enum OptionScope { general,area }
@@ -13,14 +13,14 @@ class OptionsPage extends StatefulWidget {
   final Color optionsTextColor;
   final Color optionsDropdownCBkgCol;
   final double optionsPadding;
-  final ZugClient client;
+  final ZugModel model;
   final double headerHeight;
   final Widget? customHeader;
   final String headerTxt;
   final bool isDialog;
   final OptionScope scope;
 
-  const OptionsPage(this.client, {
+  const OptionsPage(this.model, {
     this.customHeader,
     this.headerHeight = 128,
     this.headerTxt = "Options",
@@ -54,12 +54,12 @@ class _OptionsPageState extends State<OptionsPage> {
 
   Future<void> loadOptions() async {
     if (widget.scope == OptionScope.area) {
-      await widget.client.awaitResponse(ClientMsg.getOptions, ServMsg.updateOptions);
+      await widget.model.awaitResponse(ClientMsg.getOptions, ServMsg.updateOptions);
     }
     optionMap.clear();
     Map<String,ZugOption> optionMapSrc = widget.scope == OptionScope.general
-        ? widget.client.getOptions()
-        : widget.client.currentArea.options;
+        ? widget.model.getOptions()
+        : widget.model.currentArea.options;
     for (String key in optionMapSrc.keys) {
       optionMap[key] = optionMapSrc[key]!.copy();
     }
@@ -117,16 +117,16 @@ class _OptionsPageState extends State<OptionsPage> {
   void saveOptions() {
     if (widget.scope == OptionScope.general) {
         for (String key in optionMap.keys) {
-          widget.client.setOption(key, optionMap[key]!);
+          widget.model.setOption(key, optionMap[key]!);
         }
     }
     else {
-      widget.client.areaCmd(ClientMsg.setOptions, data: { fieldOptions : areaOptionsToJson() }); //()
+      widget.model.areaCmd(ClientMsg.setOptions, data: { fieldOptions : areaOptionsToJson() }); //()
     }
     if (widget.isDialog) {
       Navigator.pop(context);
     } else {
-      widget.client.setSwitchPage(PageType.lobby);
+      widget.model.setSwitchPage(PageType.lobby);
     }
   }
 

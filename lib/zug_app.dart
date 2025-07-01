@@ -5,8 +5,8 @@ import 'package:provider/provider.dart';
 import 'package:zug_utils/zug_dialogs.dart';
 import 'package:zug_utils/zug_utils.dart';
 import 'package:zugclient/splash_page.dart';
-import 'package:zugclient/zug_client.dart';
 import 'package:zugclient/zug_fields.dart';
+import 'package:zugclient/zug_model.dart';
 import 'lobby_page.dart';
 import 'options_page.dart';
 
@@ -14,13 +14,13 @@ final zugAppNavigatorKey = GlobalKey<NavigatorState>();
 
 abstract class ZugApp extends StatelessWidget {
   final String appName;
-  final ZugClient client;
+  final ZugModel model;
   final Color colorSeed;
   final ColorScheme colorScheme;
   final String splashLandscapeImgPath, splashPortraitImgPath;
   final bool noNav;
 
-  ZugApp(this.client, this.appName, {
+  ZugApp(this.model, this.appName, {
     this.colorSeed = Colors.green,
     this.splashLandscapeImgPath = "images/splash_land.png",
     this.splashPortraitImgPath = "images/splash_port.png",
@@ -37,7 +37,7 @@ abstract class ZugApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-        create: (context) => client,
+        create: (context) => model,
         child: MaterialApp(
           scrollBehavior: ZugScrollBehavior(),
           navigatorKey: zugAppNavigatorKey,
@@ -55,25 +55,25 @@ abstract class ZugApp extends StatelessWidget {
     return ZugHome(app:app,noNav: noNav);
   }
 
-  Widget createOptionsPage(ZugClient client) {
+  Widget createOptionsPage(ZugModel client) {
     return OptionsPage(client, scope: OptionScope.general);
   }
 
-  Widget createLobbyPage(ZugClient client) {
+  Widget createLobbyPage(ZugModel client) {
     return LobbyPage(client); //,
         //foregroundColor: colorScheme.onSurface, backgroundColor: colorScheme.surface)
   }
 
-  Widget createSplashPage(ZugClient client) {
+  Widget createSplashPage(ZugModel client) {
     return SplashPage(client,
         imgLandscape: Image(image: ZugUtils.getAssetImage(splashLandscapeImgPath),fit: BoxFit.fill),
         imgPortrait: Image(image: ZugUtils.getAssetImage(splashPortraitImgPath),fit: BoxFit.fill),
     );
   }
 
-  Widget createMainPage(ZugClient client);
+  Widget createMainPage(ZugModel client);
 
-  AppBar createAppBar(BuildContext context, ZugClient client, {Widget? txt, Color? color}) {
+  AppBar createAppBar(BuildContext context, ZugModel client, {Widget? txt, Color? color}) {
     Text defaultTxt = noNav
         ? Text("Hello, ${client.userName?.name ?? "Unknown User"}!")
         : Text("${client.userName}: ${client.currentArea.exists ? client.currentArea.id : "-"}");
@@ -117,7 +117,7 @@ class _ZugHomeState extends State<ZugHome> {
 
   @override
   Widget build(BuildContext context) {
-    ZugClient client = context.watch<ZugClient>();
+    ZugModel client = context.watch<ZugModel>();
     ColorScheme colorScheme = Theme.of(context).colorScheme;
     Widget page = widget.app.createSplashPage(client);
 
@@ -172,7 +172,7 @@ class _ZugHomeState extends State<ZugHome> {
     );
   }
 
-  SafeArea getSafeArea(ZugClient client) {
+  SafeArea getSafeArea(ZugModel client) {
     return SafeArea(
       child: BottomNavigationBar(
         fixedColor: Colors.black,

@@ -6,14 +6,13 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:logging/logging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zug_net/oauth_client.dart';
 import 'package:zug_net/zug_sock.dart';
 import 'package:zug_utils/zug_dialogs.dart';
-import 'package:zug_utils/zug_utils.dart';
 import 'package:zugclient/zug_app.dart';
+import 'package:zugclient/zug_area.dart';
 import 'package:zugclient/zug_option.dart';
 import 'firebase_options.dart';
 import 'zug_fields.dart';
@@ -24,214 +23,11 @@ import 'dart:io' show Platform;
 import 'dart:convert';
 import 'package:package_info_plus/package_info_plus.dart';
 
-class UniqueName {
-  final String name, source;
-  const UniqueName(this.name,this.source);
-  factory UniqueName.fromData(Map<String,dynamic>? data, {defaultName = const UniqueName("?","?"),}) {
-    if (data == null) return defaultName;
-
-    return UniqueName(
-        data[fieldUniqueName]?[fieldName] ?? data[fieldName] ?? "?",
-        data[fieldUniqueName]?[fieldAuthSource] ?? data[fieldAuthSource] ?? "?"
-    );
-  }
-
-  bool eq(UniqueName? uName) {
-    if (uName == null) return false;
-    return (uName.name == name && uName.source == source);
-  }
-
-  dynamic toJSON() {
-    return { fieldName : name, fieldAuthSource : source };
-  }
-
-  @override
-  String toString() {
-    return "$name@$source";
-  }
-}
-
-const emojiTag = "@@@";
-class Message {
-  UniqueName? uName;
-  DateTime dateTime;
-  bool fromServ;
-  String message;
-  Color color;
-  bool hidden;
-
-  Message(this.uName,this.message,this.dateTime,this.color,this.hidden) : fromServ = uName == null;
-}
-
-class MessageList {
-  static Color foregroundColor = Colors.white;
-  Map<String?,Color> userColorMap = {};
-  List<Message> messages = [];
-  int newMessages = 0;
-
-  MessageList() {
-    userColorMap.putIfAbsent(null, () => foregroundColor);
-  }
-
-  void addZugMsg(data) {
-    StringBuffer txtBuff = StringBuffer();
-    for (dynamic el in (data[fieldZugTxt] as List<dynamic>)) {
-      txtBuff.write(el[fieldTxtAscii] ?? "$emojiTag${el[fieldTxtEmoji]}$emojiTag");
-    }
-    UniqueName uName = UniqueName.fromData(data[fieldMsgUser]);
-
-    messages.add(Message(
-        uName,
-        txtBuff.toString(),
-        DateTime.fromMillisecondsSinceEpoch(data[fieldMsgDate] * 1000),
-        getMsgColor(uName,data),
-        data[fieldHidden] ?? false));
-
-  }
-
-  void addMessage(data) {
-    if (data[fieldZugMsg] != null) {
-      addZugMsg(data[fieldZugMsg]);
-    } else {
-      dynamic userData = data[fieldOccupant]?[fieldUser] ?? data[fieldUser];
-      UniqueName? uName = userData != null ? UniqueName.fromData(userData) : null;
-      messages.add(Message(
-          uName,
-          data[fieldMsg],
-          DateTime.now(),
-          getMsgColor(uName,data),
-          data[fieldHidden] ?? false));
-    }
-    newMessages++;
-  }
-
-  Color getMsgColor(UniqueName? uName, data) { //print("Fetching ColorMap: $userColorMap for $uName");
-    return data[fieldOccupant]?[fieldChatColor] != null
-        ? HexColor.fromHex(data[fieldOccupant]?[fieldChatColor])
-        : userColorMap.putIfAbsent(uName.toString(), () => HexColor.rndColor(pastel: true)); //TODO: exclude server color
-  }
-
-  Message? getLastServMsg() {
-    Iterable<Message> adminMsgs = messages.where((msg) => msg.fromServ);
-    return adminMsgs.isNotEmpty ? adminMsgs.last : null;
-  }
-
-}
-
-abstract class Room with Timerable {
-  late final String id;
-  MessageList messages = MessageList();
-  Map<UniqueName,dynamic> occupantMap = {};
-
-  Room(dynamic data) {
-    id = data?[fieldAreaID] ?? ZugClient.noAreaTitle;
-  }
-
-  String getOccupantName(UniqueName name) {
-    for (UniqueName uniqueName in occupantMap.keys) {
-      if (uniqueName.source != name.source &&
-          uniqueName.name.toLowerCase() == name.name.toLowerCase()) {
-        return name.toString();
-      }
-    }
-    return name.name;
-  }
-
-  String parseOccupantName(Map<String,dynamic> data) {
-    return getOccupantName(UniqueName.fromData(data));
-  }
-
-  bool updateOccupants(Map<String,dynamic> data) {
-    if (data[fieldOccupants] == null) return false;
-    occupantMap.clear();
-    for (dynamic occupant in data[fieldOccupants]) {
-      UniqueName uname = UniqueName.fromData(occupant[fieldUser]);
-      occupantMap.putIfAbsent(uname, () => occupant);
-    }
-    return true;
-  }
-
-  dynamic getOccupant(UniqueName? name) {
-    for (UniqueName uname in occupantMap.keys) {
-      if (uname.eq(name)) return occupantMap[uname];
-    }
-    return null;
-  }
-
-  bool containsOccupant(UniqueName? name) {
-    return getOccupant(name) != null;
-  }
-}
-
-abstract class Area extends Room {
-  dynamic upData = {};
-  int? phaseTime;
-  String phase = "";
-  Map<String,ZugOption> options = {};
-  bool exists = true;
-  Room? currentRoom;
-  Area(dynamic data) : super(data);
-
-  bool updateArea(Map<String,dynamic> data) {
-    upData = data; //TODO: clarify how this works
-    return true; //updateOccupants(data);
-  }
-
-  void updatePhase(Map<String,dynamic> data) {
-    phaseTime = data[fieldPhaseTimeRemaining] > 0 ? data[fieldPhaseTimeRemaining] : null;
-    phase = data[fieldPhase];
-    ZugClient.log.fine("Updating phase: $phase,$phaseTime");
-  }
-}
-
-class FunctionWaiter {
-  final Enum funEnum;
-  final Completer<bool> completer = Completer();
-  FunctionWaiter(this.funEnum);
-}
-
-class ShuffleInfo {
-  Random rng = Random();
-  bool shuffling;
-  int? _tracks;
-  int currentTrack = 0;
-  final String prefix;
-  final String format;
-  ShuffleInfo({this.shuffling = false,this.prefix = "lobby",String? format}) :
-      format = format ?? ".mp3";
-
-  Future<int> countTracks() async {
-    _tracks ??= await _countTracks();
-    return _tracks ?? 0;
-  }
-
-  Future<int> _countTracks() async {
-    final manifestContent = await rootBundle.loadString('AssetManifest.json');
-    final Map<String, dynamic> manifestMap = json.decode(manifestContent);
-    return manifestMap.keys
-        .where((String key) => key.startsWith('assets/audio/tracks/$prefix') &&
-        key.endsWith(format)).length;
-  }
-
-  Future<int> getRandomTrack() async {
-    int tracks = await countTracks();
-    while(true) {
-      int n = rng.nextInt(tracks) + 1;
-      if (tracks < 2 || n != currentTrack) return n;
-    }
-  }
-
-  @override
-  String toString() {
-    return "Shuffling: $shuffling, pfx: $prefix, ext: $format";
-  }
-}
-
 enum AudioOpt {sound,soundVol,music,musicVol}
 enum ZugClientOpt {debug}
 enum LoginType {none,lichess,google}
 
-abstract class ZugClient extends ChangeNotifier {
+abstract class ZugModel extends ChangeNotifier {
   static const optPrefix = "ZugClientOption";
   static final log = Logger('ClientLogger');
   static const noAreaTitle = "-";
@@ -241,7 +37,7 @@ abstract class ZugClient extends ChangeNotifier {
   bool showServMess;
   bool localServer;
   bool noServer = false;
-  String clientName = "ZugClient";
+  String modelName = "ZugClient";
   PackageInfo? packageInfo;
   String domain;
   int port;
@@ -283,7 +79,7 @@ abstract class ZugClient extends ChangeNotifier {
 
   Area createArea(dynamic data);
 
-  ZugClient(this.domain,this.port,this.remoteEndpoint, this.prefs, {this.showServMess = false, this.localServer = false, this.javalinServer = false}) {
+  ZugModel(this.domain,this.port,this.remoteEndpoint, this.prefs, {this.showServMess = false, this.localServer = false, this.javalinServer = false}) {
     //_endClipListener = clipPlayer.onPlayerComplete.listen((v) => log.info("done"));
     trackPlayer.stop();
     log.info("Prefs: ${prefs.toString()}");
@@ -689,7 +485,7 @@ abstract class ZugClient extends ChangeNotifier {
   }
 
   void checkRedirect(String host) {
-    checkRedirectOauth(OauthClient(host,clientName));
+    checkRedirectOauth(OauthClient(host,modelName));
   }
   //TODO: generalize
   void checkRedirectOauth(OauthClient oauthClient) {
@@ -761,7 +557,7 @@ abstract class ZugClient extends ChangeNotifier {
           send(ClientMsg.login, data: { fieldLoginType: LoginType.lichess.name, fieldToken : token });
         }
         else {
-          authenticate(OauthClient("lichess.org", clientName));
+          authenticate(OauthClient("lichess.org", modelName));
         }
       } else if (loginType == LoginType.google) {
         if (token != null) {
@@ -894,7 +690,7 @@ abstract class ZugClient extends ChangeNotifier {
 
   void deleteToken() {
     if (authClient?.credentials.accessToken.isNotEmpty ?? false) {
-      OauthClient(getSourceDomain(userName?.source), clientName).deleteToken(authClient?.credentials.accessToken);
+      OauthClient(getSourceDomain(userName?.source), modelName).deleteToken(authClient?.credentials.accessToken);
       authClient = oauth2.Client(oauth2.Credentials(""));
       if (kIsWeb) {
         ZugDialogs.popup("Token deleted, reload page to login again");
@@ -1030,20 +826,3 @@ abstract class ZugClient extends ChangeNotifier {
   }
 
 }
-
-/**
- * class WorkAroundPlayerController extends VideoPlayerController {
-    WorkAroundPlayerController.networkUrl(super.url) : super.networkUrl();
-    WorkAroundPlayerController.file(super.file) : super.file();
-    WorkAroundPlayerController.contentUri(super.contentUri) : super.contentUri();
-    WorkAroundPlayerController.asset(super.dataSource) : super.asset();
-
-    @override
-    Future<void> seekTo(Duration position) async {
-    if (kIsWeb && position == value.duration) {
-    return;
-    }
-    return super.seekTo(position);
-    }
-    }
- */

@@ -2,13 +2,14 @@ import 'package:flutter/foundation.dart';
 import "package:universal_html/html.dart" as html;
 import 'package:flutter/material.dart';
 import 'package:zug_utils/zug_utils.dart';
+import 'package:zugclient/zug_area.dart';
 import 'package:zugclient/zug_chat.dart';
-import 'package:zugclient/zug_client.dart';
+import 'package:zugclient/zug_model.dart';
 
 enum LobbyStyle {normal,terseLand,tersePort}
 
 class LobbyPage extends StatefulWidget {
-  final ZugClient client;
+  final ZugModel model;
   final String areaName;
   final Color? bkgCol;
   final Color? buttonsBkgCol;
@@ -21,7 +22,7 @@ class LobbyPage extends StatefulWidget {
   final bool seekButt, createButt, startButt, joinButt, partButt;
   final int portFlex;
 
-  const LobbyPage(this.client, {
+  const LobbyPage(this.model, {
     this.backgroundImage,
     this.areaName = "Area",
     this.bkgCol,
@@ -49,9 +50,9 @@ class LobbyPage extends StatefulWidget {
           scrollDirection: Axis.horizontal,
           child: DataTable(
           columns: getOccupantHeaders(),
-          rows: List.generate(client.currentArea.occupantMap.values.length, (i) {
-            UniqueName uName = client.currentArea.occupantMap.keys.elementAt(i);
-            return getOccupantData(uName, client.currentArea.occupantMap[uName]);
+          rows: List.generate(model.currentArea.occupantMap.values.length, (i) {
+            UniqueName uName = model.currentArea.occupantMap.keys.elementAt(i);
+            return getOccupantData(uName, model.currentArea.occupantMap[uName]);
           })),
       )),
     );
@@ -66,7 +67,7 @@ class LobbyPage extends StatefulWidget {
   DataRow getOccupantData(UniqueName uName, Map<String,dynamic> json, {Color color = Colors.white}) {
     return DataRow(cells: [
       DataCell(Text(
-          client.currentArea.getOccupantName(uName),
+          model.currentArea.getOccupantName(uName),
           style: TextStyle(color: color)
       ))
     ]);
@@ -102,7 +103,7 @@ class LobbyPage extends StatefulWidget {
   Widget getSeekButton({Color normCol = Colors.orangeAccent,  pressedCol = Colors.greenAccent}) {
     return ElevatedButton(
         style: getButtonStyle(normCol,pressedCol),
-        onPressed: () => client.seekArea(),
+        onPressed: () => model.seekArea(),
         child: Text("Seek",style: getButtonTextStyle()));
   }
 
@@ -110,7 +111,7 @@ class LobbyPage extends StatefulWidget {
     return ElevatedButton(
         style: getButtonStyle(normCol,pressedCol),
         onPressed: () {
-          client.joinArea(client.currentArea.id); //chatScopeController.setScope(MessageScope.area);
+          model.joinArea(model.currentArea.id); //chatScopeController.setScope(MessageScope.area);
         },
         child: Text("Join",style: getButtonTextStyle()));
   }
@@ -118,21 +119,21 @@ class LobbyPage extends StatefulWidget {
   Widget getPartButton({Color normCol = Colors.grey,  pressedCol = Colors.orangeAccent}) {
     return ElevatedButton(
         style: getButtonStyle(normCol,pressedCol),
-        onPressed: () => client.partArea(),
+        onPressed: () => model.partArea(),
         child: Text("Leave",style: getButtonTextStyle()));
   }
 
   Widget getStartButton({Color normCol = Colors.redAccent,  pressedCol = Colors.purpleAccent}) {
     return ElevatedButton(
         style: getButtonStyle(normCol,pressedCol),
-        onPressed: () => client.startArea(),
+        onPressed: () => model.startArea(),
         child: Text("Start",style: getButtonTextStyle()));
   }
 
   Widget getCreateButton({Color normCol = Colors.greenAccent,  pressedCol = Colors.redAccent}) {
     return ElevatedButton(
         style: getButtonStyle(normCol,pressedCol),
-        onPressed: () => client.newArea(),
+        onPressed: () => model.newArea(),
         child: Text("New",style: getButtonTextStyle()));
   }
 
@@ -166,15 +167,15 @@ class _LobbyPageState extends State<LobbyPage> {
   Widget getMainArea(BuildContext context) {
     Set<DropdownMenuItem<String>> gameset = {}; //List.empty(growable: true);
     //gameset.add(DropdownMenuItem<String>(value:ZugClient.noAreaTitle, child: widget.getAreaItem(ZugClient.noAreaTitle,context)));
-    gameset.addAll(widget.client.areas.keys.where((key) => widget.client.areas[key]?.exists ?? false).map<DropdownMenuItem<String>>((String title) {  //print("Adding: $title");
+    gameset.addAll(widget.model.areas.keys.where((key) => widget.model.areas[key]?.exists ?? false).map<DropdownMenuItem<String>>((String title) {  //print("Adding: $title");
       return DropdownMenuItem<String>(
         value: title,
         child: widget.getAreaItem(title,context),
       );
     }).toList());
     List<DropdownMenuItem<String>> games = gameset.toList();
-    games.sort((a,b) => widget.compareAreas(widget.client.areas[a.value],widget.client.areas[b.value]));
-    String selectedTitle = widget.client.currentArea.exists ? widget.client.currentArea.id : widget.client.noArea.id;  //print("Selected: $selectedTitle");
+    games.sort((a,b) => widget.compareAreas(widget.model.areas[a.value],widget.model.areas[b.value]));
+    String selectedTitle = widget.model.currentArea.exists ? widget.model.currentArea.id : widget.model.noArea.id;  //print("Selected: $selectedTitle");
 
     return Container(
         width: widget.width,
@@ -204,7 +205,7 @@ class _LobbyPageState extends State<LobbyPage> {
                       items: games,
                       onChanged: (String? title) {
                         setState(() {
-                          widget.client.switchArea(title); //client.update();
+                          widget.model.switchArea(title); //client.update();
                         });
                       }),
                 ],

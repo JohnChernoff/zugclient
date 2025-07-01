@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:zug_utils/zug_utils.dart';
-import 'package:zugclient/zug_client.dart';
+import 'package:zugclient/zug_area.dart';
 import 'package:zugclient/zug_fields.dart';
+import 'package:zugclient/zug_model.dart';
 
 class ZugChat extends StatefulWidget {
 
-  final ZugClient client;
+  final ZugModel model;
   final double? width;
   final double? height;
   final Color foregroundColor; //no longer used?
@@ -22,7 +23,7 @@ class ZugChat extends StatefulWidget {
   final String serverName,areaName,roomName;
   final MessageScope defScope;
 
-  const ZugChat(this.client, {this.foregroundColor = Colors.white,
+  const ZugChat(this.model, {this.foregroundColor = Colors.white,
     this.backgroundColor = Colors.black,
     this.borderColor = Colors.white,
     this.borderWidth = 1,
@@ -89,19 +90,19 @@ class ZugChatState extends State<ZugChat> {
   @override
   Widget build(BuildContext context) {//print("Building Zug Chat");
     return ValueListenableBuilder<MessageScope>(
-        valueListenable: widget.client.chatScope,
+        valueListenable: widget.model.chatScope,
         builder: (context, scope, _) {
           MessageList? messageList = switch (scope) {
-            MessageScope.room => widget.client.currentArea.currentRoom?.messages,
-            MessageScope.area => widget.client.currentArea.messages,
-            MessageScope.server => widget.client.messages,
+            MessageScope.room => widget.model.currentArea.currentRoom?.messages,
+            MessageScope.area => widget.model.currentArea.messages,
+            MessageScope.server => widget.model.messages,
           };
           return buildChatUI(context,messageList);
         });
   }
 
   Widget buildChatUI(BuildContext context, MessageList? messageList) {
-    Area currArea = widget.client.currentArea;
+    Area currArea = widget.model.currentArea;
     if (widget.autoScroll) ZugUtils.scrollDown(scrollController,250,delay: 750);
 
     List<Widget> widgetMsgList = [];
@@ -153,12 +154,12 @@ class ZugChatState extends State<ZugChat> {
     return Row(
       children: [
         ValueListenableBuilder<MessageScope>(
-          valueListenable:  widget.client.chatScope,
+          valueListenable:  widget.model.chatScope,
           builder: (context, scope, _) {
             return DropdownButton<MessageScope>(
               value: scope,
               onChanged: (MessageScope? newScope) {
-                widget.client.chatScope.value = newScope ?? MessageScope.area;
+                widget.model.chatScope.value = newScope ?? MessageScope.area;
               },
               items: [
                 DropdownMenuItem(
@@ -198,9 +199,9 @@ class ZugChatState extends State<ZugChat> {
                     color: widget.cmdTxtColor,
                     backgroundColor: widget.cmdBkgColor),
                 onSubmitted: (txt) {
-                  txt.startsWith("!") ? widget.client.handleCmdMsg(txt.split(" ")) :
-                  widget.client.send(
-                      switch ( widget.client.chatScope.value) {
+                  txt.startsWith("!") ? widget.model.handleCmdMsg(txt.split(" ")) :
+                  widget.model.send(
+                      switch ( widget.model.chatScope.value) {
                         MessageScope.room => ClientMsg.roomMsg,
                         MessageScope.area => ClientMsg.areaMsg,
                         MessageScope.server => ClientMsg.servMsg,
@@ -213,8 +214,8 @@ class ZugChatState extends State<ZugChat> {
                 },
               )),
         ),
-        widget.client.chatScope.value == MessageScope.area ? IconButton(
-            onPressed: () => widget.client.areaCmd(ClientMsg.updateArea),
+        widget.model.chatScope.value == MessageScope.area ? IconButton(
+            onPressed: () => widget.model.areaCmd(ClientMsg.updateArea),
             icon: const Icon(Icons.update) //,size: iconHeight-16)
         ) : const SizedBox.shrink(),
       ],
