@@ -59,8 +59,6 @@ const fieldData = "data",
     fieldMsgHistory = "msg_history",
     fieldResponse = "response",
     fieldResponseType = "response_type",
-    fieldAreaChange = "area_change";
-
-
-
-
+    fieldAreaChange = "area_change",
+    fieldUpdateScope = "up_scope",
+    fieldPhaseData = "phase_data";
