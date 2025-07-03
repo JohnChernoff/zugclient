@@ -673,7 +673,7 @@ abstract class ZugModel extends ChangeNotifier {
     StringBuffer sBuff = StringBuffer(localServer ? "ws://" : "wss://");
     sBuff.write(getDomain());
     if (javalinServer) {
-      sBuff.write(localServer ? ":$port/ws" : "/$remoteEndpoint");
+      sBuff.write(localServer ? ":$port/$remoteEndpoint" : "/$remoteEndpoint");
     } else {
       sBuff.write(localServer ? ":$port" : "/$remoteEndpoint");
     }
