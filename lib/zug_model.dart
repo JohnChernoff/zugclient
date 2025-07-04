@@ -14,7 +14,6 @@ import 'package:zug_utils/zug_dialogs.dart';
 import 'package:zugclient/zug_app.dart';
 import 'package:zugclient/zug_area.dart';
 import 'package:zugclient/zug_option.dart';
-import 'firebase_options.dart';
 import 'zug_fields.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -79,7 +78,8 @@ abstract class ZugModel extends ChangeNotifier {
 
   Area createArea(dynamic data);
 
-  ZugModel(this.domain,this.port,this.remoteEndpoint, this.prefs, {this.showServMess = false, this.localServer = false, this.javalinServer = false}) {
+  ZugModel(this.domain,this.port,this.remoteEndpoint, this.prefs, {
+    FirebaseOptions? firebaseOptions, this.showServMess = false, this.localServer = false, this.javalinServer = false}) {
     //_endClipListener = clipPlayer.onPlayerComplete.listen((v) => log.info("done"));
     trackPlayer.stop();
     log.info("Prefs: ${prefs.toString()}");
@@ -129,7 +129,7 @@ abstract class ZugModel extends ChangeNotifier {
       ServMsg.version: handleVersion,
       ServMsg.updateServ : handleUpdateServ
     });
-    initFirebase();
+    if (firebaseOptions != null) initFirebase(firebaseOptions);
     connect();
   }
 
@@ -145,8 +145,9 @@ abstract class ZugModel extends ChangeNotifier {
     return _funWaiter!.completer.future;
   }
 
-  Future<void> initFirebase() async {
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform,);
+  Future<void> initFirebase(FirebaseOptions fireOpts) async {
+    //await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform,);
+    await Firebase.initializeApp(options: fireOpts);
     FirebaseAuth.instance
         .authStateChanges()
         .listen((User? user) {
@@ -582,11 +583,8 @@ abstract class ZugModel extends ChangeNotifier {
   Future<UserCredential> signInWithGoogle() async {
     // Create a new provider
     GoogleAuthProvider googleProvider = GoogleAuthProvider();
-
-    googleProvider.addScope('https://www.googleapis.com/auth/contacts.readonly');
-    googleProvider.setCustomParameters({
-      'login_hint': 'user@example.com'
-    });
+    // googleProvider.addScope('https://www.googleapis.com/auth/contacts.readonly');
+    googleProvider.setCustomParameters({'login_hint': 'user@example.com'});
 
     // Once signed in, return the UserCredential
     return await FirebaseAuth.instance.signInWithPopup(googleProvider);
