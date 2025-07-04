@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:zug_utils/zug_utils.dart';
 import 'package:zugclient/zug_area.dart';
 import 'package:zugclient/zug_chat.dart';
+import 'package:zugclient/zug_fields.dart';
 import 'package:zugclient/zug_model.dart';
 
 enum LobbyStyle {normal,terseLand,tersePort}
@@ -40,7 +41,8 @@ class LobbyPage extends StatefulWidget {
     this.portFlex = 2,
     super.key});
 
-  Widget selectedArea(BuildContext context, {Color? bkgCol, Color? txtCol}) {
+  Widget selectedArea(BuildContext context, {Color? bkgCol, Color? txtCol, Iterable<dynamic>? occupants}) {
+    Iterable<dynamic> occupantList = occupants ?? model.currentArea.occupantMap.values;
     return Container(
         decoration: BoxDecoration(
           color: bkgCol ?? Colors.black,
@@ -50,9 +52,9 @@ class LobbyPage extends StatefulWidget {
           scrollDirection: Axis.horizontal,
           child: DataTable(
           columns: getOccupantHeaders(),
-          rows: List.generate(model.currentArea.occupantMap.values.length, (i) {
-            UniqueName uName = model.currentArea.occupantMap.keys.elementAt(i);
-            return getOccupantData(uName, model.currentArea.occupantMap[uName]);
+          rows: List.generate(occupantList.length, (i) {
+            UniqueName uName = UniqueName.fromData(occupantList.elementAt(i)[fieldUser]); //model.currentArea.occupantMap.keys.elementAt(i);
+            return getOccupantData(uName, occupantList.elementAt(i)); //model.currentArea.occupantMap[uName]
           })),
       )),
     );
