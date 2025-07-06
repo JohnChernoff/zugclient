@@ -302,7 +302,7 @@ abstract class ZugModel extends ChangeNotifier {
     handleUpdateOccupants(data,area : area); //TODO: why use named argument?
     handleUpdateOptions(data,area : area);
     handleUpdateMessages(data, area: area);
-    if (area.phaseTime == null) area.updatePhase(data);
+    if (area.phaseTime != null) area.updatePhase(data); //is this a good idea?
     area.updateArea(data);
   }
 
@@ -340,7 +340,7 @@ abstract class ZugModel extends ChangeNotifier {
       }
     }
   }
-  
+
   void fetchOptions(Function onOption, {int timeLimit = 5000}) async {
     awaitMsg(ServMsg.updateOptions)
         .timeout(Duration(milliseconds: timeLimit))
