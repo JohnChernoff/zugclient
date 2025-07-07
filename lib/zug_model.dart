@@ -302,7 +302,7 @@ abstract class ZugModel extends ChangeNotifier {
     handleUpdateOccupants(data,area : area); //TODO: why use named argument?
     handleUpdateOptions(data,area : area);
     handleUpdateMessages(data, area: area);
-    if (area.phaseTime != null) area.updatePhase(data); //is this a good idea?
+    if (area.phaseTime == null && data[fieldPhase] != null) area.updatePhase(data);
     area.updateArea(data);
   }
 
