@@ -147,14 +147,28 @@ abstract class Room with Timerable {
   }
 }
 
+enum ZugPhase {undefined}
+
 abstract class Area extends Room {
   dynamic upData = {};
-  int? phaseTime;
-  String phase = "";
+  int phaseTime = 0;
+  int phaseStamp = DateTime.now().millisecondsSinceEpoch;
+  Enum phase = ZugPhase.undefined;
   Map<String,ZugOption> options = {};
   bool exists = true;
   Room? currentRoom;
   Area(dynamic data) : super(data);
+
+  List<Enum> getPhases();
+
+  void setPhase(String p) {
+    for (Enum e in getPhases()) {
+      if (e.name == p) {
+        phase = e; return;
+      }
+    }
+    phase = ZugPhase.undefined;
+  }
 
   bool updateArea(Map<String,dynamic> data) {
     upData = data; //TODO: clarify how this works
@@ -162,10 +176,15 @@ abstract class Area extends Room {
   }
 
   void updatePhase(Map<String,dynamic> data) {
-    phaseTime = data[fieldPhaseTimeRemaining] > 0 ? data[fieldPhaseTimeRemaining] : null;
-    phase = data[fieldPhase];
+    phaseStamp = data[fieldPhaseStamp];
+    phaseTime = max(data[fieldPhaseTimeRemaining],0);
+    setPhase(data[fieldPhase]);
     ZugModel.log.fine("Updating phase: $phase,$phaseTime");
   }
+
+  int phaseTimeRemaining() => max(phaseTime - (DateTime.now().millisecondsSinceEpoch - phaseStamp),0);
+  double phaseProgress() => 1 - (phaseTime > 0 ? (phaseTimeRemaining() / phaseTime) : 0);
+  bool inPhase() => phaseTimeRemaining() > 0;
 }
 
 class FunctionWaiter {

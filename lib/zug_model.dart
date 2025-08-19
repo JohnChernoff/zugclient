@@ -173,8 +173,8 @@ abstract class ZugModel extends ChangeNotifier {
     send(ClientMsg.joinArea);
   }
 
-  void joinArea(String title) {
-    areaCmd(ClientMsg.joinArea,title: title);
+  void joinArea(String id) {
+    areaCmd(ClientMsg.joinArea,id: id);
   }
 
   void partArea() {
@@ -197,12 +197,12 @@ abstract class ZugModel extends ChangeNotifier {
     });
   }
 
-  void areaCmd(Enum cmd, { String? title, Map<String,dynamic> data = const {}}) {
+  void areaCmd(Enum cmd, { String? id, Map<String,dynamic> data = const {}}) {
     if (data.isEmpty) {
-      send(cmd,data: { fieldAreaID : title ??  currentArea.id});
+      send(cmd,data: { fieldAreaID : id ??  currentArea.id});
     } else {
       Map<String,dynamic> args = Map<String,dynamic>.from(data);
-      args[fieldAreaID] = title ?? currentArea.id;
+      args[fieldAreaID] = id ?? currentArea.id;
       send(cmd,data:args);
     }
   }
@@ -302,7 +302,7 @@ abstract class ZugModel extends ChangeNotifier {
     handleUpdateOccupants(data,area : area); //TODO: why use named argument?
     handleUpdateOptions(data,area : area);
     handleUpdateMessages(data, area: area);
-    if (area.phaseTime == null && data[fieldPhase] != null) area.updatePhase(data);
+    if (area.inPhase() && data[fieldPhase] != null) area.updatePhase(data);
     area.updateArea(data);
   }
 
@@ -326,14 +326,14 @@ abstract class ZugModel extends ChangeNotifier {
   void handleUpdateMessages(data, {Area? area, bool serv = false}) {
     if (data[fieldMsgHistory] != null) {
       if (serv) {
-        messages.messages.clear(); print("Message History: ${data[fieldMsgHistory]}");
+        messages.messages.clear(); //print("Message History: ${data[fieldMsgHistory]}");
         for (dynamic msg in data[fieldMsgHistory]) {
           messages.addZugMsg(msg[fieldZugMsg]);
         }
       }
       else {
         area = area ?? getOrCreateArea(data);
-        area.messages.messages.clear(); print("Message History: ${data[fieldMsgHistory]}");
+        area.messages.messages.clear(); //print("Message History: ${data[fieldMsgHistory]}");
         for (dynamic msg in data[fieldMsgHistory]) {
           area.messages.addZugMsg(msg[fieldZugMsg]);
         }
@@ -824,3 +824,6 @@ abstract class ZugModel extends ChangeNotifier {
   }
 
 }
+
+//extension StrComp on Enum { bool eq(dynamic s) { return (s is String) ? name == s : false; } }
+
