@@ -302,7 +302,7 @@ abstract class ZugModel extends ChangeNotifier {
     handleUpdateOccupants(data,area : area); //TODO: why use named argument?
     handleUpdateOptions(data,area : area);
     handleUpdateMessages(data, area: area);
-    if (area.inPhase() && data[fieldPhase] != null) area.updatePhase(data);
+    if (data[fieldPhase] != null) area.updatePhase(data);
     area.updateArea(data);
   }
 
