@@ -176,8 +176,8 @@ abstract class Area extends Room {
   }
 
   void updatePhase(Map<String,dynamic> data) {
-    phaseStamp = data[fieldPhaseStamp];
-    phaseTime = max(data[fieldPhaseTimeRemaining],0);
+    phaseStamp = data[fieldPhaseStamp] ?? DateTime.now().millisecondsSinceEpoch;
+    phaseTime = max(data[fieldPhaseTimeRemaining] ?? 0,0);
     setPhase(data[fieldPhase]);
     ZugModel.log.fine("Updating phase: $phase,$phaseTime");
   }
