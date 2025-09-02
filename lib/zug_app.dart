@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
@@ -73,7 +74,7 @@ abstract class ZugApp extends StatelessWidget {
 
   Widget createMainPage(ZugModel model);
 
-  AppBar createAppBar(BuildContext context, ZugModel model, {Widget? txt, Color? color}) {
+  AppBar createStatusBar(BuildContext context, ZugModel model, {Widget? txt, Color? color}) {
     Text defaultTxt = noNav
         ? Text("Hello, ${model.userName?.name ?? "Unknown User"}!")
         : Text("${model.userName}: ${model.currentArea.exists ? model.currentArea.id : "-"}");
@@ -83,8 +84,8 @@ abstract class ZugApp extends StatelessWidget {
     );
   }
 
-  BottomNavigationBarItem getMainNavigationBarItem() {
-    return const BottomNavigationBarItem(
+  NavigationDestination getMainNavigationBarItem() {
+    return const NavigationDestination(
       icon: Icon(Icons.center_focus_strong),
       label: 'Main',
     );
@@ -159,49 +160,86 @@ class _ZugHomeState extends State<ZugHome> {
     );
 
     return Scaffold(
-      appBar: widget.app.createAppBar(context,model),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          return Column(
-            children: [
-              Expanded(child: mainArea),
-              if (!widget.noNav) getSafeArea(model),
-            ],
-          );
-        },),
+          return Row(children: [
+            getNavBar(model),
+            Expanded(child: Column(
+              children: [
+                Expanded(child: mainArea),
+                getSafeArea(model),
+              ],
+            ))
+          ]);
+        })
     );
   }
 
   SafeArea getSafeArea(ZugModel model) {
     return SafeArea(
-      child: BottomNavigationBar(
-        fixedColor: Colors.black,
-        type: BottomNavigationBarType.fixed,
-        items: [
-          widget.app.getMainNavigationBarItem(),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.local_bar),
-            label: 'Lobby',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Settings',
-          ),
-        ],
-        currentIndex: selectedIndex,
-        onTap: (value) {
-          //if (ZugDialogs.currentContexts.isEmpty)
-          //if (selectedPage == PageType.options && model.currentArea.exists) { widget.app.model.areaCmd(ClientMsg.getOptions);
-          setState(() {
-            selectedIndex = value;
-            PageType newPage = PageType.values.elementAt(selectedIndex);
-            selectedPage = newPage;
-          });
-        },
-      ),
+      child: kIsWeb ? widget.app.createStatusBar(context,model) : getNavBar(model),
     );
   }
+
+  Widget getNavBar(ZugModel model,
+      {iconColor = Colors.white, backgroundColor = Colors.black, indicatorColor = Colors.grey, orientation = Axis.vertical }) {
+    NavigationDestination mainDestination = widget.app.getMainNavigationBarItem();
+    return Theme(
+        data: Theme.of(context).copyWith(
+      navigationBarTheme: NavigationBarThemeData(
+        labelTextStyle: WidgetStateProperty.all(TextStyle(color: iconColor)),
+      ),
+    ), child: orientation == Axis.horizontal ? NavigationBar(
+      backgroundColor: backgroundColor,
+      indicatorColor: indicatorColor,
+      onDestinationSelected: (value) => handleNewDestination(value),
+      selectedIndex: selectedIndex,
+      destinations: [
+        mainDestination,
+        NavigationDestination(
+          icon: Icon(Icons.local_bar, color: iconColor),
+          label: 'Lobby',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.settings, color: iconColor),
+          label: 'Settings',
+        ),
+      ],
+    ) : NavigationRail(
+      labelType: NavigationRailLabelType.all,
+      backgroundColor: backgroundColor,
+      indicatorColor: indicatorColor,
+      onDestinationSelected: (value) => handleNewDestination(value),
+      selectedIndex: selectedIndex,
+      destinations: [
+        NavigationRailDestination(
+            icon: mainDestination.icon,
+            label: Text(mainDestination.label, style: TextStyle(color: iconColor)),
+        ),
+        NavigationRailDestination(
+          icon: Icon(Icons.local_bar, color: iconColor),
+          label: Text('Lobby', style: TextStyle(color: iconColor)),
+        ),
+        NavigationRailDestination(
+          icon: Icon(Icons.settings, color: iconColor),
+          label: Text('Settings', style: TextStyle(color: iconColor)),
+        ),
+      ],
+    ));
+  }
+
+  void handleNewDestination(int value) {
+    //if (ZugDialogs.currentContexts.isEmpty)
+    //if (selectedPage == PageType.options && model.currentArea.exists) { widget.app.model.areaCmd(ClientMsg.getOptions);
+    setState(() {
+      selectedIndex = value;
+      PageType newPage = PageType.values.elementAt(selectedIndex);
+      selectedPage = newPage;
+    });
+  }
 }
+
+
 
 class ZugScrollBehavior extends MaterialScrollBehavior {
   // Override behavior methods and getters like dragDevices

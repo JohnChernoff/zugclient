@@ -26,7 +26,7 @@ class ZugChat extends StatefulWidget {
   const ZugChat(this.model, {this.foregroundColor = Colors.white,
     this.backgroundColor = Colors.black,
     this.borderColor = Colors.white,
-    this.borderWidth = 1,
+    this.borderWidth = 0,
     this.cmdTxtColor = Colors.greenAccent,
     this.cmdBkgColor = Colors.black,
     this.servColor = Colors.white,
@@ -43,7 +43,7 @@ class ZugChat extends StatefulWidget {
     this.height,
     super.key});
 
-static BoxDecoration getDecoration({Color color = Colors.grey, Color borderColor = Colors.grey, double borderWidth = 2, Color shadowColor = Colors.black, bool shadow = false}) {
+static BoxDecoration getDecoration({Color color = Colors.grey, Color borderColor = Colors.grey, double borderWidth = 0, Color shadowColor = Colors.black, bool shadow = false}) {
     return BoxDecoration(
       color: color,
       border: Border.all(
@@ -127,7 +127,7 @@ class ZugChatState extends State<ZugChat> {
         children: [
           Row(
             children: [
-              const Text("Filter Server Messages"),
+              const Text(" Filter Server Messages"),
               Checkbox(value: filterServerMessages, onChanged: (b) => setState(() {
                 filterServerMessages = b ?? false;
               })),
@@ -153,10 +153,14 @@ class ZugChatState extends State<ZugChat> {
   Widget getChatControl(Area currArea) {
     return Row(
       children: [
-        ValueListenableBuilder<MessageScope>(
+        Expanded(child: ValueListenableBuilder<MessageScope>(
           valueListenable:  widget.model.chatScope,
           builder: (context, scope, _) {
-            return DropdownButton<MessageScope>(
+            return DropdownButtonFormField<MessageScope>(
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.zero,
+              ),
               value: scope,
               onChanged: (MessageScope? newScope) {
                 widget.model.chatScope.value = newScope ?? MessageScope.area;
@@ -166,32 +170,37 @@ class ZugChatState extends State<ZugChat> {
                   value: MessageScope.room,
                   enabled: widget.usingRooms,
                   child: widget.usingRooms
-                      ? Text("${widget.roomName} Message: ")
+                      ? Text(" ${widget.roomName} Message: ")
                       : const SizedBox.shrink(),
                 ),
                 DropdownMenuItem(
                   value: MessageScope.area,
                   enabled: widget.usingAreas,
                   child: widget.usingAreas
-                      ? Text("${widget.areaName} Message: ")
+                      ? Text(" ${widget.areaName} Message: ")
                       : const SizedBox.shrink(),
                 ),
                 DropdownMenuItem(
                   value: MessageScope.server,
                   enabled: widget.usingServer,
                   child: widget.usingServer
-                      ? Text("${widget.serverName} Message: ")
+                      ? Text(" ${widget.serverName} Message: ")
                       : const SizedBox.shrink(),
                 ),
               ],
             );
           },
-        ),
+        )),
         const SizedBox(width: 4),
         Expanded(
           child: Container(
               color: widget.cmdBkgColor,
               child: TextField(
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  fillColor: Colors.white10,
+                  filled: true,
+                ),
                 controller: textInputController,
                 focusNode: textInputFocus,
                 autofocus: true,

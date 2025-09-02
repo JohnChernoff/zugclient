@@ -157,6 +157,7 @@ abstract class Area extends Room {
   Map<String,ZugOption> options = {};
   bool exists = true;
   Room? currentRoom;
+  int servTimeDiff = 0;
   Area(dynamic data) : super(data);
 
   List<Enum> getPhases();
@@ -176,13 +177,17 @@ abstract class Area extends Room {
   }
 
   void updatePhase(Map<String,dynamic> data) {
+    print("Phase Data: $data");
     phaseStamp = data[fieldPhaseStamp] ?? DateTime.now().millisecondsSinceEpoch;
+    if (data[fieldPhaseCurrtime] != null) { //HOLY TIME KLUDGE BATMAN
+      servTimeDiff = data[fieldPhaseCurrtime] - DateTime.now().millisecondsSinceEpoch; print("Serv time diff: $servTimeDiff");
+    }
     phaseTime = max(data[fieldPhaseTimeRemaining] ?? 0,0);
     setPhase(data[fieldPhase]);
     ZugModel.log.fine("Updating phase: $phase,$phaseTime");
   }
 
-  int phaseTimeRemaining() => max(phaseTime - (DateTime.now().millisecondsSinceEpoch - phaseStamp),0);
+  int phaseTimeRemaining() => max(phaseTime - (DateTime.now().millisecondsSinceEpoch - phaseStamp),0) - servTimeDiff;
   double phaseProgress() => 1 - (phaseTime > 0 ? (phaseTimeRemaining() / phaseTime) : 0);
   bool inPhase() => phaseTimeRemaining() > 0;
 }

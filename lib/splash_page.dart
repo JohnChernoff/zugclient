@@ -21,6 +21,7 @@ class SplashPage extends StatelessWidget {
     return LayoutBuilder(builder: (BuildContext ctx, BoxConstraints constraints) =>
       Container(color: dark ? Colors.black : Colors.white, width: constraints.maxWidth, height: constraints.maxHeight, child: Column(
       children: [
+        const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

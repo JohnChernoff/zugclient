@@ -1,3 +1,5 @@
+import 'dart:js_interop_unsafe';
+import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import "package:universal_html/html.dart" as html;
 import 'package:flutter/material.dart';
@@ -7,6 +9,7 @@ import 'package:zugclient/zug_chat.dart';
 import 'package:zugclient/zug_fields.dart';
 import 'package:zugclient/zug_model.dart';
 
+//TODO: create buttonColumn for portrait mode
 enum LobbyStyle {normal,terseLand,tersePort}
 
 class LobbyPage extends StatefulWidget {
@@ -22,6 +25,7 @@ class LobbyPage extends StatefulWidget {
   final ZugChat? zugChat;
   final bool seekButt, createButt, startButt, joinButt, partButt;
   final int portFlex;
+  final double commandAreaWidth, commandAreaHeight;
 
   const LobbyPage(this.model, {
     this.backgroundImage,
@@ -30,8 +34,8 @@ class LobbyPage extends StatefulWidget {
     this.buttonsBkgCol,
     this.style = LobbyStyle.normal,
     this.width,
-    this.borderWidth  = 1,
-    this.borderCol = Colors.white,
+    this.borderWidth  = 0,
+    this.borderCol = Colors.black,
     this.zugChat,
     this.seekButt = true,
     this.createButt = true,
@@ -39,6 +43,8 @@ class LobbyPage extends StatefulWidget {
     this.joinButt = true,
     this.partButt = true,
     this.portFlex = 2,
+    this.commandAreaHeight = 72,
+    this.commandAreaWidth = 128,
     super.key});
 
   Widget selectedArea(BuildContext context, {Color? bkgCol, Color? txtCol, Iterable<dynamic>? occupants}) {
@@ -68,10 +74,29 @@ class LobbyPage extends StatefulWidget {
 
   DataRow getOccupantData(UniqueName uName, Map<String,dynamic> json, {Color color = Colors.white}) {
     return DataRow(cells: [
-      DataCell(Text(
+      DataCell(DecoratedBox(decoration: const BoxDecoration(
+        boxShadow:  [
+          BoxShadow(
+            color: Colors.greenAccent,
+            offset: Offset(
+              5.0,
+              5.0,
+            ),
+            blurRadius: 10.0,
+            spreadRadius: 2.0,
+          ), //BoxShadow
+          BoxShadow(
+            color: Colors.white,
+            offset: Offset(0.0, 0.0),
+            blurRadius: 0.0,
+            spreadRadius: 0.0,
+          ), //BoxShadow
+        ],
+      ),
+      child: Text(
           model.currentArea.getOccupantName(uName),
           style: TextStyle(color: color)
-      ))
+      )))
     ]);
   }
 
@@ -89,70 +114,50 @@ class LobbyPage extends StatefulWidget {
     return buttons;
   }
 
-  Widget getHelpButton(String helpPage, {Color normCol = Colors.cyan,  pressedCol = Colors.lightBlueAccent}) {
-    return ElevatedButton(
-        style: getButtonStyle(normCol,pressedCol),
-        onPressed: ()  {
-          if (kIsWeb) {
-            html.window.open(helpPage, 'new tab');
-          } else {
-            ZugUtils.launch(helpPage, isNewTab: true);
-          }
-        },
-        child: Text("Help",style: getButtonTextStyle()));
+  CommandButtonData getHelpButton(String helpPage, {Color normCol = Colors.cyan}) {
+    return CommandButtonData("Help",normCol,() {
+      if (kIsWeb) {
+        html.window.open(helpPage, 'new tab');
+      } else {
+        ZugUtils.launch(helpPage, isNewTab: true);
+      }
+    });
   }
 
-  Widget getSeekButton({Color normCol = Colors.orangeAccent,  pressedCol = Colors.greenAccent}) {
-    return ElevatedButton(
-        style: getButtonStyle(normCol,pressedCol),
-        onPressed: () => model.seekArea(),
-        child: Text("Seek",style: getButtonTextStyle()));
+  CommandButtonData getSeekButton({Color normCol = Colors.orangeAccent}) {
+    return CommandButtonData("Seek",normCol,model.seekArea);
   }
 
-  Widget getJoinButton({Color normCol = Colors.blueAccent,  pressedCol = Colors.greenAccent}) { //}ChatScopeController chatScopeController) {
-    return ElevatedButton(
-        style: getButtonStyle(normCol,pressedCol),
-        onPressed: () {
-          model.joinArea(model.currentArea.id); //chatScopeController.setScope(MessageScope.area);
-        },
-        child: Text("Join",style: getButtonTextStyle()));
+  CommandButtonData getJoinButton({Color normCol = Colors.blueAccent}) { //}ChatScopeController chatScopeController) {
+    return CommandButtonData("Join",normCol,() => model.joinArea(model.currentArea.id));
   }
 
-  Widget getPartButton({Color normCol = Colors.grey,  pressedCol = Colors.orangeAccent}) {
-    return ElevatedButton(
-        style: getButtonStyle(normCol,pressedCol),
-        onPressed: () => model.partArea(),
-        child: Text("Leave",style: getButtonTextStyle()));
+  CommandButtonData getPartButton({Color normCol = Colors.grey}) {
+    return CommandButtonData("Leave",normCol,model.partArea);
   }
 
-  Widget getStartButton({Color normCol = Colors.redAccent,  pressedCol = Colors.purpleAccent}) {
-    return ElevatedButton(
-        style: getButtonStyle(normCol,pressedCol),
-        onPressed: () => model.startArea(),
-        child: Text("Start",style: getButtonTextStyle()));
+  CommandButtonData getStartButton({Color normCol = Colors.redAccent}) {
+    return CommandButtonData("Start",normCol,model.startArea);
   }
 
-  Widget getCreateButton({Color normCol = Colors.greenAccent,  pressedCol = Colors.redAccent}) {
-    return ElevatedButton(
-        style: getButtonStyle(normCol,pressedCol),
-        onPressed: () => model.newArea(),
-        child: Text("New",style: getButtonTextStyle()));
+  CommandButtonData getCreateButton({Color normCol = Colors.greenAccent}) {
+    return CommandButtonData("New",normCol,model.newArea);
   }
 
-  List<Widget> getExtraCmdButtons(BuildContext context) {
+  List<CommandButtonData> getExtraCmdButtons(BuildContext context) {
     return [];
   }
 
-  ButtonStyle getButtonStyle(Color normCol, Color pressedCol) {
+  ButtonStyle getButtonStyle(Color normCol, { Color? hoverCol }) {
     return ButtonStyle(backgroundColor:
     WidgetStateProperty.resolveWith<Color?>((Set<WidgetState> states) {
-      if (states.contains(WidgetState.pressed)) return pressedCol;
+      if (states.contains(WidgetState.hovered)) return hoverCol ?? normCol.withAlpha(200);
       return normCol;
     }));
   }
 
   TextStyle getButtonTextStyle() {
-    return const TextStyle(color: Colors.black);
+    return const TextStyle(color: Colors.black, fontSize: 36);
   }
 
   @override
@@ -190,7 +195,7 @@ class _LobbyPageState extends State<LobbyPage> {
           ) : null,
         ),
         child: Column(
-          children: [ //Text(widget.model.userName),
+          children: [
             widget.style == LobbyStyle.tersePort ? Expanded(flex: widget.portFlex, child: getCommandArea(context)) : getCommandArea(context),
             Center(
               child: Container(
@@ -199,7 +204,7 @@ class _LobbyPageState extends State<LobbyPage> {
                 mainAxisSize: MainAxisSize.max,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text("Select ${widget.areaName}: ", style: TextStyle(color: Theme.of(context).colorScheme.onPrimary)),
+                  Text("Select ${widget.areaName}: ", style: TextStyle(color: Theme.of(context).colorScheme.onPrimary,fontSize: 24)),
                   const SizedBox(width: 8),
                   DropdownButton(
                       dropdownColor: Theme.of(context).colorScheme.primary,
@@ -246,38 +251,127 @@ class _LobbyPageState extends State<LobbyPage> {
               width: widget.borderWidth
             )
         ),
-        width: widget.style == LobbyStyle.tersePort ? 128 : null,
-        height: widget.style == LobbyStyle.tersePort ? null : 50,
-        child: Center(child: SingleChildScrollView(
-          scrollDirection: axis,
-          child: Flex(
-            direction: axis,
-            children: getCmdButtons(context),
-        ))),
+        width: widget.style == LobbyStyle.tersePort ? widget.commandAreaWidth : null,
+        height: widget.style == LobbyStyle.tersePort ? null : widget.commandAreaHeight,
+        child: EqualButtonRow(buttData: getCmdButtons(context)),
       );
   }
 
-  List<Widget> getCmdButtons(BuildContext context, {
-      double padding = 4.0,
-      Widget? seekButt,
-      Widget? createButt,
-      Widget? startButt,
-      Widget? joinButt,
-      Widget? partButt,
-      Widget? helpButt,
-      List<Widget>? extraButts}) {
-    List<Widget> buttons = [
-      widget.seekButt ? Padding(padding: EdgeInsets.all(padding),child: seekButt ?? widget.getSeekButton()) : const SizedBox.shrink(),
-      widget.createButt ? Padding(padding: EdgeInsets.all(padding),child: createButt ?? widget.getCreateButton()) : const SizedBox.shrink(),
-      widget.startButt ? Padding(padding: EdgeInsets.all(padding),child: startButt ?? widget.getStartButton()) : const SizedBox.shrink(),
-      widget.joinButt ? Padding(padding: EdgeInsets.all(padding),child: joinButt ?? widget.getJoinButton()) : const SizedBox.shrink(),
-      widget.partButt ? Padding(padding: EdgeInsets.all(padding),child: partButt ?? widget.getPartButton()) : const SizedBox.shrink(),
-      //if (widget.helpPage != null) Padding(padding: EdgeInsets.all(padding),child: helpButt ?? widget.getHelpButton()),
+  List<CommandButtonData?> getCmdButtons(BuildContext context, {
+    double padding = 4.0,
+    CommandButtonData? seekButt,
+    CommandButtonData? createButt,
+    CommandButtonData? startButt,
+    CommandButtonData? joinButt,
+    CommandButtonData? partButt,
+    CommandButtonData? helpButt,
+    List<CommandButtonData>? extraButts}) {
+    List<CommandButtonData> extraList = extraButts ?? widget.getExtraCmdButtons(context);
+    List<CommandButtonData?> buttons = [
+      widget.seekButt ? widget.getSeekButton() : null,
+      widget.createButt ? widget.getCreateButton() : null,
+      widget.startButt ? widget.getStartButton() : null,
+      widget.joinButt ? widget.getJoinButton() : null,
+      widget.partButt ? widget.getPartButton() : null,
     ];
-    List<Widget> extraList = extraButts ?? widget.getExtraCmdButtons(context);
-    buttons.addAll(List.generate(extraList.length, (index) => Padding(padding: EdgeInsets.all(padding),child: extraList.elementAt(index))));
+    buttons.addAll(extraList);
     return buttons;
   }
 
 }
 
+class CommandButtonData {
+  final String text;
+  final VoidCallback callback;
+  final Color color;
+  const CommandButtonData(this.text,this.color,this.callback);
+}
+
+class EqualButtonRow extends StatelessWidget {
+  final List<CommandButtonData?> buttData;
+  final TextStyle textStyle;
+  final double spacing;
+
+  const EqualButtonRow({
+    Key? key,
+    required this.buttData,
+    this.textStyle = const TextStyle(fontSize: 24, color: Colors.black),
+    this.spacing = 36.0,
+  }) : super(key: key);
+
+  double _calculateTextWidth(String text, TextStyle style) {
+    final TextPainter textPainter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      maxLines: 1,
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.layout();
+    return textPainter.size.width;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Find the longest text width
+        double maxTextWidth = 0;
+        for (CommandButtonData? datButt in buttData) {
+          double width = _calculateTextWidth(datButt?.text ?? "", textStyle);
+          if (width > maxTextWidth) {
+            maxTextWidth = width;
+          }
+        }
+
+        // Calculate button width accounting for padding and spacing
+        const double buttonPadding = 32; // Horizontal padding inside button
+        const double minButtonWidth = 80; // Minimum button width
+
+        double totalSpacing = spacing * (buttData.length - 1);
+        double availableWidth = constraints.maxWidth - totalSpacing;
+
+        // Calculate optimal button width
+        double calculatedWidth = maxTextWidth + buttonPadding;
+        double equalWidth = availableWidth / buttData.length;
+
+        // Use the larger of calculated width or equal distribution
+        double buttonWidth = math.max(
+          math.max(calculatedWidth, minButtonWidth),
+          equalWidth,
+        );
+
+        // If calculated width exceeds available space, use equal distribution
+        if (buttonWidth * buttData.length + totalSpacing > constraints.maxWidth) {
+          buttonWidth = equalWidth;
+        }
+
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: buttData.asMap().entries.map((entry) {
+            return SizedBox(
+              width: buttonWidth,
+              height: constraints.maxHeight * .5,
+              child: ElevatedButton(
+                style: getButtonStyle(entry.value?.color ?? Colors.white),
+                onPressed: entry.value?.callback,
+                child: Text(
+                  entry.value?.text ?? "",
+                  style: textStyle,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  ButtonStyle getButtonStyle(Color normCol, { Color? hoverCol }) {
+    return ButtonStyle(backgroundColor:
+    WidgetStateProperty.resolveWith<Color?>((Set<WidgetState> states) {
+      if (states.contains(WidgetState.hovered)) return hoverCol ?? normCol.withAlpha(200);
+      return normCol;
+    }));
+  }
+}
