@@ -72,7 +72,7 @@ class LobbyPage extends StatefulWidget {
     ];
   }
 
-  DataRow getOccupantData(UniqueName uName, Map<String,dynamic> json, {Color color = Colors.white}) {
+  DataRow getOccupantData(UniqueName uName, Map<String,dynamic> json, {Color color = Colors.black}) {
     return DataRow(cells: [
       DataCell(DecoratedBox(decoration: const BoxDecoration(
         boxShadow:  [
