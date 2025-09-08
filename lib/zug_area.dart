@@ -149,7 +149,7 @@ abstract class Room with Timerable {
 
 enum ZugPhase {undefined}
 
-abstract class Area extends Room {
+abstract class Area extends Room{
   dynamic upData = {};
   int phaseTime = 0;
   int phaseStamp = DateTime.now().millisecondsSinceEpoch;
@@ -158,6 +158,7 @@ abstract class Area extends Room {
   bool exists = true;
   Room? currentRoom;
   int servTimeDiff = 0;
+
   Area(dynamic data) : super(data);
 
   List<Enum> getPhases();
