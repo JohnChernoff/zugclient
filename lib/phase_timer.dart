@@ -14,7 +14,7 @@ class PhaseTimerController {
 
   Widget getPhaseTimerCircle({
     Area? currArea,
-    double size = 120,
+    double? size = 120,
     Color backgroundColor = Colors.cyanAccent,
     Color progressColor = Colors.black,
     Color textColor = Colors.black,
@@ -37,54 +37,66 @@ class PhaseTimerController {
         final remainingMs = totalDuration * (1.0 - value);
         final remainingSeconds = (remainingMs / 1000).ceil();
 
-        return SizedBox(
-          width: size,
-          height: size,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              // Background circle
-              SizedBox(
-                width: size,
-                height: size,
-                child: CircularProgressIndicator(
-                  value: 1.0, // Full circle for background
-                  strokeWidth: strokeWidth,
-                  valueColor: AlwaysStoppedAnimation<Color>(backgroundColor),
-                  backgroundColor: Colors.transparent,
-                ),
-              ),
-              // Progress circle
-              SizedBox(
-                width: size,
-                height: size,
-                child: Transform.rotate(
-                  angle: -1.5708, // Start from top (-90 degrees)
+        Widget circularTimer = LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            // Use the available space if size is null, otherwise use the specified size
+            final effectiveSize = size ?? constraints.biggest.shortestSide;
+
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                // Background circle
+                SizedBox(
+                  width: effectiveSize,
+                  height: effectiveSize,
                   child: CircularProgressIndicator(
-                    value: value,
+                    value: 1.0, // Full circle for background
                     strokeWidth: strokeWidth,
-                    valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+                    valueColor: AlwaysStoppedAnimation<Color>(backgroundColor),
                     backgroundColor: Colors.transparent,
                   ),
                 ),
-              ),
-              // Center text showing remaining seconds
-              Text(
-                '$remainingSeconds',
-                style: textStyle ?? TextStyle(
-                  fontSize: size * 0.25,
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
+                // Progress circle
+                SizedBox(
+                  width: effectiveSize,
+                  height: effectiveSize,
+                  child: Transform.rotate(
+                    angle: -1.5708, // Start from top (-90 degrees)
+                    child: CircularProgressIndicator(
+                      value: value,
+                      strokeWidth: strokeWidth,
+                      valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+                      backgroundColor: Colors.transparent,
+                    ),
+                  ),
                 ),
-              ),
-            ],
-          ),
+                // Center text showing remaining seconds
+                Text(
+                  '$remainingSeconds',
+                  style: textStyle ?? TextStyle(
+                    fontSize: effectiveSize * 0.25,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                  ),
+                ),
+              ],
+            );
+          },
         );
+
+        // If size is specified, wrap in a SizedBox. If null, let it expand naturally
+        return size != null
+            ? SizedBox(
+          width: size,
+          height: size,
+          child: circularTimer,
+        )
+            : circularTimer;
       },
     );
   }
 
-  // Keep your original linear progress bar method
+  // Keep the original linear progress bar method
   Widget getPhaseTimerBar({
     Area? currArea,
     double minHeight = 32,
