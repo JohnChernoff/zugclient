@@ -8,18 +8,19 @@ import 'package:zugclient/zug_model.dart';
 class SplashPage extends StatelessWidget {
   final ZugModel model;
   final Image? imgLandscape, imgPortrait;
-  final bool dark;
 
-  const SplashPage(this.model,{this.imgLandscape,this.imgPortrait,this.dark = true,super.key});
+  const SplashPage(this.model,{this.imgLandscape,this.imgPortrait,super.key});
 
   @override
   Widget build(BuildContext context) { //TODO: generalize
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final dim = ZugUtils.getScreenDimensions(context);
     final Image? img = dim.getMainAxis() == Axis.horizontal ? imgLandscape : imgPortrait;
-    final txtStyle = TextStyle(color: dark ? Colors.black : Colors.white);
+    final txtStyle = TextStyle(color: isDark ? Colors.black : Colors.blue);
+    final buttonStyle = ElevatedButton.styleFrom(backgroundColor: isDark ? Colors.brown : Colors.cyanAccent);
 
     return LayoutBuilder(builder: (BuildContext ctx, BoxConstraints constraints) =>
-      Container(color: dark ? Colors.black : Colors.white, width: constraints.maxWidth, height: constraints.maxHeight, child: Column(
+      Container(color: isDark ? Colors.black : Colors.white, width: constraints.maxWidth, height: constraints.maxHeight, child: Column(
       children: [
         const SizedBox(height: 8),
         Row(
@@ -29,14 +30,15 @@ class SplashPage extends StatelessWidget {
               onPressed: () {
                 model.login(LoginType.none);
               },
-              child: Padding(padding: const EdgeInsets.all(8), child: Text("Login as Guest",style: txtStyle)),
-             // style: ButtonStyle(backgroundColor: dark ? Colors.black : Colors.white, foregroundColor: dark ? Colors.white : Colors.black)
+              style: buttonStyle,
+              child: Padding(padding: const EdgeInsets.all(8), child: Text("Login as Guest",style: txtStyle))
             ),
             const SizedBox(width: 36),
             ElevatedButton(
               onPressed: () {
                 model.login(LoginType.google);
               },
+              style: buttonStyle,
               child: Padding(padding: const EdgeInsets.all(8), child: Text("Login with Google",style: txtStyle)),
             ),
             const SizedBox(width: 36),
@@ -44,6 +46,7 @@ class SplashPage extends StatelessWidget {
               onPressed: () {
                 model.login(LoginType.lichess);
               },
+              style: buttonStyle,
               child: Padding(padding: const EdgeInsets.all(8), child: Text("Login with Lichess",style: txtStyle)),
             ),
           ],

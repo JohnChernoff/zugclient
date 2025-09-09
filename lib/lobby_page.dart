@@ -619,6 +619,8 @@ class _ModernButtonState extends State<_ModernButton> with SingleTickerProviderS
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
@@ -636,28 +638,38 @@ class _ModernButtonState extends State<_ModernButton> with SingleTickerProviderS
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: _isHovered
-                    ? [
+                    ? isDark ? [
+                  widget.buttonData.color.withOpacity(0.95),
+                  widget.buttonData.color.withOpacity(0.8),
+                ] : [
                   widget.buttonData.color.withOpacity(0.9),
                   widget.buttonData.color.withOpacity(0.7),
                 ]
-                    : [
+                    : isDark ? [
+                  widget.buttonData.color.withOpacity(0.9),
+                  widget.buttonData.color.withOpacity(0.7),
+                ] : [
                   widget.buttonData.color.withOpacity(0.8),
                   widget.buttonData.color.withOpacity(0.6),
                 ],
               ),
               borderRadius: BorderRadius.circular(12),
+              border: isDark && _isHovered ? Border.all(
+                color: widget.buttonData.color.withOpacity(0.6),
+                width: 1,
+              ) : null,
               boxShadow: _isHovered
                   ? [
                 BoxShadow(
-                  color: widget.buttonData.color.withOpacity(0.4),
-                  blurRadius: 12,
+                  color: widget.buttonData.color.withOpacity(isDark ? 0.5 : 0.4),
+                  blurRadius: isDark ? 16 : 12,
                   offset: const Offset(0, 6),
                 ),
               ]
                   : [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 4,
+                  color: (isDark ? Colors.black : Colors.black).withOpacity(isDark ? 0.2 : 0.1),
+                  blurRadius: isDark ? 8 : 4,
                   offset: const Offset(0, 2),
                 ),
               ],

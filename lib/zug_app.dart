@@ -17,6 +17,7 @@ abstract class ZugApp extends StatelessWidget {
   final String appName;
   final ZugModel model;
   final Color colorSeed;
+  final bool isDark;
   final ColorScheme colorScheme;
   final String splashLandscapeImgPath, splashPortraitImgPath;
   final bool noNav;
@@ -25,7 +26,8 @@ abstract class ZugApp extends StatelessWidget {
     this.colorSeed = Colors.green,
     this.splashLandscapeImgPath = "images/splash_land.png",
     this.splashPortraitImgPath = "images/splash_port.png",
-    super.key, Level logLevel = Level.INFO, this.noNav = false}) : colorScheme = ColorScheme.fromSeed(seedColor: colorSeed) {
+    this.isDark = true,
+    super.key, Level logLevel = Level.INFO, this.noNav = false}) : colorScheme = isDark ? const ColorScheme.dark() : const ColorScheme.light() { //}ColorScheme.fromSeed(seedColor: colorSeed) {
     ZugDialogs.setNavigatorKey(zugAppNavigatorKey);
     Logger.root.level = logLevel;
     Logger.root.onRecord.listen((record) {
@@ -37,6 +39,7 @@ abstract class ZugApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+
     return ChangeNotifierProvider(
         create: (context) => model,
         child: MaterialApp(
