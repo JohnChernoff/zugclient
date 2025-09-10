@@ -178,10 +178,11 @@ abstract class Area extends Room{
   }
 
   void updatePhase(Map<String,dynamic> data) {
-    print("Phase Data: $data");
+    ZugModel.log.fine("Phase Data: $data");
     phaseStamp = data[fieldPhaseStamp] ?? DateTime.now().millisecondsSinceEpoch;
     if (data[fieldPhaseCurrtime] != null) { //HOLY TIME KLUDGE BATMAN
-      servTimeDiff = data[fieldPhaseCurrtime] - DateTime.now().millisecondsSinceEpoch; print("Serv time diff: $servTimeDiff");
+      servTimeDiff = data[fieldPhaseCurrtime] - DateTime.now().millisecondsSinceEpoch;
+      ZugModel.log.fine("Serv time diff: $servTimeDiff");
     }
     phaseTime = max(data[fieldPhaseTimeRemaining] ?? 0,0);
     setPhase(data[fieldPhase]);
