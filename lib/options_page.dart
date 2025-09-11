@@ -126,7 +126,7 @@ class _OptionsPageState extends State<OptionsPage> {
     if (widget.isDialog) {
       Navigator.pop(context);
     } else {
-      widget.model.setSwitchPage(PageType.lobby);
+      widget.model.goToPage(PageType.lobby);
     }
   }
 

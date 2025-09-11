@@ -27,6 +27,7 @@ enum ZugClientOpt {debug}
 enum LoginType {none,lichess,google}
 
 abstract class ZugModel extends ChangeNotifier {
+  final ValueNotifier<PageType> pageNotifier;
   static const optPrefix = "ZugClientOption";
   static final log = Logger('ClientLogger');
   static const noAreaTitle = "-";
@@ -54,8 +55,6 @@ abstract class ZugModel extends ChangeNotifier {
   late Area currentArea; //Area(noAreaTitle);
   final Map<Enum,Function> _functionMap = {};
   FunctionWaiter? _funWaiter;
-  PageType switchPage = PageType.none;
-  PageType selectedPage = PageType.none;
   SharedPreferences? prefs;
   final Map<String,ZugOption> _options = {};
   LoginType? loginType;
@@ -79,7 +78,7 @@ abstract class ZugModel extends ChangeNotifier {
   Area createArea(dynamic data);
 
   ZugModel(this.domain,this.port,this.remoteEndpoint, this.prefs, {
-    FirebaseOptions? firebaseOptions, this.showServMess = false, this.localServer = false, this.javalinServer = false}) {
+    FirebaseOptions? firebaseOptions, this.showServMess = false, this.localServer = false, this.javalinServer = false}) : pageNotifier = ValueNotifier<PageType>(PageType.lobby) {
     //_endClipListener = clipPlayer.onPlayerComplete.listen((v) => log.info("done"));
     trackPlayer.stop();
     log.info("Prefs: ${prefs.toString()}");
@@ -138,6 +137,10 @@ abstract class ZugModel extends ChangeNotifier {
   }
 
   Map<Enum,Function> getFunctions() { return _functionMap; }
+
+  void goToPage(PageType page) {
+    pageNotifier.value = page;
+  }
 
   Future<bool> awaitMsg(Enum msgEnum) {
     if (_funWaiter?.completer.isCompleted == false) _funWaiter?.completer.complete(false);
@@ -205,11 +208,6 @@ abstract class ZugModel extends ChangeNotifier {
       args[fieldAreaID] = id ?? currentArea.id;
       send(cmd,data:args);
     }
-  }
-
-  void setSwitchPage(PageType p) {
-    switchPage = p;
-    notifyListeners();
   }
 
   void switchArea(String? title) {
@@ -430,7 +428,7 @@ abstract class ZugModel extends ChangeNotifier {
 
   void handleStart(data) {
     handleUpdateArea(data);
-    switchPage = PageType.main;
+    goToPage(PageType.main);
   }
 
   bool handleAreaList(data) { //print("Area List: $data");

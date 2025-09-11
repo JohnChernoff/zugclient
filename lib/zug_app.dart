@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 import 'package:zug_utils/zug_dialogs.dart';
 import 'package:zug_utils/zug_utils.dart';
 import 'package:zugclient/splash_page.dart';
-import 'package:zugclient/zug_fields.dart';
 import 'package:zugclient/zug_model.dart';
 import 'lobby_page.dart';
 import 'options_page.dart';
@@ -106,77 +105,77 @@ class ZugHome extends StatefulWidget {
 
 }
 
-enum PageType { main,lobby,options,none }
+enum PageType { main,lobby,options,splash,none }
 
 class _ZugHomeState extends State<ZugHome> {
-  var selectedIndex = 1;
-  late PageType selectedPage;
-  PageType get defaultPage => widget.noNav ? PageType.main : PageType.lobby;
-
-  @override
-  void initState() {
-    super.initState();
-    selectedPage = defaultPage;
-  }
 
   @override
   Widget build(BuildContext context) {
     ZugModel model = context.watch<ZugModel>();
     ColorScheme colorScheme = Theme.of(context).colorScheme;
-    Widget page = widget.app.createSplashPage(model);
 
-    if (model.isLoggedIn) {
-      if (widget.noNav) {
-        selectedPage = model.selectedPage = PageType.main;
-        page = widget.app.createMainPage(model);
-      }
-      else {
-        page = switch(model.switchPage) {
-          PageType.main => widget.app.createMainPage(model),
-          PageType.lobby => widget.app.createLobbyPage(model),
-          PageType.options => widget.app.createOptionsPage(model),
-          PageType.none => switch (selectedPage) {
-            PageType.main || PageType.none => widget.app.createMainPage(model),
-            PageType.lobby => widget.app.createLobbyPage(model),
-            PageType.options => widget.app.createOptionsPage(model),
-          }
-        };
-        if (model.switchPage != PageType.none) {
-          selectedPage = model.switchPage;
-          selectedIndex = pageTypeToIndex(selectedPage); // <-- keep in sync!
-          model.switchPage = PageType.none;
-        }
-        model.selectedPage = selectedPage;
-      }
-      if (selectedPage != PageType.main) {
-        model.areaCmd(ClientMsg.setDeaf,data:{fieldDeafened:true});
-      }
-    }
-
-    // The container for the current page, with its background color
-    // and subtle switching animation.
+  // The container for the current page, with its background color
+  // and subtle switching animation.
     var mainArea = ColoredBox(
       color: colorScheme.surfaceContainerHighest,
-      child: widget.noNav ? page : AnimatedSwitcher(
-        duration: const Duration(milliseconds: 200),
-        child: page,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 250),
+        transitionBuilder: (child, animation) {
+          final curved = CurvedAnimation(parent: animation, curve: Curves.easeInOut);
+          return FadeTransition(
+            opacity: curved,
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.97, end: 1.0).animate(curved),
+              child: child,
+            ),
+          );
+        },
+        child: ValueListenableBuilder<PageType>(
+          valueListenable: model.pageNotifier,
+          builder: (context, pageType, _) {
+            return KeyedSubtree(
+              key: ValueKey(pageType), // Important: unique key per page type
+              child: _buildPageForType(model, pageType),
+            );
+          },
+        ),
       ),
     );
 
     return Scaffold(
       body: LayoutBuilder(
         builder: (context, constraints) {
-          return Row(children: [
-            getNavBar(model),
-            Expanded(child: Column(
-              children: [
-                Expanded(child: mainArea),
-                getSafeArea(model),
-              ],
-            ))
-          ]);
-        })
+          return Row(
+            children: [
+              getNavBar(model),
+              Expanded(
+                child: Column(
+                  children: [
+                    Expanded(child: mainArea),
+                    getSafeArea(model),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     );
+  }
+
+  Widget _buildPageForType(ZugModel model, PageType pageType) {
+    if (!model.isLoggedIn) return widget.app.createSplashPage(model);
+    if (widget.noNav) return widget.app.createMainPage(model);
+    switch (pageType) {
+      case PageType.main:
+        return widget.app.createMainPage(model);
+      case PageType.lobby:
+        return widget.app.createLobbyPage(model);
+      case PageType.options:
+        return widget.app.createOptionsPage(model);
+      case PageType.none || PageType.splash:
+        return widget.app.createSplashPage(model);
+    }
   }
 
   SafeArea getSafeArea(ZugModel model) {
@@ -186,59 +185,68 @@ class _ZugHomeState extends State<ZugHome> {
   }
 
   Widget getNavBar(ZugModel model,
-      {iconColor = Colors.white, backgroundColor = Colors.black, indicatorColor = Colors.grey, orientation = Axis.vertical }) {
-    NavigationDestination mainDestination = widget.app.getMainNavigationBarItem();
-    return Theme(
-        data: Theme.of(context).copyWith(
-      navigationBarTheme: NavigationBarThemeData(
-        labelTextStyle: WidgetStateProperty.all(TextStyle(color: iconColor)),
-      ),
-    ), child: orientation == Axis.horizontal ? NavigationBar(
-      backgroundColor: backgroundColor,
-      indicatorColor: indicatorColor,
-      onDestinationSelected: (value) => handleNewDestination(value),
-      selectedIndex: selectedIndex,
-      destinations: [
-        mainDestination,
-        NavigationDestination(
-          icon: Icon(Icons.local_bar, color: iconColor),
-          label: 'Lobby',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.settings, color: iconColor),
-          label: 'Settings',
-        ),
-      ],
-    ) : NavigationRail(
-      labelType: NavigationRailLabelType.all,
-      backgroundColor: backgroundColor,
-      indicatorColor: indicatorColor,
-      onDestinationSelected: (value) => handleNewDestination(value),
-      selectedIndex: selectedIndex,
-      destinations: [
-        NavigationRailDestination(
-            icon: mainDestination.icon,
-            label: Text(mainDestination.label, style: TextStyle(color: iconColor)),
-        ),
-        NavigationRailDestination(
-          icon: Icon(Icons.local_bar, color: iconColor),
-          label: Text('Lobby', style: TextStyle(color: iconColor)),
-        ),
-        NavigationRailDestination(
-          icon: Icon(Icons.settings, color: iconColor),
-          label: Text('Settings', style: TextStyle(color: iconColor)),
-        ),
-      ],
-    ));
-  }
+      { iconColor = Colors.white,
+        backgroundColor = Colors.black,
+        indicatorColor = Colors.grey,
+        orientation = Axis.vertical}) {
 
-  void handleNewDestination(int value) {
-    //if (ZugDialogs.currentContexts.isEmpty)
-    //if (selectedPage == PageType.options && model.currentArea.exists) { widget.app.model.areaCmd(ClientMsg.getOptions);
-    setState(() {
-      selectedIndex = value;
-      selectedPage = indexToPageType(value);
-    });
+    NavigationDestination mainDestination = widget.app.getMainNavigationBarItem();
+
+    return ValueListenableBuilder<PageType>(
+      valueListenable: model.pageNotifier,
+      builder: (context, pageType, _) {
+        final selectedIndex = pageTypeToIndex(pageType);
+        return Theme(
+          data: Theme.of(context).copyWith(
+            navigationBarTheme: NavigationBarThemeData(
+              labelTextStyle: WidgetStateProperty.all(
+                TextStyle(color: iconColor),
+              ),
+            ),
+          ),
+          child: orientation == Axis.horizontal
+              ? NavigationBar(
+            backgroundColor: backgroundColor,
+            indicatorColor: indicatorColor,
+            selectedIndex: selectedIndex,
+            onDestinationSelected: (index) =>
+            model.pageNotifier.value = indexToPageType(index),
+            destinations: [
+              mainDestination,
+              const NavigationDestination(
+                icon: Icon(Icons.local_bar),
+                label: 'Lobby',
+              ),
+              const NavigationDestination(
+                icon: Icon(Icons.settings),
+                label: 'Settings',
+              ),
+            ],
+          )
+              : NavigationRail(
+            backgroundColor: backgroundColor,
+            indicatorColor: indicatorColor,
+            selectedIndex: selectedIndex,
+            onDestinationSelected: (index) =>
+            model.pageNotifier.value = indexToPageType(index),
+            destinations: [
+              NavigationRailDestination(
+                icon: mainDestination.icon,
+                label: Text(mainDestination.label),
+              ),
+              const NavigationRailDestination(
+                icon: Icon(Icons.local_bar),
+                label: Text('Lobby'),
+              ),
+              const NavigationRailDestination(
+                icon: Icon(Icons.settings),
+                label: Text('Settings'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   int pageTypeToIndex(PageType pageType) {
@@ -267,8 +275,6 @@ class _ZugHomeState extends State<ZugHome> {
     }
   }
 }
-
-
 
 class ZugScrollBehavior extends MaterialScrollBehavior {
   // Override behavior methods and getters like dragDevices
