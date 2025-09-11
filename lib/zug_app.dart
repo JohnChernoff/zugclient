@@ -143,6 +143,7 @@ class _ZugHomeState extends State<ZugHome> {
         };
         if (model.switchPage != PageType.none) {
           selectedPage = model.switchPage;
+          selectedIndex = pageTypeToIndex(selectedPage); // <-- keep in sync!
           model.switchPage = PageType.none;
         }
         model.selectedPage = selectedPage;
@@ -236,9 +237,34 @@ class _ZugHomeState extends State<ZugHome> {
     //if (selectedPage == PageType.options && model.currentArea.exists) { widget.app.model.areaCmd(ClientMsg.getOptions);
     setState(() {
       selectedIndex = value;
-      PageType newPage = PageType.values.elementAt(selectedIndex);
-      selectedPage = newPage;
+      selectedPage = indexToPageType(value);
     });
+  }
+
+  int pageTypeToIndex(PageType pageType) {
+    switch (pageType) {
+      case PageType.main:
+        return 0;
+      case PageType.lobby:
+        return 1;
+      case PageType.options:
+        return 2;
+      default:
+        return 1; // fallback
+    }
+  }
+
+  PageType indexToPageType(int index) {
+    switch (index) {
+      case 0:
+        return PageType.main;
+      case 1:
+        return PageType.lobby;
+      case 2:
+        return PageType.options;
+      default:
+        return PageType.lobby;
+    }
   }
 }
 
