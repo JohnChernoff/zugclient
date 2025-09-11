@@ -17,7 +17,7 @@ class SplashPage extends StatelessWidget {
     final dim = ZugUtils.getScreenDimensions(context);
     final Image? img = dim.getMainAxis() == Axis.horizontal ? imgLandscape : imgPortrait;
     final txtStyle = TextStyle(color: isDark ? Colors.black : Colors.blue);
-    final buttonStyle = ElevatedButton.styleFrom(backgroundColor: isDark ? Colors.brown : Colors.cyanAccent);
+    final buttonStyle = ElevatedButton.styleFrom(backgroundColor: isDark ? Colors.white : Colors.cyanAccent);
 
     return LayoutBuilder(builder: (BuildContext ctx, BoxConstraints constraints) =>
       Container(color: isDark ? Colors.black : Colors.white, width: constraints.maxWidth, height: constraints.maxHeight, child: Column(
