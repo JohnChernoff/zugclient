@@ -131,7 +131,7 @@ class LobbyPage extends StatefulWidget {
                 separatorBuilder: (context, index) => const SizedBox(height: 8),
                 itemBuilder: (context, index) {
                   UniqueName uName = UniqueName.fromData(occupantList.elementAt(index)[fieldUser]);
-                  return _buildPlayerCard(context, uName, occupantList.elementAt(index));
+                  return _buildOccupantCard(context, uName, occupantList.elementAt(index));
                 },
               ),
             ),
@@ -163,7 +163,7 @@ class LobbyPage extends StatefulWidget {
     );
   }
 
-  Widget _buildPlayerCard(BuildContext context, UniqueName uName, Map<String, dynamic> json) {
+  Widget _buildOccupantCard(BuildContext context, UniqueName uName, Map<String, dynamic> json) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       decoration: BoxDecoration(

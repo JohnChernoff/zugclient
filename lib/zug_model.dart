@@ -167,7 +167,7 @@ abstract class ZugModel extends ChangeNotifier {
       send(ClientMsg.newArea, data: {fieldAreaID: title});
     }
     else {
-      ZugDialogs.getString('Choose Game Title',userName?.name ?? "?")
+      ZugDialogs.getString('Choose Title',userName?.name ?? "?")
           .then((t) => send(ClientMsg.newArea, data: {fieldAreaID: t}));
     }
   }
