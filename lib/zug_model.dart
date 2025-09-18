@@ -696,31 +696,59 @@ abstract class ZugModel extends ChangeNotifier {
     }
   }
 
-  void loadOptions(List<(Enum,ZugOption)> list) {
+  void loadOptions(List<(Enum, ZugOption)> list) {
     for (var option in list) {
       try {
-        String key = option.$1.name; ZugOption defOpt = option.$2;
-        String? optionPref = prefs?.getString(optPrefix + key);
+        final key = option.$1.name;
+        final defOpt = option.$2;
+        final optionPref = prefs?.getString(optPrefix + key);
+
         if (optionPref == null) {
           setOption(key, defOpt);
         } else {
-          _options[key] = ZugOption.fromJson(jsonDecode(optionPref));
+          final loadedOpt = ZugOption.fromJson(jsonDecode(optionPref));
+
+          // If enum, rehydrate by creating a new option with a valid enum value
+          if (loadedOpt.enums != null && defOpt.zugVal.getType() == ValType.enumeration) {
+            final correctedVal = defOpt.enums!.firstWhere(
+                  (name) => name == loadedOpt.getVal(),
+              orElse: () => defOpt.enums!.first,
+            );
+            _options[key] = defOpt.fromValue(correctedVal);
+          } else {
+            _options[key] = loadedOpt;
+          }
         }
-      } catch(e) { log.info("Error parsing: $option" ); }
+      } catch (e) {
+        log.info("Error parsing: $option -> $e");
+      }
     }
   }
+
 
   ZugOption? getOption(Enum key) => _options[key.name];
 
   Map<String, ZugOption> getOptions() => _options;
 
+  /// Generic edit that works for any type
   void editOption(Enum key, dynamic val) {
-    ZugOption? option = getOption(key);
-    if (option != null) setOptionFromEnum(key, option.fromValue(val));
+    final option = getOption(key);
+    if (option == null) return;
+    // If enum, ensure it's a valid choice from registered values
+    if (option.enums != null) {
+      final strVal = val.toString();
+      final validVal = option.enums!.contains(strVal) ? strVal : option.enums!.first;
+      setOptionFromEnum(key, option.fromValue(validVal));
+    } else {
+      setOptionFromEnum(key, option.fromValue(val));
+    }
   }
 
   void setOption(String key, ZugOption option) {
-    _options[key] = option; prefs?.setString(optPrefix + key,jsonEncode(option.toJson()));
+    _options[key] = option;
+    prefs?.setString(optPrefix + key, jsonEncode(option.toJson()));
+
+    // Audio hooks (optional)
     for (AudioOpt opt in AudioOpt.values) {
       if (key == opt.name) {
         updateAudio(opt);
@@ -729,7 +757,9 @@ abstract class ZugModel extends ChangeNotifier {
     }
   }
 
-  void setOptionFromEnum(Enum key, ZugOption option) { setOption(key.name, option); }
+  void setOptionFromEnum(Enum key, ZugOption option) {
+    setOption(key.name, option);
+  }
 
   void updateAudio(AudioOpt opt) {
     if (opt == AudioOpt.musicVol) {
