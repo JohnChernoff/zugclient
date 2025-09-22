@@ -63,4 +63,5 @@ const fieldData = "data",
     fieldResponseType = "response_type",
     fieldAreaChange = "area_change",
     fieldUpdateScope = "up_scope",
-    fieldPhaseData = "phase_data";
+    fieldPhaseData = "phase_data",
+    fieldAutoJoin = "auto_join";

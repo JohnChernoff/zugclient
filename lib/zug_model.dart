@@ -162,13 +162,13 @@ abstract class ZugModel extends ChangeNotifier {
     });
   }
 
-  void newArea({String? title}) {
+  void newArea({String? title, autoJoin = true}) {
     if (title != null) {
       send(ClientMsg.newArea, data: {fieldAreaID: title});
     }
     else {
       ZugDialogs.getString('Choose Title',userName?.name ?? "?")
-          .then((t) => send(ClientMsg.newArea, data: {fieldAreaID: t}));
+          .then((t) => send(ClientMsg.newArea, data: {fieldAreaID: t, fieldAutoJoin: autoJoin}));
     }
   }
 
