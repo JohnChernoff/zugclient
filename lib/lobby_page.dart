@@ -47,6 +47,10 @@ class LobbyPage extends StatefulWidget {
     super.key
   });
 
+  Widget? selectorWidget() {
+    return null;
+  }
+
   Widget selectedArea(BuildContext context, {Color? bkgCol, Color? txtCol, Iterable<dynamic>? occupants}) {
     Iterable<dynamic> occupantList = occupants ?? model.currentArea.occupantMap.values;
 
@@ -383,7 +387,7 @@ class _LobbyPageState extends State<LobbyPage> with TickerProviderStateMixin {
                 : getCommandArea(context),
 
             // Area selector
-            if (widget.showSelector) Container(
+            if (widget.showSelector) widget.selectorWidget() ?? Container(
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
