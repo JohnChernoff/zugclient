@@ -23,6 +23,7 @@ class LobbyPage extends StatefulWidget {
   final bool seekButt, createButt, startButt, joinButt, partButt;
   final int portFlex;
   final double commandAreaWidth, commandAreaHeight;
+  final bool showSelector;
 
   const LobbyPage(this.model, {
     this.backgroundImage,
@@ -42,6 +43,7 @@ class LobbyPage extends StatefulWidget {
     this.portFlex = 2,
     this.commandAreaHeight = 80,
     this.commandAreaWidth = 140,
+    this.showSelector = true,
     super.key
   });
 
@@ -330,8 +332,8 @@ class _LobbyPageState extends State<LobbyPage> with TickerProviderStateMixin {
   }
 
   Widget getMainArea(BuildContext context) {
-    Set<DropdownMenuItem<String>> gameset = {};
-    gameset.addAll(widget.model.areas.keys
+    Set<DropdownMenuItem<String>> areaSet = {};
+    areaSet.addAll(widget.model.areas.keys
         .where((key) => widget.model.areas[key]?.exists ?? false)
         .map<DropdownMenuItem<String>>((String title) {
       return DropdownMenuItem<String>(
@@ -340,8 +342,8 @@ class _LobbyPageState extends State<LobbyPage> with TickerProviderStateMixin {
       );
     }).toList());
 
-    List<DropdownMenuItem<String>> games = gameset.toList();
-    games.sort((a, b) => widget.compareAreas(
+    List<DropdownMenuItem<String>> areas = areaSet.toList();
+    areas.sort((a, b) => widget.compareAreas(
         widget.model.areas[a.value], widget.model.areas[b.value]));
 
     String selectedTitle = widget.model.currentArea.exists
@@ -381,7 +383,7 @@ class _LobbyPageState extends State<LobbyPage> with TickerProviderStateMixin {
                 : getCommandArea(context),
 
             // Area selector
-            Container(
+            if (widget.showSelector) Container(
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -426,7 +428,7 @@ class _LobbyPageState extends State<LobbyPage> with TickerProviderStateMixin {
                         child: DropdownButton<String>(
                           dropdownColor: Theme.of(context).colorScheme.surface,
                           value: selectedTitle,
-                          items: games,
+                          items: areas,
                           icon: Icon(
                             Icons.expand_more,
                             color: Theme.of(context).colorScheme.primary,
