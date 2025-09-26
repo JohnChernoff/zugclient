@@ -851,6 +851,8 @@ abstract class ZugModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool isGuest() => userName?.source == "none";
+
 }
 
 //extension StrComp on Enum { bool eq(dynamic s) { return (s is String) ? name == s : false; } }
