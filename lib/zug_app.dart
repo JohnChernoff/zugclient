@@ -93,6 +93,20 @@ abstract class ZugApp extends StatelessWidget {
       label: 'Main',
     );
   }
+
+  NavigationDestination getLobbyNavigationBarItem() {
+    return const NavigationDestination(
+      icon: Icon(Icons.local_bar),
+      label: 'Lobby',
+    );
+  }
+
+  NavigationDestination getSettingsNavigationBarItem() {
+    return const NavigationDestination(
+      icon: Icon(Icons.settings),
+      label: 'Settings',
+    );
+  }
 }
 
 class ZugHome extends StatefulWidget {
@@ -192,6 +206,8 @@ class _ZugHomeState extends State<ZugHome> {
         orientation = Axis.vertical}) {
 
     NavigationDestination mainDestination = widget.app.getMainNavigationBarItem();
+    NavigationDestination lobbyDestination = widget.app.getLobbyNavigationBarItem();
+    NavigationDestination settingsDestination = widget.app.getSettingsNavigationBarItem();
 
     return ValueListenableBuilder<PageType>(
       valueListenable: model.pageNotifier,
@@ -214,14 +230,8 @@ class _ZugHomeState extends State<ZugHome> {
             model.pageNotifier.value = indexToPageType(index),
             destinations: [
               mainDestination,
-              const NavigationDestination(
-                icon: Icon(Icons.local_bar),
-                label: 'Lobby',
-              ),
-              const NavigationDestination(
-                icon: Icon(Icons.settings),
-                label: 'Settings',
-              ),
+              lobbyDestination,
+              settingsDestination
             ],
           )
               : NavigationRail(
