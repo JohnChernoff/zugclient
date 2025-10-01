@@ -245,13 +245,13 @@ class _ZugHomeState extends State<ZugHome> {
                 icon: mainDestination.icon,
                 label: Text(mainDestination.label),
               ),
-              const NavigationRailDestination(
-                icon: Icon(Icons.local_bar),
-                label: Text('Lobby'),
+              NavigationRailDestination(
+                icon: lobbyDestination.icon,
+                label: Text(lobbyDestination.label),
               ),
-              const NavigationRailDestination(
-                icon: Icon(Icons.settings),
-                label: Text('Settings'),
+              NavigationRailDestination(
+                icon: settingsDestination.icon,
+                label: Text(settingsDestination.label),
               ),
             ],
           ),
