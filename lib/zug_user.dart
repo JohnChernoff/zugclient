@@ -11,8 +11,7 @@ class UniqueName {
 
     return UniqueName(
         data[fieldUniqueName]?[fieldName] ?? data[fieldName] ?? "?",
-        data[fieldUniqueName]?[fieldAuthSource] ?? data[fieldAuthSource] ?? "?"
-    );
+        LoginType.fromString(data[fieldUniqueName]?[fieldAuthSource] ?? data[fieldAuthSource] ?? "?") ?? LoginType.none);
   }
 
   bool eq(UniqueName? uName) {
@@ -21,12 +20,12 @@ class UniqueName {
   }
 
   dynamic toJSON() {
-    return { fieldName : name, fieldAuthSource : source };
+    return { fieldName : name, fieldAuthSource : source.name };
   }
 
   @override
   String toString() {
-    return "$name@$source";
+    return "$name@${source.name}";
   }
 }
 
@@ -37,12 +36,13 @@ class UserWidget extends StatelessWidget {
   const UserWidget({super.key, required this.uName, this.width, this.height});
 
   String _getAuthIconPath() {
-    return switch (uName.source) {
-      LoginType.none => 'assets/images/google_logo.jpg',
-      LoginType.bot => 'assets/images/lichess_logo.jpg',
-      LoginType.lichess => 'assets/images/bot_logo.png',
-      LoginType.google => 'assets/images/guest_logo.png',
+    String name = switch (uName.source) {
+      LoginType.none => 'guest_logo.png',
+      LoginType.bot => 'bot_logo.png',
+      LoginType.lichess => 'lichess_logo.png',
+      LoginType.google => 'google_logo.png',
     };
+    return 'images/$name';
   }
 
   @override
@@ -60,7 +60,8 @@ class UserWidget extends StatelessWidget {
               padding: const EdgeInsets.only(left: 4.0),
               child: Image.asset(
                 _getAuthIconPath(),
-                height: fontSize * 1.2, // Slightly larger than text
+                package: "zugclient",
+                height: fontSize * 1.2,
                 width: fontSize * 1.2,
                 fit: BoxFit.contain,
               ),
@@ -71,4 +72,3 @@ class UserWidget extends StatelessWidget {
     );
   }
 }
-

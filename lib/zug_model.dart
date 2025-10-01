@@ -33,6 +33,11 @@ enum LoginType {
   google("google.com");
   final String? url;
   const LoginType(this.url);
+  static LoginType? fromString(String str) {
+    for (LoginType t in values) {
+      if (str.toLowerCase() == t.name) return t;
+    } return null;
+  }
 }
 
 abstract class ZugModel extends ChangeNotifier {
