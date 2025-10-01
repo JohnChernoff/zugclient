@@ -6,6 +6,7 @@ import 'package:zugclient/zug_area.dart';
 import 'package:zugclient/zug_chat.dart';
 import 'package:zugclient/zug_fields.dart';
 import 'package:zugclient/zug_model.dart';
+import 'package:zugclient/zug_user.dart';
 
 enum LobbyStyle { normal, terseLand, tersePort }
 

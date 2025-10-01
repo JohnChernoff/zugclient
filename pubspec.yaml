@@ -1,6 +1,6 @@
 name: zugclient
 description: Flutter client framework for the ZugServ library
-version: 0.5.0
+version: 0.5.5
 homepage: https://github.com/JohnChernoff/zugclient
 
 environment:
@@ -76,5 +76,9 @@ dev_dependencies:
   # https://flutter.dev/custom-fonts/#from-packages
 
 assets:
-  - images/splash_land.jpg
-  - images/splash_port.jpg
+  - images/splash_land.png
+  - images/splash_port.png
+  - images/google_logo.png
+  - images/lichess_logo.png
+  - images/guest_logo.png
+  - images/bot_logo.png

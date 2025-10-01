@@ -13,7 +13,9 @@ import 'package:zug_net/zug_sock.dart';
 import 'package:zug_utils/zug_dialogs.dart';
 import 'package:zugclient/zug_app.dart';
 import 'package:zugclient/zug_area.dart';
+import 'package:zugclient/zug_mess.dart';
 import 'package:zugclient/zug_option.dart';
+import 'package:zugclient/zug_user.dart';
 import 'zug_fields.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -24,7 +26,14 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 enum AudioOpt {sound,soundVol,music,musicVol}
 enum ZugClientOpt {debug}
-enum LoginType {none,lichess,google}
+enum LoginType {
+  none(null),
+  bot(null),
+  lichess("lichess.org"),
+  google("google.com");
+  final String? url;
+  const LoginType(this.url);
+}
 
 abstract class ZugModel extends ChangeNotifier {
   final ValueNotifier<PageType> pageNotifier;
@@ -676,17 +685,9 @@ abstract class ZugModel extends ChangeNotifier {
     return sBuff.toString();
   }
 
-  String getSourceDomain(String? source) {
-    return switch(source) {
-      "lichess" => "lichess.org",
-      String() => "error.com",
-      null => "null.com",
-    };
-  }
-
   void deleteToken() {
     if (authClient?.credentials.accessToken.isNotEmpty ?? false) {
-      OauthClient(getSourceDomain(userName?.source), modelName).deleteToken(authClient?.credentials.accessToken);
+      OauthClient(userName?.source.url ?? "error.com", modelName).deleteToken(authClient?.credentials.accessToken);
       authClient = oauth2.Client(oauth2.Credentials(""));
       if (kIsWeb) {
         ZugDialogs.popup("Token deleted, reload page to login again");
@@ -851,7 +852,7 @@ abstract class ZugModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  bool isGuest() => userName?.source == "none";
+  bool isGuest() => userName?.source == LoginType.none;
 
 }
 
