@@ -1,5 +1,5 @@
 import 'package:zugclient/zug_fields.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:zugclient/zug_model.dart';
 
 class UniqueName {
@@ -32,13 +32,26 @@ class UniqueName {
 class UserWidget extends StatelessWidget {
   final UniqueName uName;
   final double? width, height;
+  final Color? color;
+  final BlendMode? colorBlendMode;
+  final double scale; // font size vs box height
+  final double minFontSize;
 
-  const UserWidget({super.key, required this.uName, this.width, this.height});
+  const UserWidget({
+    super.key,
+    required this.uName,
+    this.width,
+    this.height,
+    this.color,
+    this.colorBlendMode,
+    this.scale = 0.6,
+    this.minFontSize = 10, // 👈 never shrink below this
+  });
 
   String _getAuthIconPath() {
     String name = switch (uName.source) {
-      LoginType.none => 'guest_logo.png',
-      LoginType.bot => 'bot_logo.png',
+      LoginType.none => 'guest.png',
+      LoginType.bot => 'bot.png',
       LoginType.lichess => 'lichess_logo.png',
       LoginType.google => 'google_logo.png',
     };
@@ -47,28 +60,55 @@ class UserWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textStyle = DefaultTextStyle.of(context).style;
-    final fontSize = textStyle.fontSize ?? 14.0;
+    final baseStyle =
+    color == null ? DefaultTextStyle.of(context).style : TextStyle(color: color);
 
-    return Text.rich(
-      TextSpan(
-        children: [
-          TextSpan(text: uName.name),
-          WidgetSpan(
-            alignment: PlaceholderAlignment.middle,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 4.0),
-              child: Image.asset(
-                _getAuthIconPath(),
-                package: "zugclient",
-                height: fontSize * 1.2,
-                width: fontSize * 1.2,
-                fit: BoxFit.contain,
-              ),
+    return LayoutBuilder(
+      builder: (BuildContext ctx, BoxConstraints bc) {
+        // Compute effective height
+        final effectiveHeight = bc.maxHeight < (height ?? 1024)
+            ? bc.maxHeight
+            : height ??
+            (bc.hasBoundedHeight && bc.maxHeight < double.infinity
+                ? bc.maxHeight
+                : (baseStyle.fontSize ?? 14.0) * 2);
+
+        // Scale font size, but clamp it so it’s never too tiny
+        final fontSize = (effectiveHeight * scale).clamp(minFontSize, double.infinity);
+
+        return SizedBox(
+          width: width,
+          height: height,
+          child: Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: uName.name,
+                  style: baseStyle.copyWith(fontSize: fontSize),
+                ),
+                WidgetSpan(
+                  alignment: PlaceholderAlignment.baseline,
+                  baseline: TextBaseline.ideographic,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 4.0),
+                    child: Image.asset(
+                      _getAuthIconPath(),
+                      package: "zugclient",
+                      height: fontSize * 1.2,
+                      width: fontSize * 1.2,
+                      fit: BoxFit.contain,
+                      color: (uName.source == LoginType.google) ? null : color ?? baseStyle.color,
+                      colorBlendMode: colorBlendMode,
+                    ),
+                  ),
+                ),
+              ],
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
