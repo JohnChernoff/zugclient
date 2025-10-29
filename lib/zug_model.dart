@@ -152,6 +152,8 @@ abstract class ZugModel extends ChangeNotifier {
 
   Map<Enum,Function> getFunctions() { return _functionMap; }
 
+  PageType get currentPage => pageNotifier.value;
+
   void goToPage(PageType page) {
     pageNotifier.value = page;
   }
