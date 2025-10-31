@@ -8,7 +8,7 @@ import 'package:zugclient/zug_fields.dart';
 import 'package:zugclient/zug_model.dart';
 import 'package:zugclient/zug_user.dart';
 
-enum LobbyStyle { normal, terseLand, tersePort }
+enum LobbyStyle { normLand, terseLand, tersePort }
 
 class LobbyPage extends StatefulWidget {
   final ZugModel model;
@@ -31,7 +31,7 @@ class LobbyPage extends StatefulWidget {
     this.areaName = "Area",
     this.bkgCol,
     this.buttonsBkgCol,
-    this.style = LobbyStyle.normal,
+    this.style = LobbyStyle.normLand,
     this.width,
     this.borderWidth = 0,
     this.borderCol = Colors.black,
@@ -511,7 +511,7 @@ class _LobbyPageState extends State<LobbyPage> with TickerProviderStateMixin {
         ],
       ),
       width: widget.style == LobbyStyle.tersePort ? widget.commandAreaWidth : null,
-      height: widget.style == LobbyStyle.tersePort ? null : widget.commandAreaHeight,
+      height: null, //widget.style == LobbyStyle.tersePort ? null : widget.commandAreaHeight,
       child: EqualButtonRow(buttData: getCmdButtons(context)),
     );
   }
