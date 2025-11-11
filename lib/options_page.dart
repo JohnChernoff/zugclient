@@ -48,7 +48,7 @@ class _OptionsPageState extends State<OptionsPage> {
   void initState() {
     super.initState();
     optTxtStyle = TextStyle(color: widget.optionsTextColor);
-    loadOptions();
+    loadOptions(); //TODO: don't do this when unnecessary
   }
 
   Future<void> loadOptions({reload = false}) async {

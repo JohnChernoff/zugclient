@@ -8,8 +8,8 @@ import 'package:zugclient/zug_model.dart';
 class SplashPage extends StatelessWidget {
   final ZugModel model;
   final Image? imgLandscape, imgPortrait;
-
-  const SplashPage(this.model,{this.imgLandscape,this.imgPortrait,super.key});
+  final List<LoginType> allowedLoginTypes;
+  const SplashPage(this.model,{this.imgLandscape,this.imgPortrait,super.key, this.allowedLoginTypes = LoginType.values});
 
   @override
   Widget build(BuildContext context) { //TODO: generalize
@@ -26,7 +26,7 @@ class SplashPage extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            ElevatedButton(
+            if (allowedLoginTypes.contains(LoginType.none)) ElevatedButton(
               onPressed: () {
                 model.login(LoginType.none);
               },
@@ -34,7 +34,7 @@ class SplashPage extends StatelessWidget {
               child: Padding(padding: const EdgeInsets.all(8), child: Text("Login as Guest",style: txtStyle))
             ),
             const SizedBox(width: 36),
-            ElevatedButton(
+            if (allowedLoginTypes.contains(LoginType.google))ElevatedButton(
               onPressed: () {
                 model.login(LoginType.google);
               },
@@ -42,7 +42,7 @@ class SplashPage extends StatelessWidget {
               child: Padding(padding: const EdgeInsets.all(8), child: Text("Login with Google",style: txtStyle)),
             ),
             const SizedBox(width: 36),
-            ElevatedButton(
+            if (allowedLoginTypes.contains(LoginType.lichess))ElevatedButton(
               onPressed: () {
                 model.login(LoginType.lichess);
               },
