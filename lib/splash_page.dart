@@ -34,7 +34,7 @@ class SplashPage extends StatelessWidget {
               child: Padding(padding: const EdgeInsets.all(8), child: Text("Login as Guest",style: txtStyle))
             ),
             const SizedBox(width: 36),
-            if (allowedLoginTypes.contains(LoginType.google))ElevatedButton(
+            if (allowedLoginTypes.contains(LoginType.google)) ElevatedButton(
               onPressed: () {
                 model.login(LoginType.google);
               },
@@ -42,7 +42,7 @@ class SplashPage extends StatelessWidget {
               child: Padding(padding: const EdgeInsets.all(8), child: Text("Login with Google",style: txtStyle)),
             ),
             const SizedBox(width: 36),
-            if (allowedLoginTypes.contains(LoginType.lichess))ElevatedButton(
+            if (allowedLoginTypes.contains(LoginType.lichess)) ElevatedButton(
               onPressed: () {
                 model.login(LoginType.lichess);
               },
