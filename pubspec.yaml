@@ -1,6 +1,6 @@
 name: zugclient
 description: Flutter client framework for the ZugServ library
-version: 0.5.5
+version: 0.5.7
 homepage: https://github.com/JohnChernoff/zugclient
 
 environment:

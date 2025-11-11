@@ -101,12 +101,6 @@ abstract class Area extends Room{
   bool inPhase() => phaseTimeRemaining() > 0;
 }
 
-class FunctionWaiter {
-  final Enum funEnum;
-  final Completer<bool> completer = Completer();
-  FunctionWaiter(this.funEnum);
-}
-
 class ShuffleInfo {
   Random rng = Random();
   bool shuffling;

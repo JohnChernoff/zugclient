@@ -68,7 +68,7 @@ abstract class ZugModel extends ChangeNotifier {
   late final Area noArea;
   late Area currentArea; //Area(noAreaTitle);
   final Map<Enum,Function> _functionMap = {};
-  FunctionWaiter? _funWaiter;
+  final Map<Enum,Completer<dynamic>> _waitMap = {};
   SharedPreferences? prefs;
   final Map<String,ZugOption> _options = {};
   LoginType? loginType;
@@ -152,16 +152,13 @@ abstract class ZugModel extends ChangeNotifier {
 
   Map<Enum,Function> getFunctions() { return _functionMap; }
 
+  bool awaiting(Enum e) => _waitMap.containsKey(e)
+      ? !_waitMap[e]!.isCompleted : false;
+
   PageType get currentPage => pageNotifier.value;
 
   void goToPage(PageType page) {
     pageNotifier.value = page;
-  }
-
-  Future<bool> awaitMsg(Enum msgEnum) {
-    if (_funWaiter?.completer.isCompleted == false) _funWaiter?.completer.complete(false);
-    _funWaiter = FunctionWaiter(msgEnum);
-    return _funWaiter!.completer.future;
   }
 
   Future<void> initFirebase(FirebaseOptions fireOpts) async {
@@ -216,13 +213,13 @@ abstract class ZugModel extends ChangeNotifier {
     });
   }
 
-  void areaCmd(Enum cmd, { String? id, Map<String,dynamic> data = const {}}) {
+  Future<dynamic> areaCmd(Enum cmd, { String? id, Map<String,dynamic> data = const {}, Enum? responseType, int timeout = 5000}) {
     if (data.isEmpty) {
-      send(cmd,data: { fieldAreaID : id ??  currentArea.id});
+      return send(cmd,data: { fieldAreaID : id ??  currentArea.id}, responseType: responseType, timeout: timeout);
     } else {
       Map<String,dynamic> args = Map<String,dynamic>.from(data);
       args[fieldAreaID] = id ?? currentArea.id;
-      send(cmd,data:args);
+      return send(cmd,data:args, responseType: responseType, timeout: timeout);
     }
   }
 
@@ -262,8 +259,10 @@ abstract class ZugModel extends ChangeNotifier {
       } else if (fun(json[fieldData])) {
         notifyListeners();
       }
-      if (_funWaiter?.funEnum == funEnum) {
-        _funWaiter?.completer.complete(true);
+      if (awaiting(funEnum)) {
+        log.info("Received response: ${funEnum.name}");
+        _waitMap[funEnum]!.complete(msg);
+        _waitMap.remove(funEnum);
       }
     } else {
       log.warning("Function not found: $type");
@@ -353,24 +352,6 @@ abstract class ZugModel extends ChangeNotifier {
         }
       }
     }
-  }
-
-  void fetchOptions(Function onOption, {int timeLimit = 5000}) async {
-    awaitMsg(ServMsg.updateOptions)
-        .timeout(Duration(milliseconds: timeLimit))
-        .then((b) => onOption.call())
-        .catchError((e) => ZugDialogs.popup("Error Fetching Options: $e"));
-    areaCmd(ClientMsg.getOptions);
-  }
-
-  Future<bool> awaitResponse(Enum query, Enum reply, {int timeLimit = 5000}) async {
-    Completer<bool> completer = Completer();
-    awaitMsg(reply)
-        .timeout(Duration(milliseconds: timeLimit))
-        .then((b) => completer.complete(true))
-        .catchError((e) => completer.complete(false));
-    areaCmd(query);
-    return completer.future;
   }
 
   void addAreaMsg(String msg, String id, {hidden = false}) {
@@ -658,17 +639,22 @@ abstract class ZugModel extends ChangeNotifier {
     return true;
   }
 
-  void send(Enum type, { var data = "" }) {
+  Future<dynamic> send(Enum type, { var data = "", Enum? responseType, int timeout = 5000}) {
     if (showServMess || (getOption(ZugClientOpt.debug)?.getBool() ?? false)) log.info("Sending: $type, $data");
     if (noServer) {
       log.fine("Sending: ${type.toString()} -> ${data.toString()}");
     }
     else if (isConnected && sock != null) {
+      if (responseType != null) {
+        log.info("Requesting response: ${responseType.name}");
+        _waitMap.putIfAbsent(responseType, () => Completer());
+      }
       sock!.send(jsonEncode( { fieldType: type.name, fieldData: data } ) );
     }
     else {
       tryReconnect();
     }
+    return _waitMap[responseType]?.future.timeout(Duration(milliseconds: timeout),onTimeout: () => "") ?? Future.value("");
   }
 
   String getDomain() {
