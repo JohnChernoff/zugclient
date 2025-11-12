@@ -86,6 +86,7 @@ class ZugChatState extends State<ZugChat> with SingleTickerProviderStateMixin {
   bool filterServerMessages = false;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  int numMess = 0;
 
   @override
   void initState() {
@@ -107,6 +108,8 @@ class ZugChatState extends State<ZugChat> with SingleTickerProviderStateMixin {
       curve: Curves.easeInOut,
     ));
     _animationController.forward();
+
+
   }
 
   @override
@@ -137,10 +140,13 @@ class ZugChatState extends State<ZugChat> with SingleTickerProviderStateMixin {
   }
 
   Widget buildChatUI(BuildContext context, MessageList? messageList) {
+
     Area currArea = widget.model.currentArea;
-    if (widget.autoScroll) {
+    if (widget.autoScroll && (numMess < (messageList?.messages.length ?? 0))) {
       ZugUtils.scrollDown(scrollController, 250, delay: 750);
     }
+
+    numMess = messageList?.messages.length ?? 0;
 
     List<Widget> widgetMsgList = [];
     if (messageList != null) {
@@ -366,7 +372,7 @@ class ZugChatState extends State<ZugChat> with SingleTickerProviderStateMixin {
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.zero,
                     ),
-                    value: scope,
+                    initialValue: scope,
                     dropdownColor: const Color(0xFF181825),
                     style: TextStyle(
                       color: widget.cmdTxtColor,
