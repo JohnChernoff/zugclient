@@ -435,7 +435,9 @@ abstract class ZugModel extends ChangeNotifier {
     for (var areaData in data[fieldAreas]) {
       Area a = getOrCreateArea(areaData);
       a.exists = true;
-      updateOccupants(a,areaData); //a.updateArea(areaData);
+      updateOccupants(a,areaData);
+      //a.updateArea(areaData); //TODO: why was this commented out?
+      if (areaData[fieldPhase] != null) a.updatePhase(areaData);
     }
     areas.removeWhere((key, value) => !value.exists);
     if (currentArea != noArea && !currentArea.exists) {
