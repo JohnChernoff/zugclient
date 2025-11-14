@@ -537,7 +537,7 @@ abstract class ZugModel extends ChangeNotifier {
   }
 
   bool handleLogin(data) { //TODO: create login dialog?
-    id = data[fieldConnID]; log.info("Connection ID: $id");
+    id = data[fieldUserID]; log.info("Connection ID: $id");
     if (!autoLog && loginType != null) {
       login(loginType);
     }
