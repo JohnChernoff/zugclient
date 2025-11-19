@@ -120,6 +120,98 @@ class ZugHome extends StatefulWidget {
   @override
   State<ZugHome> createState() => _ZugHomeState();
 
+  Widget getNavBar(ZugModel model,
+      { Decoration? decoration = const BoxDecoration(color: Colors.black),
+        Color? iconColor = Colors.white,
+        Color? indicatorColor = Colors.grey,
+        Color? tintColor = Colors.cyanAccent,
+        orientation = Axis.vertical}) {
+
+    NavigationDestination mainDestination = app.getMainNavigationBarItem();
+    NavigationDestination lobbyDestination = app.getLobbyNavigationBarItem();
+    NavigationDestination settingsDestination = app.getSettingsNavigationBarItem();
+
+    return Container(
+        decoration: decoration,
+        child: ValueListenableBuilder<PageType>(
+      valueListenable: model.pageNotifier,
+      builder: (context, pageType, _) {
+        final selectedIndex = pageTypeToIndex(pageType);
+        return Theme(
+          data: Theme.of(context).copyWith(
+            navigationBarTheme: NavigationBarThemeData(
+              labelTextStyle: WidgetStateProperty.all(
+                TextStyle(color: iconColor),
+              ),
+            ),
+          ),
+          child: orientation == Axis.horizontal
+              ? NavigationBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            indicatorColor: indicatorColor,
+            surfaceTintColor: tintColor,
+            selectedIndex: selectedIndex,
+            onDestinationSelected: (index) =>
+            model.pageNotifier.value = indexToPageType(index),
+            destinations: [
+              mainDestination,
+              lobbyDestination,
+              settingsDestination
+            ],
+          )
+              : NavigationRail(
+            backgroundColor: Colors.transparent,
+            indicatorColor: indicatorColor,
+            selectedIndex: selectedIndex,
+            onDestinationSelected: (index) =>
+            model.pageNotifier.value = indexToPageType(index),
+            destinations: [
+              NavigationRailDestination(
+                icon: mainDestination.icon,
+                label: Text(mainDestination.label),
+              ),
+              NavigationRailDestination(
+                icon: lobbyDestination.icon,
+                label: Text(lobbyDestination.label),
+              ),
+              NavigationRailDestination(
+                icon: settingsDestination.icon,
+                label: Text(settingsDestination.label),
+              ),
+            ],
+          ),
+        );
+      },
+    ));
+  }
+
+  int pageTypeToIndex(PageType pageType) {
+    switch (pageType) {
+      case PageType.main:
+        return 0;
+      case PageType.lobby:
+        return 1;
+      case PageType.options:
+        return 2;
+      default:
+        return 1; // fallback
+    }
+  }
+
+  PageType indexToPageType(int index) {
+    switch (index) {
+      case 0:
+        return PageType.main;
+      case 1:
+        return PageType.lobby;
+      case 2:
+        return PageType.options;
+      default:
+        return PageType.lobby;
+    }
+  }
+
 }
 
 enum PageType { main,lobby,options,splash,none }
@@ -164,7 +256,7 @@ class _ZugHomeState extends State<ZugHome> {
         builder: (context, constraints) {
           return Row(
             children: [
-              getNavBar(model),
+              widget.getNavBar(model),
               Expanded(
                 child: Column(
                   children: [
@@ -197,96 +289,10 @@ class _ZugHomeState extends State<ZugHome> {
 
   SafeArea getSafeArea(ZugModel model) {
     return SafeArea(
-      child: kIsWeb ? widget.app.createStatusBar(context,model) : getNavBar(model),
+      child: kIsWeb ? widget.app.createStatusBar(context,model) : widget.getNavBar(model),
     );
   }
 
-  Widget getNavBar(ZugModel model,
-      { iconColor = Colors.white,
-        backgroundColor = Colors.black,
-        indicatorColor = Colors.grey,
-        orientation = Axis.vertical}) {
-
-    NavigationDestination mainDestination = widget.app.getMainNavigationBarItem();
-    NavigationDestination lobbyDestination = widget.app.getLobbyNavigationBarItem();
-    NavigationDestination settingsDestination = widget.app.getSettingsNavigationBarItem();
-
-    return ValueListenableBuilder<PageType>(
-      valueListenable: model.pageNotifier,
-      builder: (context, pageType, _) {
-        final selectedIndex = pageTypeToIndex(pageType);
-        return Theme(
-          data: Theme.of(context).copyWith(
-            navigationBarTheme: NavigationBarThemeData(
-              labelTextStyle: WidgetStateProperty.all(
-                TextStyle(color: iconColor),
-              ),
-            ),
-          ),
-          child: orientation == Axis.horizontal
-              ? NavigationBar(
-            backgroundColor: backgroundColor,
-            indicatorColor: indicatorColor,
-            selectedIndex: selectedIndex,
-            onDestinationSelected: (index) =>
-            model.pageNotifier.value = indexToPageType(index),
-            destinations: [
-              mainDestination,
-              lobbyDestination,
-              settingsDestination
-            ],
-          )
-              : NavigationRail(
-            backgroundColor: backgroundColor,
-            indicatorColor: indicatorColor,
-            selectedIndex: selectedIndex,
-            onDestinationSelected: (index) =>
-            model.pageNotifier.value = indexToPageType(index),
-            destinations: [
-              NavigationRailDestination(
-                icon: mainDestination.icon,
-                label: Text(mainDestination.label),
-              ),
-              NavigationRailDestination(
-                icon: lobbyDestination.icon,
-                label: Text(lobbyDestination.label),
-              ),
-              NavigationRailDestination(
-                icon: settingsDestination.icon,
-                label: Text(settingsDestination.label),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  int pageTypeToIndex(PageType pageType) {
-    switch (pageType) {
-      case PageType.main:
-        return 0;
-      case PageType.lobby:
-        return 1;
-      case PageType.options:
-        return 2;
-      default:
-        return 1; // fallback
-    }
-  }
-
-  PageType indexToPageType(int index) {
-    switch (index) {
-      case 0:
-        return PageType.main;
-      case 1:
-        return PageType.lobby;
-      case 2:
-        return PageType.options;
-      default:
-        return PageType.lobby;
-    }
-  }
 }
 
 class ZugScrollBehavior extends MaterialScrollBehavior {

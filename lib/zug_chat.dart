@@ -365,8 +365,7 @@ class ZugChatState extends State<ZugChat> with SingleTickerProviderStateMixin {
             child: ValueListenableBuilder<MessageScope>(
               valueListenable: widget.model.chatScope,
               builder: (context, scope, _) {
-                return Container(
-                  color: Colors.green,
+                return Container(//color: Colors.green,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: DropdownButtonFormField<MessageScope>(
                     decoration: const InputDecoration(
