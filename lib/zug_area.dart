@@ -56,7 +56,7 @@ abstract class Room with Timerable {
 
 enum ZugPhase {undefined}
 
-abstract class Area extends Room{
+abstract class Area extends Room implements Comparable<Area> {
   dynamic upData = {};
   int phaseTime = 0;
   int phaseStamp = DateTime.now().millisecondsSinceEpoch;
@@ -99,6 +99,11 @@ abstract class Area extends Room{
   int phaseTimeRemaining() => max(phaseTime - (DateTime.now().millisecondsSinceEpoch - phaseStamp),0) - servTimeDiff;
   double phaseProgress() => 1 - (phaseTime > 0 ? (phaseTimeRemaining() / phaseTime) : 0);
   bool inPhase() => phaseTimeRemaining() > 0;
+
+  @override
+  int compareTo(Area other) {
+   return id.compareTo(other.id);
+  }
 }
 
 class ShuffleInfo {

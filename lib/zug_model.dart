@@ -6,6 +6,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zug_net/oauth_client.dart';
@@ -27,12 +28,13 @@ import 'package:package_info_plus/package_info_plus.dart';
 enum AudioOpt {sound,soundVol,music,musicVol}
 enum ZugClientOpt {debug}
 enum LoginType {
-  none(null),
-  bot(null),
-  lichess("lichess.org"),
-  google("google.com");
+  none(null,Icon(Icons.person_outline)),
+  bot(null,Icon(Icons.smart_toy_outlined)),
+  lichess("lichess.org",Icon(FontAwesomeIcons.google)),
+  google("google.com",Icon(FontAwesomeIcons.chessKnight));
   final String? url;
-  const LoginType(this.url);
+  final Icon icon;
+  const LoginType(this.url,this.icon);
   static LoginType? fromString(String str) {
     for (LoginType t in values) {
       if (str.toLowerCase() == t.name) return t;
@@ -849,6 +851,11 @@ abstract class ZugModel extends ChangeNotifier {
 
   bool isGuest() => userName?.source == LoginType.none;
 
+  List<String> getSortedAreaTitles() {
+    List<String> sortedTitles = areas.keys.where((key) => key != noAreaTitle).toList();
+    sortedTitles.sort((a,b) => areas[a]!.compareTo(areas[b]!));
+    return sortedTitles;
+  }
 }
 
 //extension StrComp on Enum { bool eq(dynamic s) { return (s is String) ? name == s : false; } }

@@ -24,7 +24,6 @@ class LobbyPage extends StatefulWidget {
   final bool seekButt, createButt, startButt, joinButt, partButt;
   final int portFlex;
   final double commandAreaWidth, commandAreaHeight;
-  final bool showSelector;
 
   const LobbyPage(this.model, {
     this.backgroundImage,
@@ -44,12 +43,92 @@ class LobbyPage extends StatefulWidget {
     this.portFlex = 2,
     this.commandAreaHeight = 80,
     this.commandAreaWidth = 140,
-    this.showSelector = true,
     super.key
   });
 
-  Widget? selectorWidget() {
-    return null;
+  Widget selectorWidget(BuildContext context, {
+    required Function(String title) onSelected,
+  }) {
+    Set<DropdownMenuItem<String>> areaSet = {};
+    areaSet.addAll(model.areas.keys
+        .where((key) => model.areas[key]?.exists ?? false)
+        .map<DropdownMenuItem<String>>((String title) {
+      return DropdownMenuItem<String>(
+        value: title,
+        child: getAreaItem(title, context),
+      );
+    }).toList());
+
+    List<DropdownMenuItem<String>> areas = areaSet.toList();
+
+    areas.sort((a, b) {
+      Area? area1 = model.areas[a.value];
+      Area? area2 = model.areas[b.value];
+      return (area1 != null && area2 != null) ? area1.compareTo(area2) : 0;
+    });
+
+    String selectedTitle = model.currentArea.exists
+        ? model.currentArea.id
+        : model.noArea.id;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.location_on,
+            color: Theme.of(context).colorScheme.primary,
+            size: 24,
+          ),
+          const SizedBox(width: 12),
+          Text(
+            "Select $areaName:",
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                ),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  dropdownColor: Theme.of(context).colorScheme.surface,
+                  value: selectedTitle,
+                  items: areas,
+                  icon: Icon(
+                    Icons.expand_more,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  onChanged: (String? title) => onSelected,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget selectedArea(BuildContext context, {Color? bkgCol, Color? txtCol, Iterable<dynamic>? occupants}) {
@@ -266,11 +345,6 @@ class LobbyPage extends StatefulWidget {
     );
   }
 
-  int compareAreas(Area? a, Area? b) {
-    if (a == null || b == null) return 0;
-    return a.id.compareTo(b.id);
-  }
-
   Widget getHelp(BuildContext context, Widget buttons) {
     return buttons;
   }
@@ -337,24 +411,6 @@ class _LobbyPageState extends State<LobbyPage> with TickerProviderStateMixin {
   }
 
   Widget getMainArea(BuildContext context) {
-    Set<DropdownMenuItem<String>> areaSet = {};
-    areaSet.addAll(widget.model.areas.keys
-        .where((key) => widget.model.areas[key]?.exists ?? false)
-        .map<DropdownMenuItem<String>>((String title) {
-      return DropdownMenuItem<String>(
-        value: title,
-        child: widget.getAreaItem(title, context),
-      );
-    }).toList());
-
-    List<DropdownMenuItem<String>> areas = areaSet.toList();
-    areas.sort((a, b) => widget.compareAreas(
-        widget.model.areas[a.value], widget.model.areas[b.value]));
-
-    String selectedTitle = widget.model.currentArea.exists
-        ? widget.model.currentArea.id
-        : widget.model.noArea.id;
-
     return Container(
       width: widget.width,
       decoration: BoxDecoration(
@@ -386,71 +442,12 @@ class _LobbyPageState extends State<LobbyPage> with TickerProviderStateMixin {
             widget.style == LobbyStyle.tersePort
                 ? Expanded(flex: widget.portFlex, child: getCommandArea(context))
                 : getCommandArea(context),
-
             // Area selector
-            if (widget.showSelector) widget.selectorWidget() ?? Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface.withOpacity(0.9),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.location_on,
-                    color: Theme.of(context).colorScheme.primary,
-                    size: 24,
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    "Select ${widget.areaName}:",
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Flexible(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
-                        ),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          dropdownColor: Theme.of(context).colorScheme.surface,
-                          value: selectedTitle,
-                          items: areas,
-                          icon: Icon(
-                            Icons.expand_more,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                          onChanged: (String? title) {
-                            setState(() {
-                              widget.model.switchArea(title);
-                            });
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
+           widget.selectorWidget(context,
+               onSelected: (title) => setState(() {
+                 widget.model.switchArea(title);
+               })
+           ),
             // Selected area display
             Expanded(flex: 1, child: widget.selectedArea(context)),
           ],

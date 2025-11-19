@@ -360,12 +360,13 @@ class ZugChatState extends State<ZugChat> with SingleTickerProviderStateMixin {
       child: Row(
         children: [
           // Scope dropdown
-          Expanded(
-            flex: 2,
+          SizedBox(
+            width: 136, //: 2,
             child: ValueListenableBuilder<MessageScope>(
               valueListenable: widget.model.chatScope,
               builder: (context, scope, _) {
                 return Container(
+                  color: Colors.green,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: DropdownButtonFormField<MessageScope>(
                     decoration: const InputDecoration(
@@ -398,7 +399,7 @@ class ZugChatState extends State<ZugChat> with SingleTickerProviderStateMixin {
                                 color: widget.cmdTxtColor.withOpacity(0.7),
                               ),
                               const SizedBox(width: 8),
-                              Text("${widget.roomName}"),
+                              SingleChildScrollView(child: SizedBox(width: 60, child: Text("${widget.roomName}"))),
                             ],
                           ),
                         ),
@@ -413,7 +414,7 @@ class ZugChatState extends State<ZugChat> with SingleTickerProviderStateMixin {
                                 color: widget.cmdTxtColor.withOpacity(0.7),
                               ),
                               const SizedBox(width: 8),
-                              Text("${widget.areaName}"),
+                              SingleChildScrollView(child: SizedBox(width: 60, child: Text("${widget.areaName}"))),
                             ],
                           ),
                         ),
@@ -428,7 +429,8 @@ class ZugChatState extends State<ZugChat> with SingleTickerProviderStateMixin {
                                 color: widget.cmdTxtColor.withOpacity(0.7),
                               ),
                               const SizedBox(width: 8),
-                              Text("${widget.serverName}"),
+                              SingleChildScrollView(child: SizedBox(width: 60, child: Text("${widget.serverName}"))),
+                              //Text("${widget.serverName}"),
                             ],
                           ),
                         ),

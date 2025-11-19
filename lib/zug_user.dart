@@ -23,6 +23,13 @@ class UniqueName {
     return { fieldName : name, fieldAuthSource : source.name };
   }
 
+  Widget toWidget({ Color? color, Color? bkgColor}) {
+    return Row(children: [
+      source.icon,
+      Text(name,style: TextStyle(color: color, backgroundColor: bkgColor)),
+    ]);
+  }
+
   @override
   String toString() {
     return "$name@${source.name}";
