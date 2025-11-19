@@ -174,6 +174,16 @@ class _OptionsPageState extends State<OptionsPage> {
         spacing: 12.0,
         children: [
           ElevatedButton.icon(
+            onPressed: () => exitOptions(),
+            icon: const Icon(Icons.cancel),
+            label: const Text("Cancel"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+          ),
+          ElevatedButton.icon(
             onPressed: () => saveOptions(),
             icon: const Icon(Icons.check),
             label: const Text("Update"),
@@ -211,12 +221,17 @@ class _OptionsPageState extends State<OptionsPage> {
     } else {
       widget.model.areaCmd(ClientMsg.setOptions, data: {fieldOptions: areaOptionsToJson()});
     }
+    exitOptions();
+  }
+
+  void exitOptions() {
     if (widget.isDialog) {
       Navigator.pop(context);
     } else {
       widget.model.goToPage(PageType.lobby);
     }
   }
+
 
   Map<String, dynamic> areaOptionsToJson() {
     Map<String, dynamic> areaOptionMap = {};
