@@ -30,8 +30,8 @@ enum ZugClientOpt {debug}
 enum LoginType {
   none(null,Icon(Icons.person_outline)),
   bot(null,Icon(Icons.smart_toy_outlined)),
-  lichess("lichess.org",Icon(FontAwesomeIcons.google)),
-  google("google.com",Icon(FontAwesomeIcons.chessKnight));
+  lichess("lichess.org",Icon(FontAwesomeIcons.chessKnight)),
+  google("google.com",Icon(FontAwesomeIcons.google));
   final String? url;
   final Icon icon;
   const LoginType(this.url,this.icon);
