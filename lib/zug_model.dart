@@ -209,10 +209,12 @@ abstract class ZugModel extends ChangeNotifier {
       }
   }
 
-  Area getOrCreateArea(dynamic data) {
-    return areas.putIfAbsent(data?[fieldAreaID] ?? noAreaTitle, () { //print(areas.keys); print("Adding area: $data");
+  Area getOrCreateArea(dynamic data) { //print("GetOrCreateArea: $data");
+    final area = areas.putIfAbsent(data?[fieldAreaID] ?? noAreaTitle, () { //print(areas.keys); print("Adding area: $data");
       return createArea(data);
     });
+    if (data != null && data[fieldPhase] != null) area.updatePhase(data);
+    return area;
   }
 
   Future<dynamic> areaCmd(Enum cmd, { String? id, Map<String,dynamic> data = const {}, Enum? responseType, int timeout = 5000}) {
@@ -297,6 +299,7 @@ abstract class ZugModel extends ChangeNotifier {
     return true;
   }
 
+  //TODO: this only works if occupant doesn't exist?!
   bool handleUpdateOccupant(data) { log.fine("Occupant update: $data");
     Area area = getOrCreateArea(data);
     area.occupantMap.putIfAbsent(UniqueName.fromData(data[fieldUser]), () => data);
@@ -439,7 +442,6 @@ abstract class ZugModel extends ChangeNotifier {
       a.exists = true;
       updateOccupants(a,areaData);
       //a.updateArea(areaData); //TODO: why was this commented out?
-      if (areaData[fieldPhase] != null) a.updatePhase(areaData);
     }
     areas.removeWhere((key, value) => !value.exists);
     if (currentArea != noArea && !currentArea.exists) {
@@ -448,7 +450,7 @@ abstract class ZugModel extends ChangeNotifier {
     return true;
   }
 
-  bool handleUpdateAreaList(data) { //print("Area List Update: $data");
+  bool handleUpdateAreaList(data) { //print("Area List Update: ${data["update_type"]},${data[fieldArea][fieldPhase]}");
     Area area = getOrCreateArea(data[fieldArea]);
     if (data[fieldAreaChange] == AreaChange.created.name) {
       area.exists = true;
@@ -461,6 +463,7 @@ abstract class ZugModel extends ChangeNotifier {
     else if (data[fieldAreaChange] == AreaChange.updated.name) {
       updateOccupants(area,data[fieldArea]);
     }
+    if (data[fieldArea][fieldPhase] != null) area.updatePhase(data[fieldArea]);
     return true;
   }
 

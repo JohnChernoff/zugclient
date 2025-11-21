@@ -22,6 +22,7 @@ class LobbyPage extends StatefulWidget {
   final Color borderCol;
   final ZugChat? zugChat;
   final bool seekButt, createButt, startButt, joinButt, partButt;
+  final bool useSelectorWidget, useSelectedWidget;
   final int portFlex;
   final double commandAreaWidth, commandAreaHeight;
 
@@ -40,6 +41,8 @@ class LobbyPage extends StatefulWidget {
     this.startButt = true,
     this.joinButt = true,
     this.partButt = true,
+    this.useSelectorWidget = true,
+    this.useSelectedWidget = true,
     this.portFlex = 2,
     this.commandAreaHeight = 80,
     this.commandAreaWidth = 140,
@@ -443,13 +446,13 @@ class _LobbyPageState extends State<LobbyPage> with TickerProviderStateMixin {
                 ? Expanded(flex: widget.portFlex, child: getCommandArea(context))
                 : getCommandArea(context),
             // Area selector
-           widget.selectorWidget(context,
+           if (widget.useSelectorWidget) widget.selectorWidget(context,
                onSelected: (title) => setState(() {
                  widget.model.switchArea(title);
                })
            ),
             // Selected area display
-            Expanded(flex: 1, child: widget.selectedArea(context)),
+            if (widget.useSelectedWidget) Expanded(flex: 1, child: widget.selectedArea(context)),
           ],
         ),
       ),

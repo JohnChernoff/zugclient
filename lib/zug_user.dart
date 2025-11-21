@@ -31,9 +31,20 @@ class UniqueName {
   }
 
   @override
+  bool operator ==(Object other) {
+    if (other is UniqueName) return eq(other);
+    return false;
+  }
+
+  @override
   String toString() {
     return "$name@${source.name}";
   }
+
+  @override
+  // TODO: implement hashCode
+  int get hashCode => name.hashCode + source.hashCode;
+
 }
 
 class UserWidget extends StatelessWidget {
