@@ -43,7 +43,7 @@ enum LoginType {
 }
 
 abstract class ZugModel extends ChangeNotifier {
-  final ValueNotifier<PageType> pageNotifier;
+  final ValueNotifier<PageType> _pageNotifier;
   static const optPrefix = "ZugClientOption";
   static final log = Logger('ClientLogger');
   static const noAreaTitle = "-";
@@ -90,11 +90,16 @@ abstract class ZugModel extends ChangeNotifier {
   String? autoJoinTitle;
   final ValueNotifier<MessageScope> chatScope = ValueNotifier(MessageScope.server);
   Map<String,ValueNotifier<bool?>> dialogTracker = {};
+  ValueNotifier<PageType> get pageNotifier => _pageNotifier;
+  PageType get currentPage => _pageNotifier.value; //set currentPage(PageType p) => _pageNotifier.value = p;
+  void gotoPage(PageType p) {
+    _pageNotifier.value = p;
+  }
 
   Area createArea(dynamic data);
 
   ZugModel(this.domain,this.port,this.remoteEndpoint, this.prefs, {
-    FirebaseOptions? firebaseOptions, this.showServMess = false, this.localServer = false, this.javalinServer = false}) : pageNotifier = ValueNotifier<PageType>(PageType.lobby) {
+    FirebaseOptions? firebaseOptions, this.showServMess = false, this.localServer = false, this.javalinServer = false}) : _pageNotifier = ValueNotifier<PageType>(PageType.splash) {
     //_endClipListener = clipPlayer.onPlayerComplete.listen((v) => log.info("done"));
     trackPlayer.stop();
     log.info("Prefs: ${prefs.toString()}");
@@ -157,12 +162,6 @@ abstract class ZugModel extends ChangeNotifier {
   bool awaiting(Enum e) => _waitMap.containsKey(e)
       ? !_waitMap[e]!.isCompleted : false;
 
-  PageType get currentPage => pageNotifier.value;
-
-  void goToPage(PageType page) {
-    pageNotifier.value = page;
-  }
-
   Future<void> initFirebase(FirebaseOptions fireOpts) async {
     //await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform,);
     await Firebase.initializeApp(options: fireOpts);
@@ -210,11 +209,11 @@ abstract class ZugModel extends ChangeNotifier {
   }
 
   Area getOrCreateArea(dynamic data) { //print("GetOrCreateArea: $data");
-    final area = areas.putIfAbsent(data?[fieldAreaID] ?? noAreaTitle, () { //print(areas.keys); print("Adding area: $data");
-      return createArea(data);
-    });
-    if (data != null && data[fieldPhase] != null) area.updatePhase(data);
-    return area;
+      final area = areas.putIfAbsent(data?[fieldAreaID] ?? noAreaTitle, () { //print(areas.keys); print("Adding area: $data");
+        return createArea(data);
+      });
+      if (data != null) area.updatePhase(data);
+      return area;
   }
 
   Future<dynamic> areaCmd(Enum cmd, { String? id, Map<String,dynamic> data = const {}, Enum? responseType, int timeout = 5000}) {
@@ -320,7 +319,7 @@ abstract class ZugModel extends ChangeNotifier {
     handleUpdateOccupants(data,area : area); //TODO: why use named argument?
     handleUpdateOptions(data,area : area);
     handleUpdateMessages(data, area: area);
-    if (data[fieldPhase] != null) area.updatePhase(data);
+    area.updatePhase(data);
     area.updateArea(data);
   }
 
@@ -430,7 +429,7 @@ abstract class ZugModel extends ChangeNotifier {
 
   void handleStart(data) {
     handleUpdateArea(data);
-    goToPage(PageType.main);
+    gotoPage(PageType.main);
   }
 
   bool handleAreaList(data) { //print("Area List: $data");
@@ -463,7 +462,7 @@ abstract class ZugModel extends ChangeNotifier {
     else if (data[fieldAreaChange] == AreaChange.updated.name) {
       updateOccupants(area,data[fieldArea]);
     }
-    if (data[fieldArea][fieldPhase] != null) area.updatePhase(data[fieldArea]);
+    area.updatePhase(data[fieldArea]);
     return true;
   }
 
@@ -632,6 +631,7 @@ abstract class ZugModel extends ChangeNotifier {
       joinArea(autoJoinTitle!);
       autoJoinTitle = null;
     }
+    gotoPage(PageType.lobby);
     return true;
   }
 

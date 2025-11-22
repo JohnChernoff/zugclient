@@ -58,9 +58,9 @@ enum ZugPhase {undefined}
 
 abstract class Area extends Room implements Comparable<Area> {
   dynamic upData = {};
-  int phaseTime = 0;
-  int phaseStamp = DateTime.now().millisecondsSinceEpoch;
-  Enum phase = ZugPhase.undefined;
+  int _phaseTime = 0;
+  int _phaseStamp = DateTime.now().millisecondsSinceEpoch;
+  Enum _phase = ZugPhase.undefined;
   Map<String,ZugOption> options = {};
   bool exists = true;
   Room? currentRoom;
@@ -73,10 +73,10 @@ abstract class Area extends Room implements Comparable<Area> {
   void setPhase(String p) {
     for (Enum e in getPhases()) {
       if (e.name == p) {
-        phase = e; return;
+        _phase = e; return;
       }
     }
-    phase = ZugPhase.undefined;
+    _phase = ZugPhase.undefined;
   }
 
   bool updateArea(Map<String,dynamic> data) {
@@ -85,20 +85,23 @@ abstract class Area extends Room implements Comparable<Area> {
   }
 
   void updatePhase(Map<String,dynamic> data) {
+    if (data[fieldPhase] == null) return;
     ZugModel.log.fine("Phase Data: $data");
-    phaseStamp = data[fieldPhaseStamp] ?? DateTime.now().millisecondsSinceEpoch;
+    _phaseStamp = data[fieldPhaseStamp] ?? DateTime.now().millisecondsSinceEpoch;
     if (data[fieldPhaseCurrtime] != null) { //HOLY TIME KLUDGE BATMAN
       servTimeDiff = data[fieldPhaseCurrtime] - DateTime.now().millisecondsSinceEpoch;
       ZugModel.log.fine("Serv time diff: $servTimeDiff");
     }
-    phaseTime = max(data[fieldPhaseTimeRemaining] ?? 0,0);
+    _phaseTime = max(data[fieldPhaseTimeRemaining] ?? 0,0);
     setPhase(data[fieldPhase]);
-    ZugModel.log.fine("Updating phase: $phase,$phaseTime");
+    ZugModel.log.fine("Updating phase: $_phase,$_phaseTime");
   }
 
-  int phaseTimeRemaining() => max(phaseTime - (DateTime.now().millisecondsSinceEpoch - phaseStamp),0) - servTimeDiff;
-  double phaseProgress() => 1 - (phaseTime > 0 ? (phaseTimeRemaining() / phaseTime) : 0);
-  bool inPhase() => phaseTimeRemaining() > 0;
+  Enum get phase => _phase;
+  int get phaseTime => _phaseTime;
+  int get phaseTimeRemaining => max(_phaseTime - (DateTime.now().millisecondsSinceEpoch - _phaseStamp),0) - servTimeDiff;
+  double get phaseProgress => 1 - (_phaseTime > 0 ? (phaseTimeRemaining / _phaseTime) : 0);
+  bool get inPhase => phaseTimeRemaining > 0;
 
   @override
   int compareTo(Area other) {

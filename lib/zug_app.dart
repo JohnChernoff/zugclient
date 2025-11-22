@@ -153,7 +153,7 @@ class ZugHome extends StatefulWidget {
             surfaceTintColor: tintColor,
             selectedIndex: selectedIndex,
             onDestinationSelected: (index) =>
-            model.pageNotifier.value = indexToPageType(index),
+            model.gotoPage(indexToPageType(index)),
             destinations: [
               mainDestination,
               lobbyDestination,
@@ -165,7 +165,7 @@ class ZugHome extends StatefulWidget {
             indicatorColor: indicatorColor,
             selectedIndex: selectedIndex,
             onDestinationSelected: (index) =>
-            model.pageNotifier.value = indexToPageType(index),
+            model.gotoPage(indexToPageType(index)),
             destinations: [
               NavigationRailDestination(
                 icon: mainDestination.icon,

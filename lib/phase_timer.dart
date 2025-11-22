@@ -23,7 +23,7 @@ class PhaseTimerController {
   }) {
     if (phaseTimer.duration?.inMilliseconds != currArea?.phaseTime) {
       phaseTimer.reset();
-      if (currArea?.inPhase() ?? false) {
+      if (currArea?.inPhase ?? false) {
         phaseTimer.duration = Duration(milliseconds: currArea?.phaseTime ?? 0);
         phaseTimer.repeat(reverse: true);
       }
@@ -105,7 +105,7 @@ class PhaseTimerController {
   }) {
     if (phaseTimer.duration?.inMilliseconds != currArea?.phaseTime) {
       phaseTimer.reset();
-      if (currArea?.inPhase() ?? false) {
+      if (currArea?.inPhase ?? false) {
         phaseTimer.duration = Duration(milliseconds: currArea?.phaseTime ?? 0);
         phaseTimer.repeat(reverse: true);
       }
