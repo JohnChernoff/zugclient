@@ -55,9 +55,16 @@ class IntroDialog {
   }
 }
 
+class RelativeSizedWidget {
+  final Widget widget;
+  final double percWidth, percHeight;
+  final double? width, height;
+  const RelativeSizedWidget(this.widget, this.percWidth, this.percHeight, {this.width, this.height});
+}
+
 class MusicStackDialog extends StatefulWidget {
 
-  final List<Widget> stack;
+  final List<RelativeSizedWidget> stack;
   final String track;
   final ZugModel model;
 
@@ -82,14 +89,14 @@ class MusicStackDialogState extends State<MusicStackDialog> {
   @override
   Widget build(BuildContext context) {
     if (!playing) {
-      widget.stack.add(ElevatedButton(
+      widget.stack.add(RelativeSizedWidget(ElevatedButton(
           onPressed: () {
             playTrack();
             setState(() { widget.stack.removeLast(); });
           },
           child: const Text("Turn on sound")
-      )
-      );
+      ),.9,.9,width: 128, height: 48
+      ));
     }
 
     return Dialog(
@@ -100,15 +107,24 @@ class MusicStackDialogState extends State<MusicStackDialog> {
             widget.model.clipPlayer.stop();
             Navigator.pop(context);
             },
-          child: Stack(children: widget.stack),
-        )
+          child: LayoutBuilder(builder: (BuildContext ctx, BoxConstraints bc) => Stack(
+              children: List.generate(widget.stack.length, (i) {
+                final e = widget.stack.elementAt(i);
+                return Positioned(
+                left: bc.maxWidth * ((1- e.percWidth)/2),
+                top: bc.maxHeight * ((1- e.percHeight)/2),
+                child: SizedBox(
+                    width: e.width ?? (bc.maxWidth *  e.percWidth),
+                    height: e.height ?? (bc.maxHeight *  e.percHeight),
+                    child: e.widget,
+          )); }
+        ))))
     );
-
   }
 
   void playTrack() {
-    playing = true;
-    widget.model.clipPlayer.play(AssetSource('audio/tracks/${widget.track}.mp3'));
+    playing = true; //print("Playing: ${widget.track}");
+    widget.model.clipPlayer.play(AssetSource('${widget.track}.mp3'));
   }
 
 }
