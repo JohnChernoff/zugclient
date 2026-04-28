@@ -57,6 +57,7 @@ abstract class Room with Timerable {
 enum ZugPhase {undefined}
 
 abstract class Area extends Room implements Comparable<Area> {
+  UniqueName? creator;
   dynamic upData = {};
   int _phaseTime = 0;
   int _phaseStamp = DateTime.now().millisecondsSinceEpoch;
@@ -66,7 +67,12 @@ abstract class Area extends Room implements Comparable<Area> {
   Room? currentRoom;
   int servTimeDiff = 0;
 
-  Area(dynamic data) : super(data);
+  Area(dynamic data) : super(data) {
+    if (data != null) { //print("Data: $data");
+      final creatorData = data["creator"];
+      if (creatorData != null) creator = UniqueName.fromData(creatorData);
+    }
+  }
 
   List<Enum> getPhases();
 

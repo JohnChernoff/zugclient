@@ -1,6 +1,6 @@
 enum MessageScope { room, area, server } //TODO: make server and client messages the same?
 
-enum ServMsg { none, version, ip, ipReq, ping, obs, unObs, reqLogin, logOK, noLog, errMsg, alertMsg, servMsg, servUserMsg, areaUserMsg, areaMsg, roomMsg, privMsg, phase, kicked,
+enum ServMsg { none, version, ip, ipReq, ping, obs, unObs, reqLogin, logOK, noLog, errMsg, errServMsg, alertMsg, servMsg, servUserMsg, areaUserMsg, areaMsg, roomMsg, privMsg, phase, kicked,
   joinArea, partArea, createArea, startArea, userList, areaList, updateAreaList, updateArea, updateRoom, updateServ, updateUser, updateOccupant, updateOccupants, updateOptions,
   reqResponse, cancelledResponse,completedResponse
 }

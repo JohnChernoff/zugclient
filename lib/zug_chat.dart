@@ -668,7 +668,7 @@ class ZugChatLineState extends State<ZugChatLine>
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          "Hidden message (tap to reveal)",
+                          widget.text,
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.7),
                             fontSize: 12,
@@ -678,7 +678,7 @@ class ZugChatLineState extends State<ZugChatLine>
                       ),
                     ] else ...[
                       Text(
-                        hidden ? "(hidden)" : widget.text,
+                        hidden ? "*** hidden message (tap to reveal) ***" : widget.text,
                         style: TextStyle(
                           color: widget.color,
                           fontSize: 14,

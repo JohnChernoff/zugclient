@@ -41,7 +41,7 @@ class MessageList {
 
   }
 
-  void addMessage(data) {
+  void addMessage(data, {Color? color}) {
     if (data[fieldZugMsg] != null) {
       addZugMsg(data[fieldZugMsg]);
     } else {
@@ -51,7 +51,7 @@ class MessageList {
           uName,
           data[fieldMsg],
           DateTime.now(),
-          getMsgColor(uName,data),
+          color ?? getMsgColor(uName,data),
           data[fieldHidden] ?? false));
     }
     newMessages++;

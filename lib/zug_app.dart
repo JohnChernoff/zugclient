@@ -8,6 +8,7 @@ import 'package:zug_utils/zug_utils.dart';
 import 'package:zugclient/splash_page.dart';
 import 'package:zugclient/zug_chat.dart';
 import 'package:zugclient/zug_model.dart';
+import 'package:zugclient/zug_nav.dart';
 import 'lobby_page.dart';
 import 'options_page.dart';
 
@@ -19,12 +20,12 @@ abstract class ZugApp extends StatelessWidget {
   final Color colorSeed;
   final bool isDark;
   final ColorScheme colorScheme;
-  final bool noNav;
+  final bool noNavBar;
 
   ZugApp(this.model, this.appName, {
     this.colorSeed = Colors.green,
     this.isDark = true,
-    super.key, Level logLevel = Level.INFO, this.noNav = false}) : colorScheme = isDark ? const ColorScheme.dark() : const ColorScheme.light() { //}ColorScheme.fromSeed(seedColor: colorSeed) {
+    super.key, Level logLevel = Level.INFO, this.noNavBar = false}) : colorScheme = isDark ? const ColorScheme.dark() : const ColorScheme.light() { //}ColorScheme.fromSeed(seedColor: colorSeed) {
     ZugDialogs.setNavigatorKey(zugAppNavigatorKey);
     Logger.root.level = logLevel;
     Logger.root.onRecord.listen((record) {
@@ -36,7 +37,6 @@ abstract class ZugApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-
     return ChangeNotifierProvider(
         create: (context) => model,
         child: MaterialApp(
@@ -53,7 +53,7 @@ abstract class ZugApp extends StatelessWidget {
   }
 
   Widget createHomePage(ZugApp app) {
-    return ZugHome(app:app,noNav: noNav);
+    return ZugHome(app:app,noNavBar: noNavBar);
   }
 
   Widget createOptionsPage(ZugModel model) {
@@ -79,8 +79,8 @@ abstract class ZugApp extends StatelessWidget {
 
   Widget createMainPage(ZugModel model);
 
-  AppBar createStatusBar(BuildContext context, ZugModel model, {Widget? txt, Color? color}) {
-    Text defaultTxt = noNav
+  AppBar? createStatusBar(BuildContext context, ZugModel model, {Widget? txt, Color? color}) {
+    Text defaultTxt = noNavBar
         ? Text("Hello, ${model.userName?.name ?? "Unknown User"}!")
         : Text("${model.userName}: ${model.currentArea.exists ? model.currentArea.id : "-"}");
     return AppBar(
@@ -89,129 +89,63 @@ abstract class ZugApp extends StatelessWidget {
     );
   }
 
-  NavigationDestination getMainNavigationBarItem() {
-    return const NavigationDestination(
+  NavItem getMainNavigationBarItem() {
+    return NavItem(
+      page: PageType.main,
+      destination: const NavigationDestination(
       icon: Icon(Icons.center_focus_strong),
       label: 'Main',
-    );
+      ));
   }
 
-  NavigationDestination getLobbyNavigationBarItem() {
-    return const NavigationDestination(
-      icon: Icon(Icons.local_bar),
-      label: 'Lobby',
-    );
+  NavItem getLobbyNavigationBarItem() {
+    return NavItem(
+      page: PageType.lobby,
+      destination: const NavigationDestination(
+        icon: Icon(Icons.local_bar),
+        label: 'Lobby',
+    ));
   }
 
-  NavigationDestination getSettingsNavigationBarItem() {
-    return const NavigationDestination(
-      icon: Icon(Icons.settings),
-      label: 'Settings',
-    );
+  NavItem getSettingsNavigationBarItem() {
+    return NavItem(
+      page: PageType.options,
+      destination: const NavigationDestination(
+        icon: Icon(Icons.settings),
+        label: 'Settings',
+    ));
   }
 }
 
 class ZugHome extends StatefulWidget {
   final ZugApp app;
-  final bool noNav;
+  final bool noNavBar;
 
-  const ZugHome({super.key, required this.app, this.noNav = false});
+  const ZugHome({super.key, required this.app, this.noNavBar = false});
 
   @override
   State<ZugHome> createState() => _ZugHomeState();
 
-  Widget getNavBar(ZugModel model,
-      { Decoration? decoration = const BoxDecoration(color: Colors.black),
+  List<NavItem> get destinations => [
+      app.getMainNavigationBarItem(),
+      app.getLobbyNavigationBarItem(),
+      app.getSettingsNavigationBarItem(),
+    ];
+
+  Widget getNavBar(ZugModel model, {
+        Decoration? decoration = const BoxDecoration(color: Colors.black),
         Color? iconColor = Colors.white,
         Color? indicatorColor = Colors.grey,
         Color? tintColor = Colors.cyanAccent,
-        orientation = Axis.vertical}) {
-
-    NavigationDestination mainDestination = app.getMainNavigationBarItem();
-    NavigationDestination lobbyDestination = app.getLobbyNavigationBarItem();
-    NavigationDestination settingsDestination = app.getSettingsNavigationBarItem();
-
-    return Container(
-        decoration: decoration,
-        child: ValueListenableBuilder<PageType>(
-      valueListenable: model.pageNotifier,
-      builder: (context, pageType, _) {
-        final selectedIndex = pageTypeToIndex(pageType);
-        return Theme(
-          data: Theme.of(context).copyWith(
-            navigationBarTheme: NavigationBarThemeData(
-              labelTextStyle: WidgetStateProperty.all(
-                TextStyle(color: iconColor),
-              ),
-            ),
-          ),
-          child: orientation == Axis.horizontal
-              ? NavigationBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            indicatorColor: indicatorColor,
-            surfaceTintColor: tintColor,
-            selectedIndex: selectedIndex,
-            onDestinationSelected: (index) =>
-            model.gotoPage(indexToPageType(index)),
-            destinations: [
-              mainDestination,
-              lobbyDestination,
-              settingsDestination
-            ],
-          )
-              : NavigationRail(
-            backgroundColor: Colors.transparent,
-            indicatorColor: indicatorColor,
-            selectedIndex: selectedIndex,
-            onDestinationSelected: (index) =>
-            model.gotoPage(indexToPageType(index)),
-            destinations: [
-              NavigationRailDestination(
-                icon: mainDestination.icon,
-                label: Text(mainDestination.label),
-              ),
-              NavigationRailDestination(
-                icon: lobbyDestination.icon,
-                label: Text(lobbyDestination.label),
-              ),
-              NavigationRailDestination(
-                icon: settingsDestination.icon,
-                label: Text(settingsDestination.label),
-              ),
-            ],
-          ),
-        );
-      },
-    ));
-  }
-
-  int pageTypeToIndex(PageType pageType) {
-    switch (pageType) {
-      case PageType.main:
-        return 0;
-      case PageType.lobby:
-        return 1;
-      case PageType.options:
-        return 2;
-      default:
-        return 1; // fallback
-    }
-  }
-
-  PageType indexToPageType(int index) {
-    switch (index) {
-      case 0:
-        return PageType.main;
-      case 1:
-        return PageType.lobby;
-      case 2:
-        return PageType.options;
-      default:
-        return PageType.lobby;
-    }
-  }
-
+        orientation = Axis.vertical}) => ZugNavBar(
+      items: destinations,
+      model: model,
+      decoration: decoration,
+      iconColor: iconColor,
+      indicatorColor: indicatorColor,
+      tintColor: tintColor,
+      orientation: orientation,
+  );
 }
 
 enum PageType { main,lobby,options,splash,none }
@@ -256,7 +190,7 @@ class _ZugHomeState extends State<ZugHome> {
         builder: (context, constraints) {
           return Row(
             children: [
-              widget.getNavBar(model),
+              if (!widget.noNavBar) widget.getNavBar(model),
               Expanded(
                 child: Column(
                   children: [
@@ -274,7 +208,6 @@ class _ZugHomeState extends State<ZugHome> {
 
   Widget _buildPageForType(ZugModel model, PageType pageType) {
     if (!model.isLoggedIn) return widget.app.createSplashPage(model);
-    if (widget.noNav) return widget.app.createMainPage(model);
     switch (pageType) {
       case PageType.main:
         return widget.app.createMainPage(model);
@@ -288,9 +221,11 @@ class _ZugHomeState extends State<ZugHome> {
   }
 
   SafeArea getSafeArea(ZugModel model) {
-    return SafeArea(
-      child: kIsWeb ? widget.app.createStatusBar(context,model) : widget.getNavBar(model),
-    );
+    if (kIsWeb) {
+      return SafeArea(child: widget.app.createStatusBar(context,model) ?? const SizedBox.shrink());
+    } else {
+      return SafeArea(child:  widget.getNavBar(model));
+    }
   }
 
 }

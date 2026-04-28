@@ -447,9 +447,11 @@ class _LobbyPageState extends State<LobbyPage> with TickerProviderStateMixin {
                 : getCommandArea(context),
             // Area selector
            if (widget.useSelectorWidget) widget.selectorWidget(context,
-               onSelected: (title) => setState(() {
-                 widget.model.switchArea(title);
-               })
+               onSelected: (title) {
+                 if (widget.model.currentArea.id != title) setState(() {
+                   widget.model.switchArea(title);
+                 });
+               }
            ),
             // Selected area display
             if (widget.useSelectedWidget) Expanded(flex: 1, child: widget.selectedArea(context)),

@@ -93,6 +93,7 @@ abstract class ZugModel extends ChangeNotifier {
   ValueNotifier<PageType> get pageNotifier => _pageNotifier;
   PageType get currentPage => _pageNotifier.value; //set currentPage(PageType p) => _pageNotifier.value = p;
   void gotoPage(PageType p) {
+    print("-> ${p.name}");
     _pageNotifier.value = p;
   }
 
@@ -358,29 +359,31 @@ abstract class ZugModel extends ChangeNotifier {
     }
   }
 
-  void addAreaMsg(String msg, String id, {hidden = false}) {
+  void addAreaMsg(String msg, String id, {hidden = false, Color? color}) {
     handleAreaMsg({
       fieldMsg : msg,
       fieldAreaID : id,
-      fieldHidden : hidden
+      fieldHidden : hidden,
+      color: color
     });
   }
 
-  bool handleAreaMsg(data, {Area? area}) { //print(data);
+  bool handleAreaMsg(data, {Area? area, Color? color}) { //print(data);
     area = area ?? getOrCreateArea(data);
-    area.messages.addMessage(data);
+    area.messages.addMessage(data, color: color);
     return true;
   }
 
-  void addServMsg(String msg, {hidden = false}) {
+  void addServMsg(String msg, {hidden = false, Color? color}) {
     handleServMsg({
       fieldMsg : msg,
-      fieldHidden : hidden
+      fieldHidden : hidden,
+      color: color
     });
   }
 
-  bool handleServMsg(data) {
-    messages.addMessage(data);
+  bool handleServMsg(data, {Color? color}) {
+    messages.addMessage(data, color: color);
     return true;
   }
 
@@ -389,16 +392,16 @@ abstract class ZugModel extends ChangeNotifier {
     return true;
   }
 
-  bool handleRoomMsg(data) {
+  bool handleRoomMsg(data, {Color? color}) {
     currentArea.currentRoom?.messages.addMessage(data);
     return true;
   }
 
-  bool handleGenericMsg(data) {
+  bool handleGenericMsg(data, {Color? color, hidden = false}) {
     switch(chatScope.value) {
-      case MessageScope.room: handleRoomMsg(data); break;
-      case MessageScope.area: handleAreaMsg(data); break;
-      case MessageScope.server: handleServMsg(data); break;
+      case MessageScope.room: handleRoomMsg(data, color: color); break;
+      case MessageScope.area: handleAreaMsg(data, color: color); break;
+      case MessageScope.server: handleServMsg(data, color: color); break;
     }
     return true;
   }
@@ -516,13 +519,15 @@ abstract class ZugModel extends ChangeNotifier {
   }
 
   void autoLogin() {
-     autoLog = true;
-     LoginType logType = defLogType;
-     String? prevLogType = prefs?.getString(fieldLoginType);
-     for (LoginType lt in LoginType.values) {
-       if (lt != LoginType.none && lt.name == prevLogType) logType = lt;
-     }
-     login(logType);
+    autoLog = true;
+    LoginType logType = defLogType;
+    String? prevLogType = prefs?.getString(fieldLoginType);
+    for (LoginType lt in LoginType.values) {
+      if (lt.name == prevLogType) logType = lt; //lt != LoginType.none &&
+    }
+    // Pass existing token if available
+    String? existingToken = authClient?.credentials.accessToken;
+    login(logType, token: existingToken?.isNotEmpty == true ? existingToken : null);
   }
 
   void authenticate(OauthClient oauthClient) {
@@ -548,11 +553,10 @@ abstract class ZugModel extends ChangeNotifier {
     return false;
   }
 
-  void login(LoginType? lt, {String? token}) {
-    //autoLog = false;
+  void login(LoginType? lt, {String? token}) { //autoLog = false;
     if (isConnected) {
-      prefs?.setString(fieldLoginType, lt.toString());
       loginType = lt ?? LoginType.none;
+      prefs?.setString(fieldLoginType, loginType.toString());
       if (loginType == LoginType.lichess) {
         if (token != null) {
           log.info("Logging in with lichess token");
