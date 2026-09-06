@@ -50,27 +50,27 @@ class LobbyPage extends StatefulWidget {
   });
 
   Widget selectorWidget(BuildContext context, {
-    required Function(String title) onSelected,
+    required Function(String id) onSelected,
   }) {
-    Set<DropdownMenuItem<String>> areaSet = {};
-    areaSet.addAll(model.areas.keys
+    Set<DropdownMenuItem<String>> unsortedAreaMenu = {};
+    unsortedAreaMenu.addAll(model.areas.keys
         .where((key) => model.areas[key]?.exists ?? false)
-        .map<DropdownMenuItem<String>>((String title) {
+        .map<DropdownMenuItem<String>>((String id) { //print("Area: ${model.areas[id]}");
       return DropdownMenuItem<String>(
-        value: title,
-        child: getAreaItem(title, context),
+        value: id,
+        child: getAreaItem(model.areas[id]!.title, context),
       );
     }).toList());
 
-    List<DropdownMenuItem<String>> areas = areaSet.toList();
+    List<DropdownMenuItem<String>> areaMenu = unsortedAreaMenu.toList();
 
-    areas.sort((a, b) {
+    areaMenu.sort((a, b) {
       Area? area1 = model.areas[a.value];
       Area? area2 = model.areas[b.value];
       return (area1 != null && area2 != null) ? area1.compareTo(area2) : 0;
     });
 
-    String selectedTitle = model.currentArea.exists
+    String selectedID = model.currentArea.exists
         ? model.currentArea.id
         : model.noArea.id;
 
@@ -118,13 +118,20 @@ class LobbyPage extends StatefulWidget {
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   dropdownColor: Theme.of(context).colorScheme.surface,
-                  value: selectedTitle,
-                  items: areas,
+                  value: selectedID,
+                  selectedItemBuilder: (BuildContext context) => areaMenu.map((item) {
+                      final title = model.areas[item.value]?.title ?? model.noArea.title;
+                      return Text(title);
+                    }).toList(),
+                  items: areaMenu,
                   icon: Icon(
                     Icons.expand_more,
                     color: Theme.of(context).colorScheme.primary,
                   ),
-                  onChanged: (String? title) => onSelected,
+                  onChanged: (String? id) { //print("Changed: $id");
+                    onSelected(id!);
+                  }
+                  //=> onSelected,
                 ),
               ),
             ),
@@ -186,7 +193,7 @@ class LobbyPage extends StatefulWidget {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    "Players in ${model.currentArea.id}",
+                    "Players in ${model.currentArea.title}",
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: Theme.of(context).colorScheme.onSurface,
@@ -447,10 +454,10 @@ class _LobbyPageState extends State<LobbyPage> with TickerProviderStateMixin {
                 : getCommandArea(context),
             // Area selector
            if (widget.useSelectorWidget) widget.selectorWidget(context,
-               onSelected: (title) {
-                 if (widget.model.currentArea.id != title) setState(() {
-                   widget.model.switchArea(title);
-                 });
+               onSelected: (id) { //print("On Selected: $id");
+                 if (widget.model.currentArea.title != id) {
+                   setState(() { widget.model.switchArea(id); });
+                 }
                }
            ),
             // Selected area display

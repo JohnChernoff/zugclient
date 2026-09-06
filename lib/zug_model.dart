@@ -46,6 +46,7 @@ abstract class ZugModel extends ChangeNotifier {
   final ValueNotifier<PageType> _pageNotifier;
   static const optPrefix = "ZugClientOption";
   static final log = Logger('ClientLogger');
+  static const noAreaID = "-";
   static const noAreaTitle = "-";
   static const servString = "serv";
   static const LoginType defLogType = LoginType.lichess;
@@ -210,7 +211,7 @@ abstract class ZugModel extends ChangeNotifier {
   }
 
   Area getOrCreateArea(dynamic data) { //print("GetOrCreateArea: $data");
-      final area = areas.putIfAbsent(data?[fieldAreaID] ?? noAreaTitle, () { //print(areas.keys); print("Adding area: $data");
+      final area = areas.putIfAbsent(data?[fieldAreaID] ?? noAreaID, () { //print(areas.keys); print("Adding area: $data");
         return createArea(data);
       });
       if (data != null) area.updatePhase(data);
@@ -227,15 +228,15 @@ abstract class ZugModel extends ChangeNotifier {
     }
   }
 
-  void switchArea(String? title) {
-    final t = title ?? noAreaTitle;
-    if (currentArea.id != t) {
-      if (areas[t] != null) {
+  void switchArea(String? id) {
+    final i = id ?? noAreaID;
+    if (currentArea.id != i) {
+      if (areas[i] != null) {
         if (currentArea.exists) send(ClientMsg.unObs,data:{ fieldAreaID : currentArea.id });
-        currentArea = areas[t]!; // ?? noGame;
+        currentArea = areas[i]!; // ?? noGame;
         if (currentArea.exists ) {
           send(ClientMsg.obs,data:{fieldAreaID:currentArea.id});
-          send(ClientMsg.updateArea,data:{fieldAreaID:title});
+          send(ClientMsg.updateArea,data:{fieldAreaID:id});
         }
       }
       else {

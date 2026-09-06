@@ -11,11 +11,15 @@ import 'package:zugclient/zug_user.dart';
 
 abstract class Room with Timerable {
   late final String id;
+  late final String title;
+
   MessageList messages = MessageList();
   Map<UniqueName,dynamic> occupantMap = {};
 
   Room(dynamic data) {
-    id = data?[fieldAreaID] ?? ZugModel.noAreaTitle;
+    id = data?[fieldAreaID] ?? ZugModel.noAreaID;
+    title = data?[fieldAreaTitle] ?? ZugModel.noAreaTitle;
+    print("Created room: $id , $title from: $data");
   }
 
   String getOccupantName(UniqueName name) {
