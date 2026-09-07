@@ -21,11 +21,17 @@ abstract class ZugApp extends StatelessWidget {
   final bool isDark;
   final ColorScheme colorScheme;
   final bool noNavBar;
+  final String? splashLandImgPath; //= "images/splash_land.png",
+  final String? splashPortImgPath; //= "images/splash_port.png",
 
   ZugApp(this.model, this.appName, {
     this.colorSeed = Colors.green,
     this.isDark = true,
-    super.key, Level logLevel = Level.INFO, this.noNavBar = false}) : colorScheme = isDark ? const ColorScheme.dark() : const ColorScheme.light() { //}ColorScheme.fromSeed(seedColor: colorSeed) {
+    super.key,
+    Level logLevel = Level.INFO,
+    this.noNavBar = false,
+    this.splashLandImgPath, this.splashPortImgPath
+    }) : colorScheme = isDark ? const ColorScheme.dark() : const ColorScheme.light() { //}ColorScheme.fromSeed(seedColor: colorSeed) {
     ZugDialogs.setNavigatorKey(zugAppNavigatorKey);
     Logger.root.level = logLevel;
     Logger.root.onRecord.listen((record) {
@@ -66,13 +72,11 @@ abstract class ZugApp extends StatelessWidget {
   }
 
   Widget createSplashPage(ZugModel model, {
-    String landImgPath = "images/splash_land.png",
-    String portImgPath = "images/splash_port.png",
     List<LoginType> allowedLoginTypes = LoginType.values,
   }) {
     return SplashPage(model,
-        imgLandscape: Image(image: ZugUtils.getAssetImage(landImgPath),fit: BoxFit.fill),
-        imgPortrait: Image(image: ZugUtils.getAssetImage(portImgPath),fit: BoxFit.fill),
+        imgLandscape: splashLandImgPath != null ? Image(image: ZugUtils.getAssetImage(splashLandImgPath!),fit: BoxFit.fill) : null,
+        imgPortrait: splashPortImgPath != null ? Image(image: ZugUtils.getAssetImage(splashPortImgPath!),fit: BoxFit.fill) : null,
         allowedLoginTypes: allowedLoginTypes
     );
   }

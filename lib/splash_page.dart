@@ -54,7 +54,7 @@ class SplashPage extends StatelessWidget {
         Expanded(
           child: !kIsWeb && model.authenticating
               ? WebViewWidget(controller: OauthClient.webViewController)
-              : SizedBox(child: img), //?? const SizedBox()
+              : SizedBox(child: img ?? const Center(child: Text("Welcome to ZugClient"))), //?? const SizedBox()
         ),
       ],
     )));

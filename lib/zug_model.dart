@@ -149,7 +149,9 @@ abstract class ZugModel extends ChangeNotifier {
       ServMsg.cancelledResponse : handleCompletedRequest,
       ServMsg.completedResponse : handleCancelledRequest,
       ServMsg.version: handleVersion,
-      ServMsg.updateServ : handleUpdateServ
+      ServMsg.updateServ : handleUpdateServ,
+      ServMsg.seekCreated : handleSeekCreation,
+      ServMsg.seekMatched : handleSeekMatch,
     });
     if (firebaseOptions != null) initFirebase(firebaseOptions);
     connect();
@@ -188,8 +190,20 @@ abstract class ZugModel extends ChangeNotifier {
     }
   }
 
-  void seekArea() {
-    send(ClientMsg.joinArea);
+  Future<dynamic> seekArea({bool pool = true, dynamic data = "", timeout = 30000}) {
+    if (pool) {
+      return send(ClientMsg.seek, data: data, responseType: ServMsg.startArea);
+    } else {
+      return send(ClientMsg.joinArea);
+    }
+  }
+
+  void handleSeekCreation(data) {
+    log.info("Seek created");
+  }
+
+  void handleSeekMatch(data) {
+    log.info("Seek matched");
   }
 
   void joinArea(String id) {
