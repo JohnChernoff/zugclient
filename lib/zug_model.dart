@@ -88,6 +88,7 @@ abstract class ZugModel extends ChangeNotifier {
   bool errPopup = false;
   bool javalinServer;
   bool helpMode = false;
+  bool seeking = false;
   String? autoJoinTitle;
   final ValueNotifier<MessageScope> chatScope = ValueNotifier(MessageScope.server);
   Map<String,ValueNotifier<bool?>> dialogTracker = {};
@@ -190,9 +191,9 @@ abstract class ZugModel extends ChangeNotifier {
     }
   }
 
-  Future<dynamic> seekArea({bool pool = true, dynamic data = "", timeout = 30000}) {
+  Future<dynamic> seekArea({bool pool = true, dynamic data = ""}) {
     if (pool) {
-      return send(ClientMsg.seek, data: data, responseType: ServMsg.startArea);
+      return send(ClientMsg.seek, data: data);
     } else {
       return send(ClientMsg.joinArea);
     }
@@ -200,10 +201,12 @@ abstract class ZugModel extends ChangeNotifier {
 
   void handleSeekCreation(data) {
     log.info("Seek created");
+    seeking = true;
   }
 
   void handleSeekMatch(data) {
     log.info("Seek matched");
+    seeking = false;
   }
 
   void joinArea(String id) {
