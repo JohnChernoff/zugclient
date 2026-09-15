@@ -2,28 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:zugclient/zug_app.dart';
 import 'package:zugclient/zug_model.dart';
 
-class NavItem {
-  final PageType page;
-  final NavigationDestination destination;
-  final bool Function(ZugModel model)? visible;
-
-  NavItem({
-    required this.page,
-    required this.destination,
-    this.visible,
-  });
-
-  bool isVisible(ZugModel model) => visible?.call(model) ?? true;
-}
-
 class ZugNavBar extends StatefulWidget {
   final ZugModel model;
-  final List<NavItem> items;
+  final List<ZugPage> pages;
   final Decoration? decoration;
   final Color? iconColor, indicatorColor, tintColor;
   final Axis orientation;
 
-  const ZugNavBar({super.key, required this.items, required this.model,
+  const ZugNavBar({super.key, required this.pages, required this.model,
     this.decoration = const BoxDecoration(color: Colors.black),
     this.iconColor = Colors.white,
     this.indicatorColor = Colors.grey,
@@ -42,21 +28,21 @@ class _ZugNavBarState extends State<ZugNavBar> {
   Widget build(BuildContext context) {
     return Container(
       decoration: widget.decoration,
-      child: ValueListenableBuilder<PageType>(
+      child: ValueListenableBuilder<Enum>(
         valueListenable: widget.model.pageNotifier,
         builder: (context, pageType, _) {
-          final visibleItems = widget.items
+          final visibleItems = widget.pages
               .where((item) => item.isVisible(widget.model))
               .toList();
 
           // Find selected index safely
           int selectedIndex =
-          visibleItems.indexWhere((item) => item.page == pageType);
+          visibleItems.indexWhere((item) => item.type == pageType);
           final noSelection = selectedIndex == -1 && visibleItems.isNotEmpty;
           if (noSelection) {
             selectedIndex = 0;
             // Optional: auto-correct invalid page (currently breaks when pages don't always use a navbar)
-            //WidgetsBinding.instance.addPostFrameCallback((_) { //widget.model.gotoPage(visibleItems.first.page); });
+            //WidgetsBinding.instance.addPostFrameCallback((_) { //widget.model.gotoPage(visibleItems.first.type); });
           }
 
           return Theme(
@@ -75,9 +61,9 @@ class _ZugNavBarState extends State<ZugNavBar> {
               surfaceTintColor: widget.tintColor,
               selectedIndex: selectedIndex,
               onDestinationSelected: (index) =>
-                  widget.model.gotoPage(visibleItems[index].page),
+                  widget.model.gotoPage(visibleItems[index].type),
               destinations: visibleItems
-                  .map((e) => e.destination)
+                  .map((p) => NavigationDestination(icon: p.icon, label: p.label))
                   .toList(),
             )
                 : NavigationRail(
@@ -85,12 +71,11 @@ class _ZugNavBarState extends State<ZugNavBar> {
               indicatorColor:  noSelection ? Colors.transparent : widget.indicatorColor,
               selectedIndex: selectedIndex,
               onDestinationSelected: (index) =>
-                  widget.model.gotoPage(visibleItems[index].page),
-              destinations: visibleItems.map((item) {
-                final navD = item.destination;
+                  widget.model.gotoPage(visibleItems[index].type),
+              destinations: visibleItems.map((p) {
                 return NavigationRailDestination(
-                  icon: navD.icon,
-                  label: Text(navD.label),
+                  icon: p.icon,
+                  label: Text(p.label),
                 );
               }).toList(),
             ),
@@ -99,5 +84,4 @@ class _ZugNavBarState extends State<ZugNavBar> {
       ),
     );
   }
-
 }

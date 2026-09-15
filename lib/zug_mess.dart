@@ -11,8 +11,9 @@ class Message {
   String message;
   Color color;
   bool hidden;
+  bool err;
 
-  Message(this.uName,this.message,this.dateTime,this.color,this.hidden) : fromServ = uName == null;
+  Message(this.uName,this.message,this.dateTime,this.color,this.hidden, {this.err = false}) : fromServ = uName == null;
 }
 
 class MessageList {
@@ -25,7 +26,7 @@ class MessageList {
     userColorMap.putIfAbsent(null, () => foregroundColor);
   }
 
-  void addZugMsg(data) {
+  void addZugMsg(data, {err = false}) {
     StringBuffer txtBuff = StringBuffer();
     for (dynamic el in (data[fieldZugTxt] as List<dynamic>)) {
       txtBuff.write(el[fieldTxtAscii] ?? "$emojiTag${el[fieldTxtEmoji]}$emojiTag");
@@ -37,11 +38,11 @@ class MessageList {
         txtBuff.toString(),
         DateTime.fromMillisecondsSinceEpoch(data[fieldMsgDate] * 1000),
         getMsgColor(uName,data),
-        data[fieldHidden] ?? false));
-
+        data[fieldHidden] ?? false,
+        err: err));
   }
 
-  void addMessage(data, {Color? color}) {
+  void addMessage(data, {Color? color, err = false}) {
     if (data[fieldZugMsg] != null) {
       addZugMsg(data[fieldZugMsg]);
     } else {
@@ -52,7 +53,8 @@ class MessageList {
           data[fieldMsg],
           DateTime.now(),
           color ?? getMsgColor(uName,data),
-          data[fieldHidden] ?? false));
+          data[fieldHidden] ?? false,
+          err: err));
     }
     newMessages++;
   }

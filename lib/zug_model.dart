@@ -43,7 +43,7 @@ enum LoginType {
 }
 
 abstract class ZugModel extends ChangeNotifier {
-  final ValueNotifier<PageType> _pageNotifier;
+  final ValueNotifier<Enum> _pageNotifier;
   static const optPrefix = "ZugClientOption";
   static final log = Logger('ClientLogger');
   static const noAreaID = "-";
@@ -92,9 +92,9 @@ abstract class ZugModel extends ChangeNotifier {
   String? autoJoinTitle;
   final ValueNotifier<MessageScope> chatScope = ValueNotifier(MessageScope.server);
   Map<String,ValueNotifier<bool?>> dialogTracker = {};
-  ValueNotifier<PageType> get pageNotifier => _pageNotifier;
-  PageType get currentPage => _pageNotifier.value; //set currentPage(PageType p) => _pageNotifier.value = p;
-  void gotoPage(PageType p) {
+  ValueNotifier<Enum> get pageNotifier => _pageNotifier;
+  Enum get currentPage => _pageNotifier.value; //set currentPage(PageType p) => _pageNotifier.value = p;
+  void gotoPage(Enum p) {
     print("-> ${p.name}");
     _pageNotifier.value = p;
   }
@@ -102,7 +102,7 @@ abstract class ZugModel extends ChangeNotifier {
   Area createArea(dynamic data);
 
   ZugModel(this.domain,this.port,this.remoteEndpoint, this.prefs, {
-    FirebaseOptions? firebaseOptions, this.showServMess = false, this.localServer = false, this.javalinServer = false}) : _pageNotifier = ValueNotifier<PageType>(PageType.splash) {
+    FirebaseOptions? firebaseOptions, this.showServMess = false, this.localServer = false, this.javalinServer = false}) : _pageNotifier = ValueNotifier<Enum>(PageType.splash) {
     //_endClipListener = clipPlayer.onPlayerComplete.listen((v) => log.info("done"));
     trackPlayer.stop();
     log.info("Prefs: ${prefs.toString()}");
@@ -222,17 +222,17 @@ abstract class ZugModel extends ChangeNotifier {
   }
 
   void handleCmdMsg(List<String> msgs) {
-      if (msgs.isNotEmpty) {
-        if (msgs.first == "!srv") send(ClientMsg.updateServ);
-      }
+    if (msgs.isNotEmpty) {
+      if (msgs.first == "!srv") send(ClientMsg.updateServ);
+    }
   }
 
   Area getOrCreateArea(dynamic data) { //print("GetOrCreateArea: $data");
-      final area = areas.putIfAbsent(data?[fieldAreaID] ?? noAreaID, () { //print(areas.keys); print("Adding area: $data");
-        return createArea(data);
-      });
-      if (data != null) area.updatePhase(data);
-      return area;
+    final area = areas.putIfAbsent(data?[fieldAreaID] ?? noAreaID, () { //print(areas.keys); print("Adding area: $data");
+      return createArea(data);
+    });
+    if (data != null) area.updatePhase(data);
+    return area;
   }
 
   Future<dynamic> areaCmd(Enum cmd, { String? id, Map<String,dynamic> data = const {}, Enum? responseType, int timeout = 5000}) {
@@ -319,9 +319,9 @@ abstract class ZugModel extends ChangeNotifier {
 
   //TODO: this only works if occupant doesn't exist?!
   bool handleUpdateOccupant(data) { log.fine("Occupant update: $data");
-    Area area = getOrCreateArea(data);
-    area.occupantMap.putIfAbsent(UniqueName.fromData(data[fieldUser]), () => data);
-    return true;
+  Area area = getOrCreateArea(data);
+  area.occupantMap.putIfAbsent(UniqueName.fromData(data[fieldUser]), () => data);
+  return true;
   }
 
   bool handleNewPhase(data) {
@@ -334,12 +334,12 @@ abstract class ZugModel extends ChangeNotifier {
   }
 
   void handleUpdateArea(data) { log.fine("Update Area: $data");
-    Area area = getOrCreateArea(data);
-    handleUpdateOccupants(data,area : area); //TODO: why use named argument?
-    handleUpdateOptions(data,area : area);
-    handleUpdateMessages(data, area: area);
-    area.updatePhase(data);
-    area.updateArea(data);
+  Area area = getOrCreateArea(data);
+  handleUpdateOccupants(data,area : area); //TODO: why use named argument?
+  handleUpdateOptions(data,area : area);
+  handleUpdateMessages(data, area: area);
+  area.updatePhase(data);
+  area.updateArea(data);
   }
 
   bool handleUpdateOccupants(data, {Area? area}) {
@@ -377,31 +377,33 @@ abstract class ZugModel extends ChangeNotifier {
     }
   }
 
-  void addAreaMsg(String msg, String id, {hidden = false, Color? color}) {
+  void addAreaMsg(String msg, String id, {hidden = false, Color? color, err = false}) {
     handleAreaMsg({
       fieldMsg : msg,
       fieldAreaID : id,
       fieldHidden : hidden,
-      color: color
+      color: color,
+      err: err
     });
   }
 
-  bool handleAreaMsg(data, {Area? area, Color? color}) { //print(data);
+  bool handleAreaMsg(data, {Area? area, Color? color, err = false}) { //print(data);
     area = area ?? getOrCreateArea(data);
-    area.messages.addMessage(data, color: color);
+    area.messages.addMessage(data, color: color, err: err);
     return true;
   }
 
-  void addServMsg(String msg, {hidden = false, Color? color}) {
+  void addServMsg(String msg, {hidden = false, Color? color, err = false}) {
     handleServMsg({
       fieldMsg : msg,
       fieldHidden : hidden,
-      color: color
+      color: color,
+      err: err
     });
   }
 
-  bool handleServMsg(data, {Color? color}) {
-    messages.addMessage(data, color: color);
+  bool handleServMsg(data, {Color? color, err = false}) {
+    messages.addMessage(data, color: color, err: err);
     return true;
   }
 
@@ -410,16 +412,16 @@ abstract class ZugModel extends ChangeNotifier {
     return true;
   }
 
-  bool handleRoomMsg(data, {Color? color}) {
-    currentArea.currentRoom?.messages.addMessage(data);
+  bool handleRoomMsg(data, {Color? color, err = false}) {
+    currentArea.currentRoom?.messages.addMessage(data, err: err);
     return true;
   }
 
-  bool handleGenericMsg(data, {Color? color, hidden = false}) {
+  bool handleGenericMsg(data, {Color? color, hidden = false, err = false}) {
     switch(chatScope.value) {
-      case MessageScope.room: handleRoomMsg(data, color: color); break;
-      case MessageScope.area: handleAreaMsg(data, color: color); break;
-      case MessageScope.server: handleServMsg(data, color: color); break;
+      case MessageScope.room: handleRoomMsg(data, color: color, err: err); break;
+      case MessageScope.area: handleAreaMsg(data, color: color, err: err); break;
+      case MessageScope.server: handleServMsg(data, color: color, err: err); break;
     }
     return true;
   }
@@ -429,7 +431,7 @@ abstract class ZugModel extends ChangeNotifier {
       ZugDialogs.popup("Error: ${data[fieldMsg]}");
       return true;
     }
-    return handleGenericMsg(data);
+    return handleGenericMsg(data, err: true);
   }
 
   bool handleAlertMsg(data) {
@@ -631,8 +633,8 @@ abstract class ZugModel extends ChangeNotifier {
   }
 
   void connected() { log.info("Connected!");
-    isConnected = true;
-    if (autoLog) autoLogin();
+  isConnected = true;
+  if (autoLog) autoLogin();
   }
 
   void disconnected() {
@@ -884,4 +886,3 @@ abstract class ZugModel extends ChangeNotifier {
 }
 
 //extension StrComp on Enum { bool eq(dynamic s) { return (s is String) ? name == s : false; } }
-

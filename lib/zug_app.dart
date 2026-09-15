@@ -23,6 +23,7 @@ abstract class ZugApp extends StatelessWidget {
   final bool noNavBar;
   final String? splashLandImgPath; //= "images/splash_land.png",
   final String? splashPortImgPath; //= "images/splash_port.png",
+  late final List<ZugPage> pageList = stockPages();
 
   ZugApp(this.model, this.appName, {
     this.colorSeed = Colors.green,
@@ -30,8 +31,8 @@ abstract class ZugApp extends StatelessWidget {
     super.key,
     Level logLevel = Level.INFO,
     this.noNavBar = false,
-    this.splashLandImgPath, this.splashPortImgPath
-    }) : colorScheme = isDark ? const ColorScheme.dark() : const ColorScheme.light() { //}ColorScheme.fromSeed(seedColor: colorSeed) {
+    this.splashLandImgPath, this.splashPortImgPath,
+  }) : colorScheme = isDark ? const ColorScheme.dark() : const ColorScheme.light() { //}ColorScheme.fromSeed(seedColor: colorSeed) {
     ZugDialogs.setNavigatorKey(zugAppNavigatorKey);
     Logger.root.level = logLevel;
     Logger.root.onRecord.listen((record) {
@@ -58,6 +59,15 @@ abstract class ZugApp extends StatelessWidget {
     );
   }
 
+  List<ZugPage> stockPages() => [
+    ZugPage(const Icon(Icons.center_focus_strong), (model) => createMainPage(model),
+        type: PageType.main, label: "Main"),
+    ZugPage(const Icon(Icons.local_bar), (model) => createLobbyPage(model),
+        type: PageType.lobby, label: "Lobby"),
+    ZugPage(const Icon(Icons.settings), (model) => createOptionsPage(model),
+        type: PageType.options, label: "Settings"),
+  ];
+
   Widget createHomePage(ZugApp app) {
     return ZugHome(app:app,noNavBar: noNavBar);
   }
@@ -68,7 +78,7 @@ abstract class ZugApp extends StatelessWidget {
 
   Widget createLobbyPage(ZugModel model) {
     return LobbyPage(model,zugChat: ZugChat(model)); //,
-        //foregroundColor: colorScheme.onSurface, backgroundColor: colorScheme.surface)
+    //foregroundColor: colorScheme.onSurface, backgroundColor: colorScheme.surface)
   }
 
   Widget createSplashPage(ZugModel model, {
@@ -92,33 +102,6 @@ abstract class ZugApp extends StatelessWidget {
       title: txt ?? defaultTxt,
     );
   }
-
-  NavItem getMainNavigationBarItem() {
-    return NavItem(
-      page: PageType.main,
-      destination: const NavigationDestination(
-      icon: Icon(Icons.center_focus_strong),
-      label: 'Main',
-      ));
-  }
-
-  NavItem getLobbyNavigationBarItem() {
-    return NavItem(
-      page: PageType.lobby,
-      destination: const NavigationDestination(
-        icon: Icon(Icons.local_bar),
-        label: 'Lobby',
-    ));
-  }
-
-  NavItem getSettingsNavigationBarItem() {
-    return NavItem(
-      page: PageType.options,
-      destination: const NavigationDestination(
-        icon: Icon(Icons.settings),
-        label: 'Settings',
-    ));
-  }
 }
 
 class ZugHome extends StatefulWidget {
@@ -130,29 +113,39 @@ class ZugHome extends StatefulWidget {
   @override
   State<ZugHome> createState() => _ZugHomeState();
 
-  List<NavItem> get destinations => [
-      app.getMainNavigationBarItem(),
-      app.getLobbyNavigationBarItem(),
-      app.getSettingsNavigationBarItem(),
-    ];
-
   Widget getNavBar(ZugModel model, {
-        Decoration? decoration = const BoxDecoration(color: Colors.black),
-        Color? iconColor = Colors.white,
-        Color? indicatorColor = Colors.grey,
-        Color? tintColor = Colors.cyanAccent,
-        orientation = Axis.vertical}) => ZugNavBar(
-      items: destinations,
-      model: model,
-      decoration: decoration,
-      iconColor: iconColor,
-      indicatorColor: indicatorColor,
-      tintColor: tintColor,
-      orientation: orientation,
+    Decoration? decoration = const BoxDecoration(color: Colors.black),
+    Color? iconColor = Colors.white,
+    Color? indicatorColor = Colors.grey,
+    Color? tintColor = Colors.cyanAccent,
+    Axis orientation = Axis.vertical}) => ZugNavBar(
+    pages: app.pageList,
+    model: model,
+    decoration: decoration,
+    iconColor: iconColor,
+    indicatorColor: indicatorColor,
+    tintColor: tintColor,
+    orientation: orientation,
   );
 }
 
 enum PageType { main,lobby,options,splash,none }
+
+class ZugPage {
+  Icon icon;
+  Enum type;
+  String label;
+  Widget Function(ZugModel model) destination;
+  bool Function(ZugModel model)? visible;
+
+  ZugPage(this.icon, this.destination, {
+    this.type = PageType.none,
+    this.label = "",
+    this.visible,
+  });
+
+  bool isVisible(ZugModel model) => visible?.call(model) ?? true;
+}
 
 class _ZugHomeState extends State<ZugHome> {
 
@@ -161,8 +154,8 @@ class _ZugHomeState extends State<ZugHome> {
     ZugModel model = context.watch<ZugModel>();
     ColorScheme colorScheme = Theme.of(context).colorScheme;
 
-  // The container for the current page, with its background color
-  // and subtle switching animation.
+    // The container for the current page, with its background color
+    // and subtle switching animation.
     var mainArea = ColoredBox(
       color: colorScheme.surfaceContainerHighest,
       child: AnimatedSwitcher(
@@ -177,7 +170,7 @@ class _ZugHomeState extends State<ZugHome> {
             ),
           );
         },
-        child: ValueListenableBuilder<PageType>(
+        child: ValueListenableBuilder<Enum>(
           valueListenable: model.pageNotifier,
           builder: (context, pageType, _) {
             return KeyedSubtree(
@@ -210,18 +203,15 @@ class _ZugHomeState extends State<ZugHome> {
     );
   }
 
-  Widget _buildPageForType(ZugModel model, PageType pageType) {
+  Widget _buildPageForType(ZugModel model, Enum pageType) {
     if (!model.isLoggedIn) return widget.app.createSplashPage(model);
-    switch (pageType) {
-      case PageType.main:
-        return widget.app.createMainPage(model);
-      case PageType.lobby:
-        return widget.app.createLobbyPage(model);
-      case PageType.options:
-        return widget.app.createOptionsPage(model);
-      case PageType.none || PageType.splash:
-        return widget.app.createSplashPage(model);
+    if (pageType == PageType.splash || pageType == PageType.none) {
+      return widget.app.createSplashPage(model);
     }
+    for (ZugPage page in widget.app.pageList) {
+      if (page.type == pageType) return page.destination(model);
+    }
+    return widget.app.createSplashPage(model);
   }
 
   SafeArea getSafeArea(ZugModel model) {
