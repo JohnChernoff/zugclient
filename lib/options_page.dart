@@ -19,6 +19,7 @@ class OptionsPage extends StatefulWidget {
   final String headerTxt;
   final bool isDialog;
   final OptionScope scope;
+  final Enum fromPage;
 
   const OptionsPage(this.model, {
     this.customHeader,
@@ -29,6 +30,7 @@ class OptionsPage extends StatefulWidget {
     this.optionsTextColor = Colors.cyan,
     this.optionsDropdownCBkgCol = Colors.blueGrey,
     this.optionsPadding = 4.0,
+    this.fromPage = PageType.lobby,
     required this.scope,
     super.key
   });
@@ -228,7 +230,7 @@ class _OptionsPageState extends State<OptionsPage> {
     if (widget.isDialog) {
       Navigator.pop(context);
     } else {
-      widget.model.gotoPage(PageType.lobby);
+      widget.model.gotoPage(widget.fromPage);
     }
   }
 
@@ -278,9 +280,7 @@ class _OptionsPageState extends State<OptionsPage> {
                   (i) => DropdownMenuItem<dynamic>(
                 value: option.enums!.elementAt(i),
                 child: Text(
-                  option.enums!.elementAt(i) is String
-                      ? option.enums!.elementAt(i) as String
-                      : (option.enums!.elementAt(i) as Enum).name,
+                  option.enums!.elementAt(i),
                   style: optTxtStyle,
                 ),
               ),
