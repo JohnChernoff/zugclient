@@ -21,7 +21,7 @@ class LobbyPage extends StatefulWidget {
   final double borderWidth;
   final Color borderCol;
   final ZugChat? zugChat;
-  final bool seekButt, createButt, startButt, joinButt, partButt;
+  final bool seekButt, createButt, startButt, joinButt, partButt, challengeButt;
   final bool useSelectorWidget, useSelectedWidget;
   final int portFlex;
   final double commandAreaWidth, commandAreaHeight;
@@ -41,6 +41,7 @@ class LobbyPage extends StatefulWidget {
     this.startButt = true,
     this.joinButt = true,
     this.partButt = true,
+    this.challengeButt = false,
     this.useSelectorWidget = true,
     this.useSelectedWidget = true,
     this.portFlex = 2,
@@ -373,6 +374,10 @@ class LobbyPage extends StatefulWidget {
     return CommandButtonData("Seek", normCol, Icons.search, model.seekArea);
   }
 
+  CommandButtonData getChallengeButton({Color normCol = Colors.purpleAccent}) {
+    return CommandButtonData("Challenge", normCol, Icons.link, model.newChallenge);
+  }
+
   CommandButtonData getJoinButton({Color normCol = Colors.blueAccent}) {
     return CommandButtonData("Join", normCol, Icons.login, () => model.joinArea(model.currentArea.id));
   }
@@ -538,6 +543,7 @@ class _LobbyPageState extends State<LobbyPage> with TickerProviderStateMixin {
     List<CommandButtonData> extraList = extraButts ?? widget.getExtraCmdButtons(context);
     List<CommandButtonData?> buttons = [
       widget.seekButt ? widget.getSeekButton() : null,
+      widget.challengeButt ? widget.getChallengeButton() : null,
       widget.createButt ? widget.getCreateButton() : null,
       widget.startButt ? widget.getStartButton() : null,
       widget.joinButt ? widget.getJoinButton() : null,

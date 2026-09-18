@@ -2,10 +2,12 @@ enum MessageScope { room, area, server } //TODO: make server and client messages
 
 enum ServMsg { none, version, ip, ipReq, ping, obs, unObs, reqLogin, logOK, noLog, errMsg, errServMsg, alertMsg, servMsg, servUserMsg, areaUserMsg, areaMsg, roomMsg, privMsg, phase, kicked,
   joinArea, partArea, createArea, startArea, userList, areaList, updateAreaList, updateArea, updateRoom, updateServ, updateUser, updateOccupant, updateOccupants, updateOptions,
-  reqResponse, cancelledResponse,completedResponse, seekCreated, seekMatched
+  reqResponse, cancelledResponse,completedResponse, seekCreated, seekMatched,
+  challengeCreated, challengeInfo, challengeClosed
 }
 enum ClientMsg { none, ip, pong, obs, unObs, login, getOptions, setOptions, listAreas, kick, response, seek, getMessages, nudge,
-  newRoom, joinRoom, newArea, joinArea, startArea, partArea, areaMsg, roomMsg, servMsg, privMsg, updateArea, updateRoom, updateServ, updateUser, updateOccupant, setDeaf, ban
+  newRoom, joinRoom, newArea, joinArea, startArea, partArea, areaMsg, roomMsg, servMsg, privMsg, updateArea, updateRoom, updateServ, updateUser, updateOccupant, setDeaf, ban,
+  newChallenge, viewChallenge, acceptChallenge, cancelChallenge
 }
 
 enum AreaChange {created,updated,deleted}
@@ -66,4 +68,8 @@ const fieldData = "data",
     fieldAreaChange = "area_change",
     fieldUpdateScope = "up_scope",
     fieldPhaseData = "phase_data",
-    fieldAutoJoin = "auto_join";
+    fieldAutoJoin = "auto_join",
+    fieldChallenge = "challenge",
+    fieldChallengeID = "challenge_id",
+    fieldCreator = "creator",
+    fieldExpires = "expires";

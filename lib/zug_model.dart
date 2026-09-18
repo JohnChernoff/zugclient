@@ -6,6 +6,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -42,9 +43,29 @@ enum LoginType {
   }
 }
 
+/// A link-only seek: it never appears in the area list and can only be
+/// matched by someone who knows [id] (see ZugModel.challengeLink).
+class Challenge {
+  final String id;
+  final UniqueName? creator;
+  final DateTime? expires;
+  final dynamic data; // opaque, game-specific settings
+  const Challenge(this.id, this.creator, this.expires, this.data);
+  factory Challenge.fromData(dynamic d) {
+    final c = d[fieldChallenge] ?? d;
+    return Challenge(
+      c[fieldChallengeID],
+      c[fieldCreator] != null ? UniqueName.fromData(c[fieldCreator]) : null,
+      c[fieldExpires] != null ? DateTime.fromMillisecondsSinceEpoch(c[fieldExpires]) : null,
+      c[fieldData],
+    );
+  }
+}
+
 abstract class ZugModel extends ChangeNotifier {
   final ValueNotifier<Enum> _pageNotifier;
   static const optPrefix = "ZugClientOption";
+  static const prefPendingChallenge = "ZugPendingChallenge";
   static final log = Logger('ClientLogger');
   static const noAreaID = "-";
   static const noAreaTitle = "-";
@@ -90,6 +111,10 @@ abstract class ZugModel extends ChangeNotifier {
   bool helpMode = false;
   bool seeking = false;
   String? autoJoinTitle;
+  String? pendingChallengeID; //challenge id from an incoming link, waiting for login
+  String? webBaseUrl; //e.g. "https://bingochess.com/" - only needed to build links on non-web clients
+
+  final Map<String,Challenge> challenges = {}; //this user's open challenges
   final ValueNotifier<MessageScope> chatScope = ValueNotifier(MessageScope.server);
   Map<String,ValueNotifier<bool?>> dialogTracker = {};
   ValueNotifier<Enum> get pageNotifier => _pageNotifier;
@@ -153,6 +178,9 @@ abstract class ZugModel extends ChangeNotifier {
       ServMsg.updateServ : handleUpdateServ,
       ServMsg.seekCreated : handleSeekCreation,
       ServMsg.seekMatched : handleSeekMatch,
+      ServMsg.challengeCreated : handleChallengeCreated,
+      ServMsg.challengeInfo : handleChallengeInfo,
+      ServMsg.challengeClosed : handleChallengeClosed,
     });
     if (firebaseOptions != null) initFirebase(firebaseOptions);
     connect();
@@ -207,6 +235,60 @@ abstract class ZugModel extends ChangeNotifier {
   void handleSeekMatch(data) {
     log.info("Seek matched");
     seeking = false;
+  }
+
+  void newChallenge({Map<String,dynamic>? data}) {
+    send(ClientMsg.newChallenge, data: { fieldData : data ?? {} });
+  }
+
+  void cancelChallenge(String id) {
+    send(ClientMsg.cancelChallenge, data: { fieldChallengeID : id });
+  }
+
+  void acceptChallenge(String id) {
+    send(ClientMsg.acceptChallenge, data: { fieldChallengeID : id });
+  }
+
+  String challengeLink(String id) {
+    final base = kIsWeb ? "${Uri.base.origin}${Uri.base.path}" : (webBaseUrl ?? "");
+    return "$base?challenge=$id";
+  }
+
+  /// Override to customize what happens when the server confirms a new challenge.
+  void onChallengeCreated(Challenge c) {
+    final link = challengeLink(c.id);
+    Clipboard.setData(ClipboardData(text: link));
+    ZugDialogs.popup("Challenge link copied to clipboard:\n$link");
+  }
+
+  bool handleChallengeCreated(data) {
+    final c = Challenge.fromData(data);
+    challenges[c.id] = c;
+    onChallengeCreated(c);
+    return true;
+  }
+
+  bool handleChallengeClosed(data) { //accepted, cancelled or expired
+    challenges.remove(data[fieldChallengeID] ?? data[fieldChallenge]?[fieldChallengeID]);
+    return true;
+  }
+
+  bool handleChallengeInfo(data) => false; //consumed by offerChallenge() via send(responseType: ...)
+
+  /// Looks up a challenge from a link and, if it's still open, asks whether to accept it.
+  Future<void> offerChallenge(String id) async {
+    final raw = await send(ClientMsg.viewChallenge, data: { fieldChallengeID : id }, responseType: ServMsg.challengeInfo);
+    if (raw is! String || raw.isEmpty) {
+      ZugDialogs.popup("That challenge is no longer available");
+      return;
+    }
+    final c = Challenge.fromData(jsonDecode(raw)[fieldData]);
+    if (c.creator?.eq(userName) ?? false) {
+      ZugDialogs.popup("That's your own challenge link - send it to someone else!");
+    }
+    else if (await ZugDialogs.confirm("Accept challenge from ${c.creator?.name ?? 'someone'}?")) {
+      acceptChallenge(id);
+    }
   }
 
   void joinArea(String id) {
@@ -528,15 +610,23 @@ abstract class ZugModel extends ChangeNotifier {
     }
   }
 
-  void checkGoto() {
-    String goto = Uri.base.queryParameters["goto"]?.toString() ?? "";
-    if (goto.isNotEmpty) {
-      html.window.history.pushState(null, 'home', Uri.base.path);
-      autoJoinTitle = goto;
-      log.info("Autologging into game: $autoJoinTitle");
-      autoLogin();
+  MapEntry<String,String>? _linkFromUrl(Map<String,String> params) {
+    for (final e in params.entries) {
+      if (e.value.isNotEmpty && linkHandlers.containsKey(e.key)) return e;
     }
+    return null;
   }
+
+  //OAuth's "state" parameter is echoed back untouched, which makes it a tidy way to carry a link across the login redirect
+  String? _linkToState(MapEntry<String,String>? link) => link == null ? null : "${link.key}:${link.value}";
+
+  MapEntry<String,String>? _linkFromState(String? state) {
+    final i = state?.indexOf(":") ?? -1;
+    if (state == null || i < 1) return null;
+    final key = state.substring(0, i);
+    return linkHandlers.containsKey(key) ? MapEntry(key, state.substring(i + 1)) : null;
+  }
+
 
   void autoLogin() {
     autoLog = true;
@@ -651,10 +741,9 @@ abstract class ZugModel extends ChangeNotifier {
     log.info("Logged in: ${data.toString()}");
     userName = UniqueName.fromData(data);
     isLoggedIn = true;
-    if (autoJoinTitle != null && await confirmGoto(autoJoinTitle!)) {
-      joinArea(autoJoinTitle!);
-      autoJoinTitle = null;
-    }
+    final link = pendingLink;
+    pendingLink = null;
+    if (link != null) await linkHandlers[link.key]?.call(link.value);
     gotoPage(PageType.lobby);
     return true;
   }
