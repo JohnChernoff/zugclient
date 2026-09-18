@@ -110,6 +110,10 @@ abstract class ZugModel extends ChangeNotifier {
   bool javalinServer;
   bool helpMode = false;
   bool seeking = false;
+
+  final Map<String,Future<void> Function(String)> linkHandlers = {};
+  MapEntry<String,String>? pendingLink; //a launch link waiting for login to complete
+
   String? autoJoinTitle;
   String? pendingChallengeID; //challenge id from an incoming link, waiting for login
   String? webBaseUrl; //e.g. "https://bingochess.com/" - only needed to build links on non-web clients
@@ -119,8 +123,9 @@ abstract class ZugModel extends ChangeNotifier {
   Map<String,ValueNotifier<bool?>> dialogTracker = {};
   ValueNotifier<Enum> get pageNotifier => _pageNotifier;
   Enum get currentPage => _pageNotifier.value; //set currentPage(PageType p) => _pageNotifier.value = p;
+
   void gotoPage(Enum p) {
-    print("-> ${p.name}");
+    log.fine("-> ${p.name}");
     _pageNotifier.value = p;
   }
 
@@ -184,6 +189,7 @@ abstract class ZugModel extends ChangeNotifier {
     });
     if (firebaseOptions != null) initFirebase(firebaseOptions);
     connect();
+
   }
 
   void addFunctions(Map<Enum, Function> functions) {
@@ -594,20 +600,26 @@ abstract class ZugModel extends ChangeNotifier {
   void checkRedirect(String host) {
     checkRedirectOauth(OauthClient(host,modelName));
   }
+
   //TODO: generalize
   void checkRedirectOauth(OauthClient oauthClient) {
-    if (kIsWeb) {
-      String code = Uri.base.queryParameters["code"]?.toString() ?? "";
-      if (code.isNotEmpty) {
-        authenticating = true;
-        html.window.history.pushState(null, 'home', Uri.base.path);
-        log.info("Redirecting login...");
-        oauthClient.decode(code, handleAuthClient);
-      }
-      else {
-        checkGoto();
-      }
+    if (!kIsWeb) return;
+    final params = Uri.base.queryParameters;
+    String code = params["code"]?.toString() ?? "";
+    if (code.isNotEmpty) {
+      pendingLink = _linkFromState(params["state"]); //the link we sent through the OAuth round trip, if any
+      authenticating = true;
+      html.window.history.pushState(null, 'home', Uri.base.path);
+      log.info("Redirecting login...");
+      oauthClient.decode(code, handleAuthClient);
     }
+    else {
+      pendingLink = _linkFromUrl(params);
+      if (pendingLink != null) {
+        html.window.history.pushState(null, 'home', Uri.base.path);
+        log.info("Launch link: $pendingLink");
+        autoLogin();
+      }}
   }
 
   MapEntry<String,String>? _linkFromUrl(Map<String,String> params) {
@@ -643,7 +655,7 @@ abstract class ZugModel extends ChangeNotifier {
   void authenticate(OauthClient oauthClient) {
     log.info("Authenticating");
     authenticating = true;
-    oauthClient.authenticate(handleAuthClient);
+    oauthClient.authenticate(handleAuthClient, state: _linkToState(pendingLink));
   }
 
   void handleAuthClient(oauth2.Client? client) {
