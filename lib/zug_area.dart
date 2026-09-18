@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:zug_utils/zug_utils.dart';
 import 'package:zugclient/zug_fields.dart';
@@ -9,7 +10,7 @@ import 'package:zugclient/zug_model.dart';
 import 'package:zugclient/zug_option.dart';
 import 'package:zugclient/zug_user.dart';
 
-abstract class Room with Timerable {
+abstract class Room extends ChangeNotifier with Timerable {
   late final String id;
   late final String title;
 
