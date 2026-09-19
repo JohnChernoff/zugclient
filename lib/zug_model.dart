@@ -65,12 +65,11 @@ class Challenge {
 abstract class ZugModel extends ChangeNotifier {
   final ValueNotifier<Enum> _pageNotifier;
   static const optPrefix = "ZugClientOption";
-  static const prefPendingChallenge = "ZugPendingChallenge";
   static final log = Logger('ClientLogger');
   static const noAreaID = "-";
   static const noAreaTitle = "-";
   static const servString = "serv";
-  static const LoginType defLogType = LoginType.lichess;
+  final LoginType defLogType;
 
   bool showServMess;
   bool localServer;
@@ -114,8 +113,7 @@ abstract class ZugModel extends ChangeNotifier {
   final Map<String,Future<void> Function(String)> linkHandlers = {};
   MapEntry<String,String>? pendingLink; //a launch link waiting for login to complete
 
-  String? autoJoinTitle;
-  String? pendingChallengeID; //challenge id from an incoming link, waiting for login
+  //String? autoJoinTitle;
   String? webBaseUrl; //e.g. "https://bingochess.com/" - only needed to build links on non-web clients
 
   final Map<String,Challenge> challenges = {}; //this user's open challenges
@@ -131,7 +129,7 @@ abstract class ZugModel extends ChangeNotifier {
 
   Area createArea(dynamic data);
 
-  ZugModel(this.domain,this.port,this.remoteEndpoint, this.prefs, {
+  ZugModel(this.domain,this.port,this.remoteEndpoint, this.prefs, { this.defLogType = LoginType.none,
     FirebaseOptions? firebaseOptions, this.showServMess = false, this.localServer = false, this.javalinServer = false}) : _pageNotifier = ValueNotifier<Enum>(PageType.splash) {
     //_endClipListener = clipPlayer.onPlayerComplete.listen((v) => log.info("done"));
     trackPlayer.stop();
@@ -188,6 +186,10 @@ abstract class ZugModel extends ChangeNotifier {
       ServMsg.challengeClosed : handleChallengeClosed,
     });
     if (firebaseOptions != null) initFirebase(firebaseOptions);
+
+    linkHandlers["goto"] = (title) async { if (await confirmGoto(title)) joinArea(title); };
+    linkHandlers["challenge"] = offerChallenge;
+
     connect();
 
   }
@@ -606,8 +608,10 @@ abstract class ZugModel extends ChangeNotifier {
     if (!kIsWeb) return;
     final params = Uri.base.queryParameters;
     String code = params["code"]?.toString() ?? "";
+
     if (code.isNotEmpty) {
       pendingLink = _linkFromState(params["state"]); //the link we sent through the OAuth round trip, if any
+      autoLog = true;
       authenticating = true;
       html.window.history.pushState(null, 'home', Uri.base.path);
       log.info("Redirecting login...");
@@ -616,9 +620,9 @@ abstract class ZugModel extends ChangeNotifier {
     else {
       pendingLink = _linkFromUrl(params);
       if (pendingLink != null) {
+        autoLog = true;
         html.window.history.pushState(null, 'home', Uri.base.path);
-        log.info("Launch link: $pendingLink");
-        autoLogin();
+        log.info("Launch link: $pendingLink"); //autoLogin();
       }}
   }
 
@@ -678,7 +682,7 @@ abstract class ZugModel extends ChangeNotifier {
   void login(LoginType? lt, {String? token}) { //autoLog = false;
     if (isConnected) {
       loginType = lt ?? LoginType.none;
-      prefs?.setString(fieldLoginType, loginType.toString());
+      prefs?.setString(fieldLoginType, loginType?.name ?? "none");
       if (loginType == LoginType.lichess) {
         if (token != null) {
           log.info("Logging in with lichess token");
