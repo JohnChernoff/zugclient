@@ -1,6 +1,7 @@
 library zugclient;
 
 import 'dart:async';
+import 'dart:collection';
 import 'dart:math';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -91,7 +92,7 @@ abstract class ZugModel extends ChangeNotifier {
   Map<String,Area> areas = {};
   MessageList messages = MessageList();
   late final Area noArea;
-  late Area currentArea; //Area(noAreaTitle);
+  late Area currentArea;
   final Map<Enum,Function(MsgData)> _functionMap = {};
   final Map<Enum,Completer<dynamic>> _waitMap = {};
   SharedPreferences? prefs;
@@ -111,6 +112,8 @@ abstract class ZugModel extends ChangeNotifier {
   bool javalinServer;
   bool helpMode = false;
   bool seeking = false;
+  Queue<String> msgQueue = Queue<String>();
+  bool _draining = false;
 
   final Map<String,Future<void> Function(String)> linkHandlers = {};
   MapEntry<String,String>? pendingLink; //a launch link waiting for login to complete
@@ -356,7 +359,32 @@ abstract class ZugModel extends ChangeNotifier {
     }
   }
 
-  Enum handleMsg(dynamic msg) {
+  void handleMsg(dynamic msg) {
+    if (msg is String) {
+      msgQueue.add(msg);
+      _drainQueue();            // no-op if already running
+    }
+  }
+
+  Future<void> _drainQueue() async {
+    if (_draining) return;
+    _draining = true;
+    try {
+      while (msgQueue.isNotEmpty) {
+        try {
+          await processNextMsg();
+        } catch (e, st) {
+          log.severe("Error processing message: $e\n$st"); // one bad msg shouldn't kill the loop
+        }
+        await Future.delayed(Duration.zero); // optional: let the UI render between messages
+      }
+    } finally {
+      _draining = false;
+    }
+  }
+
+  Future<Enum> processNextMsg() async {
+    final msg = msgQueue.removeFirst();
     if (showServMess || (getOption(ZugClientOpt.debug)?.getBool() ?? false)) {
       log.info("Incoming msg: $msg"); //print(msg); print(""); print("***"); print("");
     }
@@ -367,13 +395,9 @@ abstract class ZugModel extends ChangeNotifier {
     String type = json[fieldType]; //logMsg("Handling: $type");
     Enum funEnum = _functionMap.keys.singleWhere((element) => element.name == type, orElse: () => ClientMsg.none);
     Function? fun = _functionMap[funEnum];
-
     if (fun != null) {
-      if (fun.runtimeType != bool) {
-        fun(json[fieldData]); notifyListeners();
-      } else if (fun(json[fieldData])) {
-        notifyListeners();
-      }
+      final result = fun(json[fieldData]);
+      if (result is! bool || result) notifyListeners();
       if (awaiting(funEnum)) {
         log.info("Received response: ${funEnum.name}");
         _waitMap[funEnum]!.complete(msg);
@@ -540,10 +564,11 @@ abstract class ZugModel extends ChangeNotifier {
 
   void handlePart(MsgData data) { //print("Parting: $data");
     addServMsg("Leaving: ${data[fieldAreaID]}");
-    switchArea(noAreaTitle);
+    switchArea(noAreaID);
   }
 
-  void handleStart(MsgData data) {
+  void handleStart(MsgData data, {autoSwitch = true}) {
+    if (autoSwitch) switchArea(data[fieldAreaID]);
     handleUpdateArea(data);
     gotoPage(PageType.main);
   }
@@ -573,7 +598,7 @@ abstract class ZugModel extends ChangeNotifier {
     }
     else if (data[fieldAreaChange] == AreaChange.deleted.name) { //print("Removing: ${area.title}");
       areas.remove(area.id);
-      if (currentArea.id == area.id) switchArea(noAreaTitle);
+      if (currentArea.id == area.id) switchArea(noAreaID);
     }
     else if (data[fieldAreaChange] == AreaChange.updated.name) {
       updateOccupants(area,data[fieldArea]);

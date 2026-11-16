@@ -90,6 +90,14 @@ abstract class Area extends Room implements Comparable<Area> {
     _phase = ZugPhase.undefined;
   }
 
+  void setPhaseTime(int? t) {
+    _phaseTime = max(t ?? 0,0);
+  }
+
+  void addPhaseTime(int? t) {
+    _phaseTime += t ?? 0;
+  }
+
   bool updateArea(Map<String,dynamic> data) {
     upData = data; //TODO: clarify how this works
     return true; //updateOccupants(data);
@@ -102,8 +110,8 @@ abstract class Area extends Room implements Comparable<Area> {
     if (data[fieldPhaseCurrtime] != null) { //HOLY TIME KLUDGE BATMAN
       servTimeDiff = data[fieldPhaseCurrtime] - DateTime.now().millisecondsSinceEpoch;
       ZugModel.log.fine("Serv time diff: $servTimeDiff");
-    }
-    _phaseTime = max(data[fieldPhaseTimeRemaining] ?? 0,0);
+    } //_phaseTime = max(data[fieldPhaseTimeRemaining] ?? 0,0);
+    setPhaseTime(data[fieldPhaseTimeRemaining]);
     setPhase(data[fieldPhase]);
     ZugModel.log.fine("Updating phase: $_phase,$_phaseTime");
   }
