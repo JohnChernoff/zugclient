@@ -2,11 +2,42 @@ import 'package:zugclient/zug_fields.dart';
 import 'package:flutter/material.dart';
 import 'package:zugclient/zug_model.dart';
 
+class ZugUser {
+  UniqueName uName;
+  bool loggedIn;
+  ZugUser(this.uName,this.loggedIn);
+  factory ZugUser.fromData(MsgData data) => ZugUser(
+    UniqueName.fromData(data),
+    (data[fieldLoggedIn] ?? false) as bool,
+  );
+  bool eq(ZugUser other) => uName.eq(other.uName);
+}
+
+class Occupant {
+  ZugUser user;
+  bool away,banned,creator;
+  Occupant(this.user,this.away,this.banned,this.creator);
+  factory Occupant.fromData(MsgData data) => Occupant(
+      ZugUser.fromData(data),
+      (data[fieldAway] ?? false) as bool,
+      (data[fieldBanned] ?? false) as bool,
+      (data[fieldCreator] ?? false) as bool,
+  );
+  bool eq(Occupant other) => user.eq(other.user);
+  static List<Occupant> getOccupants(List<dynamic> dataList) {
+    List<Occupant> occupants = [];
+    for (MsgData data in dataList) {
+      occupants.add(Occupant.fromData(data));
+    }
+    return occupants;
+  }
+}
+
 class UniqueName {
   final String name;
   final LoginType source;
   const UniqueName(this.name,this.source);
-  factory UniqueName.fromData(Map<String,dynamic>? data, {defaultName = const UniqueName("?",LoginType.none),}) {
+  factory UniqueName.fromData(MsgData? data, {defaultName = const UniqueName("?",LoginType.none),}) {
     if (data == null) return defaultName;
 
     return UniqueName(

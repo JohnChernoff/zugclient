@@ -72,4 +72,8 @@ const fieldData = "data",
     fieldChallenge = "challenge",
     fieldChallengeID = "challenge_id",
     fieldCreator = "creator",
-    fieldExpires = "expires";
+    fieldBanned = "banned",
+    fieldAway = "away",
+    fieldExpires = "expires",
+    fieldLoggedIn = "loggedIn"
+;
