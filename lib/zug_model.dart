@@ -508,7 +508,7 @@ abstract class ZugModel extends ChangeNotifier {
       fieldAreaID : id,
       fieldHidden : hidden,
       fieldColor: color,
-      err: err
+      fieldError: err
     },color: color);
   }
 

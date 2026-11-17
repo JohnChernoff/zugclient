@@ -75,5 +75,6 @@ const fieldData = "data",
     fieldBanned = "banned",
     fieldAway = "away",
     fieldExpires = "expires",
-    fieldLoggedIn = "loggedIn"
+    fieldLoggedIn = "loggedIn",
+    fieldError = "error"
 ;
