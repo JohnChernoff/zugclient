@@ -530,7 +530,7 @@ abstract class ZugModel extends ChangeNotifier {
 
   bool handleServMsg(data, {Color? color, err = false, console = true}) {
     final msg = messages.addMessage(data, color: color, err: err);
-    if (console) log.info("Server Msg: $msg");
+    if (console) log.info("Server Msg: ${msg.message}");
     return true;
   }
 

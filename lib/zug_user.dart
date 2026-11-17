@@ -5,31 +5,59 @@ import 'package:zugclient/zug_model.dart';
 class ZugUser {
   UniqueName uName;
   bool loggedIn;
-  ZugUser(this.uName,this.loggedIn);
-  factory ZugUser.fromData(MsgData data) => ZugUser(
+
+  ZugUser(this.uName, this.loggedIn);
+
+  static (UniqueName, bool) parseUserData(MsgData data) => (
     UniqueName.fromData(data),
     (data[fieldLoggedIn] ?? false) as bool,
   );
+
+  factory ZugUser.fromData(MsgData data) {
+    final (uName, loggedIn) = parseUserData(data);
+    return ZugUser(uName, loggedIn);
+  }
+
   bool eq(ZugUser other) => uName.eq(other.uName);
+
+  @override
+  String toString() {
+    return "$uName, loggedIn: $loggedIn";
+  }
 }
 
-class Occupant {
-  ZugUser user;
-  bool away,banned,creator;
-  Occupant(this.user,this.away,this.banned,this.creator);
-  factory Occupant.fromData(MsgData data) => Occupant(
-      ZugUser.fromData(data),
-      (data[fieldAway] ?? false) as bool,
-      (data[fieldBanned] ?? false) as bool,
-      (data[fieldCreator] ?? false) as bool,
+class Occupant<U extends ZugUser> {
+  U user;
+  bool away, banned, creator;
+
+  Occupant(this.user, this.away, this.banned, this.creator);
+
+  static (bool, bool, bool) parseOccupantData(MsgData data) => (
+    (data[fieldAway] ?? false) as bool,
+    (data[fieldBanned] ?? false) as bool,
+    (data[fieldCreator] ?? false) as bool,
   );
-  bool eq(Occupant other) => user.eq(other.user);
-  static List<Occupant> getOccupants(List<dynamic> dataList) {
-    List<Occupant> occupants = [];
-    for (MsgData data in dataList) {
-      occupants.add(Occupant.fromData(data));
-    }
-    return occupants;
+
+  factory Occupant.fromData(MsgData data, U Function(MsgData) userFactory) {
+    final (away, banned, creator) = parseOccupantData(data);
+    return Occupant(
+      userFactory(data),
+      away,
+      banned,
+      creator,
+    );
+  }
+
+  static List<O> getOccupants<O extends Occupant>(
+      List<dynamic> dataList, O Function(MsgData) occupantFactory) {
+    return [ for (MsgData data in dataList) occupantFactory(data) ];
+  }
+
+  bool eq(Occupant<U> other) => user.eq(other.user);
+
+  @override
+  String toString() {
+    return "$user, away: $away, banned: $banned, creator: $creator";
   }
 }
 
