@@ -26,37 +26,41 @@ class MessageList {
     userColorMap.putIfAbsent(null, () => foregroundColor);
   }
 
-  void addZugMsg(data, {err = false}) {
+  Message addZugMsg(data, {err = false}) {
     StringBuffer txtBuff = StringBuffer();
     for (dynamic el in (data[fieldZugTxt] as List<dynamic>)) {
       txtBuff.write(el[fieldTxtAscii] ?? "$emojiTag${el[fieldTxtEmoji]}$emojiTag");
     }
     UniqueName uName = UniqueName.fromData(data[fieldMsgUser]);
-
-    messages.add(Message(
+    final msg = Message(
         uName,
         txtBuff.toString(),
         DateTime.fromMillisecondsSinceEpoch(data[fieldMsgDate] * 1000),
         getMsgColor(uName,data),
         data[fieldHidden] ?? false,
-        err: err));
+        err: err);
+    messages.add(msg);
+    return msg;
   }
 
-  void addMessage(data, {Color? color, err = false}) {
+  Message addMessage(data, {Color? color, err = false}) {
+    Message message;
     if (data[fieldZugMsg] != null) {
-      addZugMsg(data[fieldZugMsg]);
+      message = addZugMsg(data[fieldZugMsg]);
     } else {
       dynamic userData = data[fieldOccupant]?[fieldUser] ?? data[fieldUser];
       UniqueName? uName = userData != null ? UniqueName.fromData(userData) : null;
-      messages.add(Message(
+      message = Message(
           uName,
           data[fieldMsg],
           DateTime.now(),
           color ?? getMsgColor(uName,data),
           data[fieldHidden] ?? false,
-          err: err));
+          err: err);
+      messages.add(message);
     }
     newMessages++;
+    return message;
   }
 
   Color getMsgColor(UniqueName? uName, data) { //print("Fetching ColorMap: $userColorMap for $uName");

@@ -340,22 +340,30 @@ abstract class ZugModel extends ChangeNotifier {
     }
   }
 
-  void switchArea(String? id) {
+  void switchArea(Area? area, {obs = true, update = true}) {
+    if (area != null) {
+      currentArea = area;
+      if (currentArea.exists && area != noArea) {
+        if (obs) send(ClientMsg.obs,data:{fieldAreaID : currentArea.id});
+        if (update) send(ClientMsg.updateArea,data:{fieldAreaID : area.id});
+      }
+    }
+  }
+
+  void switchAreaID(String? id, {unObs = true}) {
     final i = id ?? noAreaID;
     if (currentArea.id != i) {
       if (areas[i] != null) {
-        if (currentArea.exists) send(ClientMsg.unObs,data:{ fieldAreaID : currentArea.id });
-        currentArea = areas[i]!; // ?? noGame;
-        if (currentArea.exists ) {
-          send(ClientMsg.obs,data:{fieldAreaID:currentArea.id});
-          send(ClientMsg.updateArea,data:{fieldAreaID:id});
+        if (currentArea.exists && currentArea != noArea && unObs) {
+          send(ClientMsg.unObs,data:{ fieldAreaID : currentArea.id });
         }
+        switchArea(areas[i]);
       }
       else {
         currentArea = noArea;
         update(); //TODO: can this be done for all games?
       }
-      log.info("Switched to game: ${currentArea.id}"); //update();
+      log.info("Switched to area: ${currentArea.id}"); //update();
     }
   }
 
@@ -510,17 +518,19 @@ abstract class ZugModel extends ChangeNotifier {
     return true;
   }
 
-  void addServMsg(String msg, {hidden = false, Color? color, err = false}) {
+  void addServMsg(String msg, {hidden = false, Color? color, err = false, console = true}) {
     handleServMsg({
       fieldMsg : msg,
       fieldHidden : hidden,
       color: color,
-      err: err
+      err: err,
+      console: console
     });
   }
 
-  bool handleServMsg(data, {Color? color, err = false}) {
-    messages.addMessage(data, color: color, err: err);
+  bool handleServMsg(data, {Color? color, err = false, console = true}) {
+    final msg = messages.addMessage(data, color: color, err: err);
+    if (console) log.info("Server Msg: $msg");
     return true;
   }
 
@@ -557,19 +567,21 @@ abstract class ZugModel extends ChangeNotifier {
   }
 
   void handleJoin(MsgData data) { //print("Joining: $data");
-    switchArea(data[fieldAreaID]);
     handleUpdateArea(data);
+    switchAreaID(data[fieldAreaID]);
+    addServMsg("Joining: ${currentArea.id}");
     chatScope.value = MessageScope.area;
   }
 
   void handlePart(MsgData data) { //print("Parting: $data");
     addServMsg("Leaving: ${data[fieldAreaID]}");
-    switchArea(noAreaID);
+    switchAreaID(noAreaID);
   }
 
   void handleStart(MsgData data, {autoSwitch = true}) {
-    if (autoSwitch) switchArea(data[fieldAreaID]);
     handleUpdateArea(data);
+    if (autoSwitch) switchAreaID(data[fieldAreaID]);
+    addServMsg("Starting: ${currentArea.id}");
     gotoPage(PageType.main);
   }
 
@@ -598,7 +610,7 @@ abstract class ZugModel extends ChangeNotifier {
     }
     else if (data[fieldAreaChange] == AreaChange.deleted.name) { //print("Removing: ${area.title}");
       areas.remove(area.id);
-      if (currentArea.id == area.id) switchArea(noAreaID);
+      if (currentArea.id == area.id) switchAreaID(noAreaID);
     }
     else if (data[fieldAreaChange] == AreaChange.updated.name) {
       updateOccupants(area,data[fieldArea]);

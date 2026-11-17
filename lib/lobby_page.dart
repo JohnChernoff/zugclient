@@ -461,7 +461,7 @@ class _LobbyPageState extends State<LobbyPage> with TickerProviderStateMixin {
            if (widget.useSelectorWidget) widget.selectorWidget(context,
                onSelected: (id) { //print("On Selected: $id");
                  if (widget.model.currentArea.title != id) {
-                   setState(() { widget.model.switchArea(id); });
+                   setState(() { widget.model.switchAreaID(id); });
                  }
                }
            ),
