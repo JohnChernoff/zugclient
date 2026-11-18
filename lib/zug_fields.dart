@@ -76,5 +76,6 @@ const fieldData = "data",
     fieldAway = "away",
     fieldExpires = "expires",
     fieldLoggedIn = "loggedIn",
-    fieldError = "error"
+    fieldError = "error",
+    fieldTimeout = "timeout"
 ;
