@@ -630,7 +630,7 @@ abstract class ZugModel extends ChangeNotifier {
 
   void handleResponseRequest(MsgData data) {
     ValueNotifier<bool?> canceller = ValueNotifier<bool?>(null);
-    dialogTracker.putIfAbsent(data[fieldResponseType], () => canceller);
+    dialogTracker[data[fieldResponseType]] = canceller;
   }
 
   void handleCancelledRequest(MsgData data) {
