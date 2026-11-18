@@ -114,6 +114,7 @@ abstract class ZugModel extends ChangeNotifier {
   bool seeking = false;
   Queue<String> msgQueue = Queue<String>();
   bool _draining = false;
+  bool switchback = true;
 
   final Map<String,Future<void> Function(String)> linkHandlers = {};
   MapEntry<String,String>? pendingLink; //a launch link waiting for login to complete
@@ -610,7 +611,10 @@ abstract class ZugModel extends ChangeNotifier {
     }
     else if (data[fieldAreaChange] == AreaChange.deleted.name) { //print("Removing: ${area.title}");
       areas.remove(area.id);
-      if (currentArea.id == area.id) switchAreaID(noAreaID);
+      if (currentArea.id == area.id) {
+        switchAreaID(noAreaID);
+        if (currentPage == PageType.main && switchback) gotoPage(PageType.lobby);
+      }
     }
     else if (data[fieldAreaChange] == AreaChange.updated.name) {
       updateOccupants(area,data[fieldArea]);
