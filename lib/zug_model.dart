@@ -187,6 +187,7 @@ abstract class ZugModel extends ChangeNotifier {
       ServMsg.updateServ : handleUpdateServ,
       ServMsg.seekCreated : handleSeekCreation,
       ServMsg.seekMatched : handleSeekMatch,
+      ServMsg.seekCancelled : handleSeekCancelled,
       ServMsg.challengeCreated : handleChallengeCreated,
       ServMsg.challengeInfo : handleChallengeInfo,
       ServMsg.challengeClosed : handleChallengeClosed,
@@ -248,6 +249,11 @@ abstract class ZugModel extends ChangeNotifier {
 
   void handleSeekMatch(MsgData data) {
     log.info("Seek matched");
+    seeking = false;
+  }
+
+  void handleSeekCancelled(MsgData data) {
+    log.info("Seek cancelled");
     seeking = false;
   }
 

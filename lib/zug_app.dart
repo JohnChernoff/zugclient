@@ -28,11 +28,12 @@ abstract class ZugApp extends StatelessWidget {
   ZugApp(this.model, this.appName, {
     this.colorSeed = Colors.green,
     this.isDark = true,
+    Color? primaryColor,
     super.key,
     Level logLevel = Level.INFO,
     this.noNavBar = false,
     this.splashLandImgPath, this.splashPortImgPath,
-  }) : colorScheme = isDark ? const ColorScheme.dark() : const ColorScheme.light() { //}ColorScheme.fromSeed(seedColor: colorSeed) {
+  }) : colorScheme = primaryColor != null ? ColorScheme.fromSeed(seedColor: primaryColor, brightness: Brightness.dark, secondary: Colors.black) : (isDark ? const ColorScheme.dark() : const ColorScheme.light()) {
     ZugDialogs.setNavigatorKey(zugAppNavigatorKey);
     Logger.root.level = logLevel;
     Logger.root.onRecord.listen((record) {
