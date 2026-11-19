@@ -252,6 +252,10 @@ abstract class ZugModel extends ChangeNotifier {
     seeking = false;
   }
 
+  void cancelSeek() {
+    send(ClientMsg.cancelSeek);
+  }
+
   void handleSeekCancelled(MsgData data) {
     log.info("Seek cancelled");
     seeking = false;

@@ -7,7 +7,7 @@ enum ServMsg { none, version, ip, ipReq, ping, obs, unObs, reqLogin, logOK, noLo
 }
 enum ClientMsg { none, ip, pong, obs, unObs, login, getOptions, setOptions, listAreas, kick, response, seek, getMessages, nudge,
   newRoom, joinRoom, newArea, joinArea, startArea, partArea, areaMsg, roomMsg, servMsg, privMsg, updateArea, updateRoom, updateServ, updateUser, updateOccupant, setDeaf, ban,
-  newChallenge, viewChallenge, acceptChallenge, cancelChallenge
+  newChallenge, viewChallenge, acceptChallenge, cancelChallenge, cancelSeek
 }
 
 enum AreaChange {created,updated,deleted}
